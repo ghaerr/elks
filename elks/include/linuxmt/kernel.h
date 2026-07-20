@@ -32,6 +32,16 @@ extern char running_qemu;
 extern dev_t dev_console;
 extern int debug_level;
 
+extern seg_t dmesg_seg;     /* segment or selector of dmesg circular queue */
+
+struct dmesg_queue {
+    unsigned int     len;    /* # chars in queue */
+    unsigned int     size;   /* queue size */
+    unsigned int     head;
+    unsigned int     tail;
+    unsigned char   base[]; /* queue data follows */
+};
+
 extern void do_exit(int) noreturn;
 
 extern int kill_pg(pid_t,sig_t,int);

@@ -411,14 +411,6 @@ CONFIG_CHAR_DEV_MEM
   Saying yes include support for the various memory character devices.
   Currently only mem, kmem, zero, null and full are supported.
 
-Enable kernel message log
-CONFIG_CHAR_DEV_KMSG
-  Store printk output in a circular ring buffer in unused main memory
-  (top of conventional RAM). Messages can be retrieved via dmesg using
-  /dev/kmem and the MEM_READKMSG ioctl. The buffer is configured at
-  boot via /bootopts dmesg=N (e.g. dmesg=4096). If not specified,
-  the ring buffer is not created.
-
 Enable standard parallel (printer) ports
 CONFIG_CHAR_DEV_LP
   Include support for parallel port devices.

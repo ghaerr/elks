@@ -50,10 +50,6 @@ ifeq ($(CONFIG_ARCH_SOLO86), y)
 OBJS += irq-solo86.o reset-stubs.o timer-8254.o divzero.o nmi.o
 endif
 
-ifeq ($(CONFIG_CHAR_DEV_KMSG), y)
-OBJS += kmsg.o
-endif
-
 ifeq ($(CONFIG_ARCH_8018X), y)
 OBJS += irq-8018x.o reset-stubs.o timer-8018x.o
 endif

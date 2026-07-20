@@ -27,11 +27,7 @@
 #include <linuxmt/heap.h>
 #include <linuxmt/timer.h>
 #include <linuxmt/init.h>
-#ifdef CONFIG_CHAR_DEV_KMSG
-#include <linuxmt/kmsg.h>
-#endif
 #include <arch/io.h>
-#include <arch/irq.h>
 #include <arch/segment.h>
 #include <arch/seg286.h>
 
@@ -40,8 +36,7 @@
 #define DEV_NULL_MINOR          3
 #define DEV_PORT_MINOR          4
 #define DEV_ZERO_MINOR          5
-#define DEV_KMSG_MINOR          8
-#define DEV_MAX_MINOR           8
+#define DEV_MAX_MINOR           5
 
 /*
  * /dev/null code
@@ -169,54 +164,10 @@ static int kmem_ioctl(struct inode *inode, struct file *file, int cmd, char *arg
     case MEM_GETSEGALL:
         retword = (unsigned)&_seg_all;
         break;
-#ifdef CONFIG_CHAR_DEV_KMSG
-    case MEM_GETKMSG:
-        retword = kmsg_seg;
+    case MEM_GETDMSG:
+        retword = dmesg_seg;
         break;
-    case MEM_READKMSG: {
-        struct kmsg_read kr;
-        unsigned int flags;
-        seg_t s = kmsg_seg;
-        unsigned int tail, count, size;
-        unsigned int n;
-
-        if (s == 0)
-            return -EINVAL;
-        memcpy_fromfs(&kr, arg, sizeof(kr));
-
-        /* Atomically snapshot the ring buffer under cli/sti */
-        save_flags(flags);
-        clr_irq();
-
-        tail  = peekw(2, s);           /* tail */
-        count = peekw(4, s);           /* count */
-        size  = peekw(6, s);           /* size */
-
-        restore_flags(flags);
-
-        if (count > kr.maxlen)
-            count = kr.maxlen;
-        kr.count = count;
-
-        /* Copy linear portion: data[tail .. min(tail+count, size)] */
-        n = size - tail;
-        if (n > count)
-            n = count;
-        if (n)
-            fmemcpyb(kr.buf, current->t_regs.ds,
-                     (byte_t *)(KMSG_DATA_OFF + tail), s, n);
-
-        /* Copy wrapped portion from start of data[] */
-        if (count > size - tail) {
-            unsigned int rest = count - (size - tail);
-            fmemcpyb(kr.buf + n, current->t_regs.ds,
-                     (byte_t *)KMSG_DATA_OFF, s, rest);
-        }
-
-        memcpy_tofs(arg, &kr, sizeof(kr));
-        return 0;
-    }
-#endif
+        /* fall thru */
     default:
         return -EINVAL;
     }
@@ -373,9 +324,6 @@ static struct file_operations *mdev_fops[] = {
     NULL,
 #endif
     &zero_fops,                 /* DEV_ZERO_MINOR */
-    NULL,                       /* 6 */
-    NULL,                       /* 7 */
-    NULL,                       /* 8 */
 };
 
 /*

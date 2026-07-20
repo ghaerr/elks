@@ -42,9 +42,6 @@
 #include <linuxmt/debug.h>
 #include <linuxmt/signal.h>
 #include <linuxmt/prectimer.h>
-#ifdef CONFIG_CHAR_DEV_KMSG
-#include <linuxmt/kmsg.h>
-#endif
 #include <arch/segment.h>
 #include <arch/irq.h>
 #include <arch/divmod.h>
@@ -61,17 +58,7 @@ dev_t dev_console;
 #define DEVCONSOLE  MKDEV(TTY_MAJOR,TTY_MINOR_OFFSET)   /* /dev/tty1*/
 #endif
 static void (*kputc)(dev_t, int) = 0;
-
-/*
- * Kernel log ring buffer - writes to far-memory ring buffer via ASM
- * Read side: /dev/kmem MEM_READKMSG ioctl (atomic snapshot)
- */
-
-#ifdef CONFIG_CHAR_DEV_KMSG
-
-/* kmsg_enqueue is implemented in kmsg.S */
-#endif
-
+void dmesg_addch(int c);
 
 void set_console(dev_t dev)
 {
@@ -89,9 +76,8 @@ void kputchar(int ch)
 {
     if (ch == '\n')
             kputchar('\r');
-#ifdef CONFIG_CHAR_DEV_KMSG
-    kmsg_enqueue(kmsg_seg, ch);
-#endif
+    if (dmesg_seg) 
+            dmesg_addch(ch);
     if (kputc)
             (*kputc)(dev_console, ch);
     else early_putchar(ch);
@@ -383,4 +369,18 @@ void dprintk(const char *fmt, ...)
     vprintk(fmt, p);
     va_end(p);
 }
+
+void dmesg_addch(int c)
+{
+    struct dmesg_queue __far *q = _MK_FP(dmesg_seg, 0);
+
+    clr_irq();
+    q->base[q->head] = c;
+    if (++q->head >= q->size)
+        q->head = 0;
+    if (q->len < q->size)
+        q->len++;
+    set_irq();
+}
+
 #endif

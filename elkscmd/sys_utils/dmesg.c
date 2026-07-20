@@ -5,15 +5,44 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 
-#define KMSG_BUF_SIZE   2048
+#define MIN(a,b)        ((a) < (b) ? (a) : (b))
+#define DMSG_BUF_SIZE   2048
 
-static char buf[KMSG_BUF_SIZE];
+#define DMESG_BUFSIZ    2048
+static char localbuf[DMESG_BUFSIZ];
+
+void dmesg_write(unsigned char __far *farbuf, unsigned int count)
+{
+    unsigned int n;
+
+    while (count) {
+        n = MIN(count, DMESG_BUFSIZ);
+        fmemcpy(localbuf, farbuf, n);
+        write(STDOUT_FILENO, localbuf, n);
+        count -= n;
+    }
+}
+
+void dmesg_read(void)
+{
+    unsigned int tail, n;
+    struct dmesg_queue __far *q = _MK_FP(dmesg_seg, 0);
+
+    if (!q->len)
+        return;
+    tail = (q->head - q->len) % q->size;    /* start read pointer */
+    n = q->size - tail;                     /* bytes to end of buffer */
+    dmesg_write(&q->base[tail], n);
+    n = q->len - n;                         /* bytes from start of buffer */
+    dmesg_write(&q->base[0], n);
+}
+//static char buf[DMSG_BUF_SIZE];
 
 int main(void)
 {
-    int fd;
-    unsigned int kmsg_seg;
-    struct kmsg_read kr;
+   /* int fd;
+    unsigned int dmsg_seg;
+    struct dmsg_read kr;
     int n;
 
     fd = open("/dev/kmem", O_RDONLY);
@@ -35,7 +64,7 @@ int main(void)
     }
 
     /* Read ring buffer atomically via MEM_READKMSG */
-    kr.buf    = buf;
+/*    kr.buf    = buf;
     kr.maxlen = KMSG_BUF_SIZE;
     kr.count  = 0;
 
@@ -46,7 +75,7 @@ int main(void)
     }
 
     /* Output */
-    n = kr.count;
+  /*  n = kr.count;
     {
         char *p = buf;
         while (n > 0) {
@@ -57,6 +86,7 @@ int main(void)
         }
     }
 
-    close(fd);
+    close(fd);*/
+    dmesg_read();
     return 0;
 }

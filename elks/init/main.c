@@ -17,9 +17,6 @@
 #include <linuxmt/prectimer.h>
 #include <linuxmt/timer.h>
 #include <linuxmt/debug.h>
-#ifdef CONFIG_CHAR_DEV_KMSG
-#include <linuxmt/kmsg.h>
-#endif
 #include <arch/segment.h>
 #include <arch/seg286.h>
 #include <arch/ports.h>
@@ -56,10 +53,8 @@ int nr_ext_bufs, nr_xms_bufs, nr_map_bufs;
 int xms_bootopts;
 int ata_mode = -1;              /* =AUTO default set ATA CF driver mode automatically */
 char running_qemu;
-#ifdef CONFIG_CHAR_DEV_KMSG
-volatile seg_t kmsg_seg;            /* segment of ring buffer in far memory (0 = disabled) */
-unsigned int kmsg_buf_size;         /* requested buffer size from /bootopts dmesg= */
-#endif
+int dmesg;                  /* dmesg buffer size in K from /bootopts */
+seg_t dmesg_seg;            /* segment of dmesg circular queue */
 static int boot_console;
 static segext_t umbtotal;
 static kdev_t disabled[4];      /* disabled devices using disable= */
@@ -105,6 +100,7 @@ static void FARPROC far_start_kernel(void);
 static void INITPROC early_kernel_init(void);
 static void INITPROC kernel_init(void);
 static void INITPROC kernel_banner(seg_t init, seg_t extra);
+static void INITPROC dmesg_init();
 static void init_task(void);
 static void idle_loop(void);
 
@@ -232,19 +228,7 @@ static void INITPROC early_kernel_init(void)
     heap_init();                    /* init near memory allocator */
     heapofs = setup_arch();          /* sets membase and memend globals */
     heap_add((void *)heapofs, heapsize);
-
-#ifdef CONFIG_CHAR_DEV_KMSG
-    /* carve kmsg ring buffer from top of conventional RAM before mm_init */
-    if (kmsg_buf_size) {
-        seg_t kmsg_segs = (KMSG_DATA_OFF + kmsg_buf_size + 15) >> 4;
-        if ((memend - membase) > kmsg_segs) {
-            memend -= kmsg_segs;
-            kmsg_seg = memend;
-            kmsg_init(kmsg_seg, kmsg_buf_size);
-        }
-    }
-#endif
-
+    dmesg_init();
     mm_init(membase, memend);       /* init far/main memory allocator */
 
 #ifdef CONFIG_BOOTOPTS
@@ -658,12 +642,6 @@ static int INITPROC parse_options(void)
             nr_ext_bufs = (int)simple_strtol(line+4, 10);
             continue;
         }
-#ifdef CONFIG_CHAR_DEV_KMSG
-        if (!strncmp(line,"dmesg=",6)) {
-            kmsg_buf_size = (unsigned int)simple_strtol(line+6, 10);
-            continue;
-        }
-#endif
         if (!strncmp(line,"xms=",4)) {
             if (!strcmp(line+4, "on"))    xms_bootopts = XMS_UNREAL;
             if (!strcmp(line+4, "int15")) xms_bootopts = XMS_INT15;
@@ -684,6 +662,10 @@ static int INITPROC parse_options(void)
         }
         if (!strncmp(line,"heap=",5)) {
             heapsize = (unsigned int)simple_strtol(line+5, 10);
+            continue;
+        }
+        if (!strncmp(line,"dmesg=",6)) {
+            dmesg = (unsigned int)simple_strtol(line+6, 10);
             continue;
         }
         if (!strncmp(line,"task=",5)) {
@@ -815,3 +797,18 @@ static char * INITPROC option(char *s)
     return s;
 }
 #endif /* CONFIG_BOOTOPTS*/
+
+void INITPROC dmesg_init(void)
+{
+    struct dmesg_queue __far *q;
+
+    if (dmesg) {
+        if (dmesg > 63) dmesg = 63;
+        dmesg_seg = memend - (dmesg << 6);
+        memend -= (dmesg << 6);
+
+        q = _MK_FP(dmesg_seg, 0); 
+        q->size = (dmesg << 10) - 4 * sizeof(int);
+        q->len = q->head = q->tail = 0;
+    }   
+}      

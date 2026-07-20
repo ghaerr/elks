@@ -32,7 +32,6 @@ create_dev_dir()
 	mknod -p $MNT/dev/kmem	c 1 2
 	mknod -p $MNT/dev/null	c 1 3
 	mknod -p $MNT/dev/zero	c 1 5
-	mknod -p $MNT/dev/kmsg	c 1 8
 	mknod -p $MNT/dev/tcpdev	c 8 0
 	mknod -p $MNT/dev/ne0	c 9 0
 	mknod -p $MNT/dev/wd0	c 9 1
@@ -94,7 +93,6 @@ copy_bin_files()
 	cp /bin/cp	$MNT/bin
 	cp /bin/date	$MNT/bin
 	cp /bin/df	$MNT/bin
-	cp /bin/dmesg	$MNT/bin
 	cp /bin/echo	$MNT/bin
 	cp /bin/fdisk	$MNT/bin
 	cp /bin/init	$MNT/bin

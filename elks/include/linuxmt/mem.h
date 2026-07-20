@@ -12,14 +12,7 @@
 #define MEM_GETMAXTASKS 10
 #define MEM_GETJIFFADDR 11
 #define MEM_GETSEGALL   12
-#define MEM_GETKMSG     13
-#define MEM_READKMSG    14
-
-struct kmsg_read {
-    char *buf;              /* user buffer to receive data */
-    unsigned int maxlen;    /* max bytes to copy in */
-    unsigned int count;     /* actual bytes copied out */
-};
+#define MEM_GETDMSG     13
 
 struct mem_usage {              /* all in Kbytes */
     unsigned int main_free;
