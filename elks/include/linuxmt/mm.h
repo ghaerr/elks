@@ -1,21 +1,29 @@
 #ifndef __LINUXMT_MM_H
 #define __LINUXMT_MM_H
 
+#include <linuxmt/config.h>
 #include <linuxmt/types.h>
 #include <linuxmt/list.h>
-#include <linuxmt/config.h>
+#include <linuxmt/init.h>
 
-/* main memory management */
+/* use 32-bit SELEXT_T for PM paragraph address >= 1M, keep small for real mode */
+#ifdef CONFIG_286_PMODE
+#define SELEXT_T    selext_t    /* PM 32-bit paragraph address or count */
+#else
+#define SELEXT_T    segext_t    /* RM 16-bit paragraph address or count */
+#endif
+
+/* main memory management, also used with XMS memory in PM */
 struct segment {
 	list_s    all;
 	list_s    free;
 	seg_t     base;             /* segment or selector used to access memory */
-	segext_t  size;             /* size in paragraphs */
 	byte_t    flags;
 	byte_t    ref_count;
 	word_t    pid;
+	SELEXT_T  size;             /* 16- or 32-bit size in paragraphs */
 #ifdef CONFIG_286_PMODE
-	addr_t    addr;             /* paragraph address of memory (=base in real mode) */
+	selext_t  addr;             /* paragraph address of memory (=base in real mode) */
 #endif
 };
 
@@ -61,6 +69,7 @@ int fs_memcmp(const void *,const void *,size_t);
 
 /* Memory allocation */
 
+void INITPROC seg_add(SELEXT_T start, SELEXT_T end);
 segment_s * seg_alloc_fixed (seg_t, segext_t, word_t);
 segment_s * seg_alloc (segext_t, word_t);
 void seg_free (segment_s *);
