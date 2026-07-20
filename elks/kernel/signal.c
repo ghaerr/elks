@@ -131,6 +131,9 @@ int sys_signal(int signr, __kern_sighandler_t handler)
 {
     int i;
     struct segment *s;
+    seg_t seg;
+    segoff_t off;
+    segext_t seg_paras, off_paras;
 
     debug_sig("SIGNAL(%P) sys_signal %2d action %x:%x\n", signr,
         _FP_SEG(handler), _FP_OFF(handler));
@@ -141,13 +144,22 @@ int sys_signal(int signr, __kern_sighandler_t handler)
     else if (handler == KERN_SIG_IGN)
         current->sig.action[signr - 1].sa_dispose = SIGDISP_IGN;
     else {
-        debug("handler %x:%x\n", _FP_SEG(handler), _FP_OFF(handler));
+        seg = _FP_SEG(handler);
+        off = _FP_OFF(handler);
+        debug("handler %x:%x\n", seg, off);
+        off_paras = off >> 4;
+
         for (i = 0; i < MAX_SEGS; i++) {
             s = current->mm[i];
             if (!s || (s->flags & SEG_FLAG_TYPE) != SEG_FLAG_CSEG)
                 continue;
-            debug("codeseg %x:%x\n", s->base, s->size<<4);
-            if (_FP_SEG(handler) == s->base && _FP_OFF(handler) < (s->size << 4)) {
+            debug("codeseg %04x (%x paras)\n", s->base, s->size);
+            if (seg < s->base)
+                continue;
+            seg_paras = seg - s->base;
+            if (seg_paras >= s->size)
+                continue;
+            if (off_paras < s->size - seg_paras) {
                 current->sig.handler = handler;
                 current->sig.action[signr - 1].sa_dispose = SIGDISP_CUSTOM;
                 return 0;
