@@ -285,8 +285,6 @@ static void INITPROC kernel_init(void)
     selext_t xms_start = (XMS_START_ADDR >> 4) + (xms_alloc_ptr << 6);
     selext_t xms_end   = (XMS_START_ADDR >> 4) + ((addr_t)SETUP_XMS_KBYTES << 6);
     seg_add(xms_start, xms_end);            /* add remaining XMS memory paragraphs */
-
-    // DEBUG REMOVE
     printk("mem: xms start %08lx end %08lx total %dK\n",
         xms_start << 4, xms_end << 4, (xms_end - xms_start) >> 6);
 #endif

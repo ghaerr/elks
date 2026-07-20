@@ -183,11 +183,6 @@ segment_s * seg_alloc (segext_t size, word_t type)
     segment_s * seg = 0;
 
     seg = seg_free_get (size, type);
-#ifdef CONFIG_286_PMODE
-    if (!seg) printk("MEM FAIL %04x paras\n", size);    // DEBUG REMOVE
-    if (seg && (seg->addr & 0xFFFF0000)) printk("seg_alloc: xms %08lx size %uK\n",
-        seg->addr << 4, (size + 63) >> 6);
-#endif
     if (seg && (type & SEG_FLAG_ALIGN1K))
         BASE(seg) += ((~BASE(seg) + 1) & ((1024 >> 4) - 1));
     if (seg && !seg_pm_attach(seg, type)) {
