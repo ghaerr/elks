@@ -15,7 +15,7 @@ struct segment {
 	byte_t    ref_count;
 	word_t    pid;
 #ifdef CONFIG_286_PMODE
-	seg_t     para;             /* paragraph address of memory (=base in real mode) */
+	addr_t    addr;             /* paragraph address of memory (=base in real mode) */
 #endif
 };
 

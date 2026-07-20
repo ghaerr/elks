@@ -82,7 +82,7 @@ static size_t zero_read(struct inode *inode, struct file *filp, char *data, size
 static size_t kmem_read(struct inode *inode, struct file *filp, char *data, size_t len)
 {
     seg_t sseg;
-    segext_t soff;
+    segoff_t soff;
 
     if (filp->f_flags & O_ALT) {
         sseg = _FP_SEG(filp->f_pos);
@@ -113,7 +113,7 @@ static size_t kmem_read(struct inode *inode, struct file *filp, char *data, size
 static size_t kmem_write(struct inode *inode, struct file *filp, char *data, size_t len)
 {
     seg_t dseg;
-    segext_t doff;
+    segoff_t doff;
 
     if (filp->f_flags & O_ALT) {
         dseg = _FP_SEG(filp->f_pos);

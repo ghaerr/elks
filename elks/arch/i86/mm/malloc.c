@@ -21,7 +21,7 @@
  * of the segment register value stored there in real mode.
  * Real mode just uses single 'base' member as segment address.
  */
-#define BASE(seg)   ((seg)->para)   /* use base paragraph address in protected mode */
+#define BASE(seg)   ((seg)->addr)   /* use base paragraph address in protected mode */
 
 static byte_t seg_pm_access(word_t type)
 {
@@ -35,7 +35,7 @@ static byte_t seg_pm_access(word_t type)
 /* allocate selector for passed segment_s structure, 0 = GDT full or limit exceeded */
 static int seg_pm_attach(segment_s *seg, word_t type)
 {
-    seg->base = desc_alloc(PARA_BYTES(seg->para), PARA_BYTES(seg->size),
+    seg->base = desc_alloc(PARA_BYTES(seg->addr), PARA_BYTES(seg->size),
         seg_pm_access(type));
     return seg->base;
 }
@@ -185,6 +185,11 @@ segment_s * seg_alloc (segext_t size, word_t type)
     segment_s * seg = 0;
 
     seg = seg_free_get (size, type);
+#ifdef CONFIG_286_PMODE
+    if (!seg) printk("MEM FAIL %02x paras\n", size);    // DEBUG REMOVE
+    if (seg && (seg->addr & 0xFFFF0000)) printk("seg_alloc: xms %08lx size %uK\n",
+        seg->addr << 4, (size + 63) >> 6);
+#endif
     if (seg && (type & SEG_FLAG_ALIGN1K))
         BASE(seg) += ((~BASE(seg) + 1) & ((1024 >> 4) - 1));
     if (seg && !seg_pm_attach(seg, type)) {
@@ -463,11 +468,14 @@ int seg_verify_area(pid_t pid, seg_t base, segoff_t offset)
     return 0;
 }
 
-void INITPROC seg_add(seg_t start, seg_t end)
+void INITPROC seg_add(addr_t start, addr_t end)
 {
     segment_s * seg = (segment_s *) heap_alloc (sizeof (segment_s), HEAP_TAG_SEG);
     if(seg) {
         BASE(seg) = start;
+#ifdef CONFIG_286_PMODE
+        if (end - start >= 0x10000) panic("seg_add TOO LARGE\n"); // DEBUG REMOVE
+#endif
         seg->size = end - start;
         seg->flags = SEG_FLAG_FREE;
         seg->ref_count = 0;
