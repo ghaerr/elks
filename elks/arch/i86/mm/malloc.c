@@ -21,7 +21,7 @@
  * of the segment register value stored there in real mode.
  * Real mode just uses single 'base' member as segment address.
  */
-#define BASE(seg)   ((seg)->para)   /* use base paragraph address in protected mode */
+#define BASE(seg)   ((seg)->addr)   /* use base paragraph address in protected mode */
 
 static byte_t seg_pm_access(word_t type)
 {
@@ -35,8 +35,7 @@ static byte_t seg_pm_access(word_t type)
 /* allocate selector for passed segment_s structure, 0 = GDT full or limit exceeded */
 static int seg_pm_attach(segment_s *seg, word_t type)
 {
-    seg->base = desc_alloc(PARA_BYTES(seg->para), PARA_BYTES(seg->size),
-        seg_pm_access(type));
+    seg->base = desc_alloc(seg->addr << 4, seg->size << 4, seg_pm_access(type));
     return seg->base;
 }
 
@@ -72,9 +71,9 @@ static list_s _seg_free;
 
 // Split segment if enough large
 
-static segment_s * seg_split (segment_s * s1, segext_t size0)
+static segment_s * seg_split (segment_s * s1, SELEXT_T size0)
 {
-    segext_t size2 = s1->size - size0;
+    SELEXT_T size2 = s1->size - size0;
 
     if (size2 >= SEG_MIN_SIZE) {
 
@@ -103,18 +102,18 @@ static segment_s * seg_split (segment_s * s1, segext_t size0)
 
 // Get free segment
 
-static segment_s * seg_free_get (segext_t size0, word_t type)
+static segment_s * seg_free_get (SELEXT_T size0, word_t type)
 {
     // First get the smallest suitable free segment
 
     segment_s * best_seg  = 0;
-    segext_t best_size = 0xFFFF;
+    SELEXT_T best_size = (SELEXT_T)-1;
     list_s * n = _seg_free.next;
-    segext_t size00 = size0, incr = 0;
+    SELEXT_T size00 = size0, incr = 0;
 
     while (n != &_seg_free) {
         segment_s * seg = structof (n, segment_s, free);
-        segext_t size1 = seg->size;
+        SELEXT_T size1 = seg->size;
 
         if (type & SEG_FLAG_ALIGN1K)
             size00 = size0 + ((~BASE(seg) + 1) & ((1024 >> 4) - 1));
@@ -160,8 +159,7 @@ static void seg_merge (segment_s * s1, segment_s * s2)
 
 segment_s * seg_alloc_fixed (seg_t base, segext_t size, word_t type)
 {
-    segment_s * seg = heap_alloc(sizeof(segment_s),
-        HEAP_TAG_SEG | HEAP_TAG_CLEAR);
+    segment_s * seg = heap_alloc(sizeof(segment_s), HEAP_TAG_SEG | HEAP_TAG_CLEAR);
     if (!seg)
         return seg;
 
@@ -178,7 +176,7 @@ segment_s * seg_alloc_fixed (seg_t base, segext_t size, word_t type)
 
 #endif
 
-// Allocate segment
+// Allocate segment, limited to 64K in PM for now
 
 segment_s * seg_alloc (segext_t size, word_t type)
 {
@@ -457,13 +455,13 @@ int seg_verify_area(pid_t pid, seg_t base, segoff_t offset)
         segment_s * seg = structof (n, segment_s, all);
 
         if (seg->pid == pid && seg->base == base)
-            return offset <= (seg->size << 4);
+            return offset <= ((unsigned long)seg->size << 4);
         n = seg->all.next;
     }
     return 0;
 }
 
-void INITPROC seg_add(seg_t start, seg_t end)
+void INITPROC seg_add(SELEXT_T start, SELEXT_T end)
 {
     segment_s * seg = (segment_s *) heap_alloc (sizeof (segment_s), HEAP_TAG_SEG);
     if(seg) {

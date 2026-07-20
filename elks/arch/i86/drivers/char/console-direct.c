@@ -67,7 +67,7 @@ struct console {
     void (*fsm)(struct console *, int);
     seg_t vseg;                 /* current render target: video page seg when foreground,
                                    ram_seg when backgrounded in RAM-buffer mode */
-    segext_t vseg_offset;       /* offset into vseg for buffer ram calculations */
+    segoff_t vseg_offset;       /* offset into vseg for buffer ram calculations */
     unsigned int crtc_offset;   /* CRTC start address (chars) for this VC's video page;
                                    only meaningful when this VC is video-page-backed */
     unsigned short crtc_base;   /* 6845 CRTC base I/O address */

@@ -66,7 +66,7 @@ void desc_chaccess(sel_t sel, byte_t access)
  * of the real mode segment in segment_s.base.  The far-memory primitives then load
  * that selector into a segment register and the CPU resolves it via the GDT.
  */
-sel_t desc_alloc(addr_t base, addr_t limit, byte_t access)
+sel_t desc_alloc(addr_t base, seloff_t limit, byte_t access)
 {
     int i, scanned;
     sel_t sel = 0;
@@ -101,7 +101,7 @@ addr_t desc_base(sel_t sel)
 }
 
 /* return selector limit (< 64K). FIXME: will need 16M limit for 386 PM/fmemalloc */
-addr_t desc_limit(sel_t sel)
+seloff_t desc_limit(sel_t sel)
 {
     return gdt[SEL_INDEX(sel)].limit_lo;
 }

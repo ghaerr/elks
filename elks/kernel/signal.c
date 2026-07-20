@@ -153,13 +153,13 @@ int sys_signal(int signr, __kern_sighandler_t handler)
             s = current->mm[i];
             if (!s || (s->flags & SEG_FLAG_TYPE) != SEG_FLAG_CSEG)
                 continue;
-            debug("codeseg %04x (%x paras)\n", s->base, s->size);
+            debug("codeseg %04x (%x paras)\n", s->base, (segext_t)s->size);
             if (seg < s->base)
                 continue;
             seg_paras = seg - s->base;
-            if (seg_paras >= s->size)
+            if (seg_paras >= (segext_t)s->size)
                 continue;
-            if (off_paras < s->size - seg_paras) {
+            if (off_paras < (segext_t)s->size - seg_paras) {
                 current->sig.handler = handler;
                 current->sig.action[signr - 1].sa_dispose = SIGDISP_CUSTOM;
                 return 0;

@@ -225,8 +225,11 @@ static void INITPROC early_kernel_init(void)
     heap_init();                    /* init near memory allocator */
     heapofs = setup_arch();          /* sets membase and memend globals */
     heap_add((void *)heapofs, heapsize);
+#ifdef CONFIG_286_PMODE
+    /* force 256K base system ram to force immediate usage of XMS allocations */
+    memend = 256 << 6;      // DEBUG REMOVE
+#endif
     mm_init(membase, memend);       /* init far/main memory allocator */
-
 #ifdef CONFIG_BOOTOPTS
     struct umbseg *p;
     /* now able to add umb memory segments */
@@ -274,9 +277,18 @@ static void INITPROC kernel_init(void)
 #ifdef CONFIG_FARTEXT_KERNEL
     /* add .farinit.init section to main memory free list */
     seg_t     init_seg = _FP_SEG(__start_fartext_init);
+
 #ifdef CONFIG_286_PMODE
     init_seg = desc_base(init_seg) >> 4;    /* convert selector to physical segment */
+
+    /* calculate remaining xms start and end in paragraphs */
+    selext_t xms_start = (XMS_START_ADDR >> 4) + (xms_alloc_ptr << 6);
+    selext_t xms_end   = (XMS_START_ADDR >> 4) + ((addr_t)SETUP_XMS_KBYTES << 6);
+    seg_add(xms_start, xms_end);            /* add remaining XMS memory paragraphs */
+    printk("mem: xms start %08lx end %08lx total %dK\n",
+        xms_start << 4, xms_end << 4, (xms_end - xms_start) >> 6);
 #endif
+
     seg_t s = init_seg + (((word_t)(void *)__start_fartext_init + 15) >> 4);
     seg_t e = init_seg + (((word_t)(void *)  __end_fartext_init + 15) >> 4);
     debug("init: seg %04x to %04x size %04x (%d)\n", s, e, (e - s) << 4, (e - s) << 4);
@@ -291,8 +303,8 @@ static void INITPROC kernel_init(void)
 static void INITPROC kernel_banner(seg_t init, seg_t extra)
 {
     kernel_banner_arch();
-    printk("syscaps %x, %uK base ram, %d tasks, %d files, %d inodes\n",
-        sys_caps, SETUP_MEM_KBYTES, max_tasks, nr_file, nr_inode);
+    printk("syscaps %x, %uK ram, %d tasks, %d files, %d inodes\n",
+        sys_caps, memend >> 6, max_tasks, nr_file, nr_inode);
     printk("ELKS %s (%u text, %u ftext, %u data, %u bss, %u heap)\n",
            system_utsname.release,
            (unsigned)_endtext, (unsigned)_endftext, (unsigned)_enddata,
