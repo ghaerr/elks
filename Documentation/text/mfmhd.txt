@@ -1,0 +1,51 @@
+ELKS XT MFM hard disk driver
+============================
+
+The CONFIG_BLK_DEV_MFMHD driver provides direct access to Xebec-style
+command-block controllers used with ST-506/412 MFM hard disks in IBM PC/XT
+class systems.  Supported profiles cover WD1002A-WX1-compatible controllers
+and Seagate ST11M/ST11R or FileCard-class controllers.  It does not drive
+IDE/ATA, ESDI, or generic RLL controllers; ST11R support is limited to the
+documented Seagate command profile.
+
+Hardware resources
+------------------
+
+The primary controller normally occupies I/O ports 0x320 through 0x323.  A
+second configured controller normally occupies 0x324 through 0x327 and is
+touched only when three or four drives are selected for probing.
+
+Command, status, sense, and controller-parameter bytes use programmed I/O.
+Sector payloads use 8237 DMA channel 3, the standard IBM XT hard-disk DMA
+channel.  The driver reserves a fixed 1024-byte buffer below the first 64 KiB
+physical boundary, so an 8237 transfer cannot wrap.  Normal transfers are
+therefore limited to two 512-byte sectors per command.  The controller IRQ is
+kept masked and completion is polled.  DMA channel 3 must not be shared with
+another active device.
+
+Configuration
+-------------
+
+Enable "XT MFM hard drive support" under block device drivers.  Select the
+controller profile, the number of units to probe, and any required geometry
+override.  One unit is the safest default.  The primary controller exposes
+/dev/mfma and /dev/mfmb; a configured secondary controller exposes /dev/mfmc
+and /dev/mfmd.  Each whole-disk minor is followed by seven partition minors.
+
+WD1002 configurations can select Super, G, or H controller-ROM geometry
+tables.  Explicit cylinder, head, and sector values take precedence.  Leave
+them at zero to use the selected controller table or the controller geometry
+command.  Standard MFM media normally uses 17 sectors per track.
+
+Booting and recovery
+--------------------
+
+Use "root=mfma" (or mfmb, mfmc, mfmd) in /bootopts to mount a whole device,
+or use the normal partition device name for a partition.  "mfm=slow" selects
+conservative controller deadlines; "mfm=fast" restores the default timings.
+The driver retries failed commands, recalibrates the affected unit, and falls
+back to single-sector transfers after repeated errors.
+
+Maintenance ioctls, including format and long-sector commands, are optional
+and disabled by default.  Formatting destroys data and should be enabled only
+for a dedicated maintenance build.

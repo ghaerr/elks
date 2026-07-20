@@ -52,6 +52,9 @@ int tracing;
 int nr_ext_bufs, nr_xms_bufs, nr_map_bufs;
 int xms_bootopts;
 int ata_mode = -1;              /* =AUTO default set ATA CF driver mode automatically */
+#ifdef CONFIG_BLK_DEV_MFMHD
+extern int mfmhd_slow_profile;  /* /bootopts mfm=slow */
+#endif
 char running_qemu;
 static int boot_console;
 static segext_t umbtotal;
@@ -381,19 +384,23 @@ static struct dev_name_struct {
     const char *name;
     int num;
 } devices[] = {
-	/* the 6 partitionable drives must be first */
+	/* the 10 partitionable drives must be first */
 	{ "hda",     DEV_HDA },         /* 0 */
 	{ "hdb",     DEV_HDB },
 	{ "hdc",     DEV_HDC },
 	{ "hdd",     DEV_HDD },
 	{ "cfa",     DEV_CFA },
 	{ "cfb",     DEV_CFB },
-	{ "fd0",     DEV_FD0 },         /* 6 */
+	{ "mfma",    DEV_MFMA },
+	{ "mfmb",    DEV_MFMB },
+	{ "mfmc",    DEV_MFMC },
+	{ "mfmd",    DEV_MFMD },
+	{ "fd0",     DEV_FD0 },         /* 10 */
 	{ "fd1",     DEV_FD1 },
-	{ "df0",     DEV_DF0 },         /* 8 */
+	{ "df0",     DEV_DF0 },         /* 12 */
 	{ "df1",     DEV_DF1 },
 	{ "rom",     DEV_ROM },
-	{ "ttyS0",   DEV_TTYS0 },       /* 11 */
+	{ "ttyS0",   DEV_TTYS0 },       /* 15 */
 	{ "ttyS1",   DEV_TTYS1 },
 	{ "tty1",    DEV_TTY1 },
 	{ "tty2",    DEV_TTY2 },
@@ -410,18 +417,20 @@ char *root_dev_name(kdev_t dev)
 {
     int i;
     unsigned int mask;
+    unsigned int len;
 #define NAMEOFF 13
-    static char name[18] = "ROOTDEV=/dev/";
+    static char name[20] = "ROOTDEV=/dev/";
 
     name[8] = '/';
-    for (i=0; i<11; i++) {
-        mask = (i < 6)? 0xfff8: 0xffff;
+    for (i=0; i<15; i++) {
+        mask = (i < 10)? 0xfff8: 0xffff;
         if (devices[i].num == (dev & mask)) {
             strcpy(&name[NAMEOFF], devices[i].name);
-            if (i < 6) {
+            if (i < 10) {
                 if (dev & 0x07) {
-                    name[NAMEOFF+3] = '0' + (dev & 7);
-                    name[NAMEOFF+4] = '\0';
+                    len = strlen(devices[i].name);
+                    name[NAMEOFF + len] = '0' + (dev & 7);
+                    name[NAMEOFF + len + 1] = '\0';
                 }
             }
             return name;
@@ -664,6 +673,17 @@ static int INITPROC parse_options(void)
             ata_mode = (int)simple_strtol(line+6, 10);
             continue;
         }
+#ifdef CONFIG_BLK_DEV_MFMHD
+        if (!strncmp(line,"mfm=",4)) {
+            if (!strcmp(line+4, "slow") || !strcmp(line+4, "1") ||
+                    !strcmp(line+4, "on"))
+                mfmhd_slow_profile = 1;
+            else if (!strcmp(line+4, "fast") || !strcmp(line+4, "0") ||
+                    !strcmp(line+4, "off"))
+                mfmhd_slow_profile = 0;
+            continue;
+        }
+#endif
         if (!strncmp(line,"cache=",6)) {
             nr_map_bufs = (int)simple_strtol(line+6, 10);
             continue;

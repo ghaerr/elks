@@ -100,6 +100,13 @@ static void floppy_off(int nr);
     #define DEVICE_OFF(device)
 #endif
 
+#elif (MAJOR_NR == MFMHD_MAJOR)
+
+#define DEVICE_NAME "mfm"
+#define DEVICE_REQUEST do_mfmhd_request
+#define DEVICE_NR(device) (MINOR(device) >> 3)
+#define DEVICE_OFF(device)
+
 #endif
 
 #define CURRENT         (blk_dev[MAJOR_NR].current_request)
