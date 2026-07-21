@@ -29,8 +29,8 @@ extern unsigned int malloc_arena_thresh;        /* mem.c wrapper function */
 void __far *fmemalloc(unsigned long size);
 int         fmemfree(void __far *ptr);
 
-int        _fmemalloc(int paras, unsigned short *pseg); /* syscall */
-int        _fmemfree(unsigned short seg);               /* syscall */
+int        _fmemalloc(unsigned int paras, unsigned short *pseg); /* syscall */
+int        _fmemfree(unsigned short seg);                        /* syscall */
 #endif
 
 /* usable with all mallocs */

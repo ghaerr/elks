@@ -20,16 +20,24 @@ static unsigned long maxsize;
 #define MK_FP(seg,off)   ((void __far *)((((unsigned long)(seg)) << 16) | \
                                            ((unsigned int)(off))))
 
+/*
+ * Allocate up to 1M-16 bytes from main or XMS memory.
+ * Requesting > 64K requires PM-incompatible segment arithmetic or 32-bit app code.
+ */
 void __far *fmemalloc(unsigned long size)
 {
     unsigned short seg;
-    unsigned int paras = (unsigned int)((size + 15) >> 4);
 
+    size = (size + 15) >> 4;
+    if (size & 0xFFFF0000) {    /* > (1M - 16) paragraphs */
+        errno = EINVAL;
+        return -1;
+    }
 #if DEBUG == 1
     sysctl(CTL_GET, "malloc.debug", &debug_level);
 #endif
     debug("(%d)FMEMALLOC(%5lu) ", getpid(), size);
-    if (_fmemalloc(paras, &seg)) {
+    if (_fmemalloc((unsigned int)size, &seg)) {
         debug("= FAIL\n");
         return 0;
     }
