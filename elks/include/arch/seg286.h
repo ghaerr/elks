@@ -93,10 +93,10 @@ void enable_protected_mode(struct dtr *gdtr, struct dtr *idtr);
 /* allocate a descriptor for [base, base+paras*16) with `access`; returns a
  * selector (0 on table-full). seg_alloc() calls this after reserving physram.
  */
-sel_t  desc_alloc(addr_t base, addr_t limit, byte_t access);
+sel_t  desc_alloc(addr_t base, seloff_t limit, byte_t access);
 
 /* rewrite / free an existing selector's descriptor */
-sel_t  desc_set(sel_t sel, addr_t base, addr_t limit, byte_t access);
+sel_t  desc_set(sel_t sel, addr_t base, seloff_t limit, byte_t access);
 void   desc_chaccess(sel_t sel, byte_t access);
 void   desc_free(sel_t sel);
 
@@ -104,7 +104,7 @@ void   desc_free(sel_t sel);
 addr_t desc_base(sel_t sel);
 
 /* max valid byte offset in a selector's segment (its descriptor limit) */
-addr_t desc_limit(sel_t sel);
+seloff_t desc_limit(sel_t sel);
 
 /* install an interrupt gate (used by the IRQ/syscall path). */
 void idt_gate_set(unsigned int vect, unsigned int proc, sel_t selector, byte_t access);

@@ -6,10 +6,6 @@
  */
 #include <linuxmt/config.h>
 
-/* paragraph (16-byte) helpers shared with the real-mode arena allocator */
-#define PARA_BYTES(paras)   ((addr_t)(paras) << 4)
-#define BYTES_PARA(bytes)   (((bytes) + 15) >> 4)
-
 /* fixed GDT indices (kernel-private selectors) */
 #define GDT_NULL        0   /* required null descriptor          */
 #define GDT_KCODE       1   /* kernel CS  (near .text)           */

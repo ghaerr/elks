@@ -1,92 +1,91 @@
-#include <linuxmt/types.h>
+#define __KERNEL__
+#include <linuxmt/ntty.h>       /* for struct tty */
+#undef __KERNEL__
+
+#include <linuxmt/mm.h>
 #include <linuxmt/mem.h>
+#include <linuxmt/memory.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 
-#define MIN(a,b)        ((a) < (b) ? (a) : (b))
-#define DMSG_BUF_SIZE   2048
+struct dmesg_queue {
+    unsigned int     len;
+    unsigned int     size;
+    unsigned int     head;
+    unsigned int     tail;
+    unsigned char    base[1];
+};
 
-#define DMESG_BUFSIZ    2048
-static char localbuf[DMESG_BUFSIZ];
-
-void dmesg_write(unsigned char __far *farbuf, unsigned int count)
+static int memread(int fd, word_t off, seg_t seg, void *buf, int size)
 {
-    unsigned int n;
+    if (lseek(fd, _MK_LP(seg, off), SEEK_SET) == (off_t)-1)
+        return -1;
+    return read(fd, buf, size);
+}
 
-    while (count) {
-        n = MIN(count, DMESG_BUFSIZ);
-        fmemcpy(localbuf, farbuf, n);
-        write(STDOUT_FILENO, localbuf, n);
-        count -= n;
+static void ring_read(int fd, seg_t seg, struct dmesg_queue *q)
+{
+    unsigned int avail, first, tail;
+    unsigned char buf[2048];
+    int r;
+
+    avail = q->len;
+    if (avail > q->size)
+        avail = q->size;
+
+    tail = (q->head - avail) % q->size;
+
+    /* first part: tail to end of ring */
+    first = q->size - tail;
+    if (first > avail)
+        first = avail;
+
+    r = memread(fd, (sizeof(*q) - 1) + tail, seg, buf, first);
+    if (r > 0)
+        write(STDOUT_FILENO, buf, r);
+
+    /* second part: wrap around from start of ring */
+    if (avail > first) {
+        r = memread(fd, sizeof(*q) - 1, seg, buf, avail - first);
+        if (r > 0)
+            write(STDOUT_FILENO, buf, r);
     }
 }
 
-void dmesg_read(void)
-{
-    unsigned int tail, n;
-    struct dmesg_queue __far *q = _MK_FP(dmesg_seg, 0);
-
-    if (!q->len)
-        return;
-    tail = (q->head - q->len) % q->size;    /* start read pointer */
-    n = q->size - tail;                     /* bytes to end of buffer */
-    dmesg_write(&q->base[tail], n);
-    n = q->len - n;                         /* bytes from start of buffer */
-    dmesg_write(&q->base[0], n);
-}
-//static char buf[DMSG_BUF_SIZE];
-
 int main(void)
 {
-   /* int fd;
-    unsigned int dmsg_seg;
-    struct dmsg_read kr;
-    int n;
+    int fd;
+    seg_t seg;
+    struct dmesg_queue q;
 
-    fd = open("/dev/kmem", O_RDONLY);
-    if (fd < 0) {
+    if ((fd = open("/dev/kmem", O_RDONLY|O_ALT)) < 0) {
         write(2, "dmesg: cannot open /dev/kmem\n", 29);
         return 1;
     }
 
-    if (ioctl(fd, MEM_GETKMSG, &kmsg_seg) < 0) {
+    if (ioctl(fd, MEM_GETDMSG, &seg) < 0) {
         write(2, "dmesg: kernel message log not enabled\n", 38);
         close(fd);
         return 1;
     }
 
-    if (kmsg_seg == 0) {
-        write(2, "dmesg: kmsg buffer not configured (add dmesg= to /bootopts)\n", 60);
+    if (seg == 0) {
+        write(2, "dmesg: not configured (add dmesg= to /bootopts)\n", 49);
         close(fd);
         return 0;
     }
 
-    /* Read ring buffer atomically via MEM_READKMSG */
-/*    kr.buf    = buf;
-    kr.maxlen = KMSG_BUF_SIZE;
-    kr.count  = 0;
-
-    if (ioctl(fd, MEM_READKMSG, &kr) < 0) {
-        write(2, "dmesg: MEM_READKMSG failed\n", 27);
+    if (memread(fd, 0, seg, &q, sizeof(q) - 1) != sizeof(q) - 1) {
+        write(2, "dmesg: cannot read header\n", 26);
         close(fd);
         return 1;
     }
 
-    /* Output */
-  /*  n = kr.count;
-    {
-        char *p = buf;
-        while (n > 0) {
-            int w = write(1, p, n);
-            if (w <= 0) break;
-            p += w;
-            n -= w;
-        }
-    }
+    if (q.len > 0)
+        ring_read(fd, seg, &q);
 
-    close(fd);*/
-    dmesg_read();
+    close(fd);
     return 0;
 }
