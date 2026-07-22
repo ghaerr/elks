@@ -13,7 +13,7 @@
 #define SELEXT_T    segext_t    /* RM 16-bit paragraph address or count */
 #endif
 
-/* main memory management, also used with XMS memory in PM */
+/* main memory management, also used for XMS memory in PM */
 struct segment {
 	list_s    all;
 	list_s    free;
@@ -21,10 +21,9 @@ struct segment {
 	byte_t    flags;
 	byte_t    ref_count;
 	word_t    pid;
+	selext_t  addr;             /* mem paragraph address in PM (=0 in real mode kernel) */
+    /* following variable sized member must be last, or requires meminfo re-compilation */
 	SELEXT_T  size;             /* 16- or 32-bit size in paragraphs */
-#ifdef CONFIG_286_PMODE
-	selext_t  addr;             /* paragraph address of memory (=base in real mode) */
-#endif
 };
 
 typedef struct segment segment_s;
