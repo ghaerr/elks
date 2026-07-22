@@ -16,6 +16,7 @@
 #include <linuxmt/memory.h>
 #include <linuxmt/heap.h>
 #include <linuxmt/sched.h>
+#include <arch/segment.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -36,6 +37,7 @@ unsigned int heap_all;
 unsigned int seg_all;
 unsigned int taskoff;
 int maxtasks;
+int pmode;
 struct task_struct task_table;
 
 int memread(word_t off, word_t seg, void *buf, int size)
@@ -54,6 +56,15 @@ word_t getword(word_t off, word_t seg)
     if (memread(off, seg, &word, sizeof(word)) != sizeof(word))
         return 0;
     return word;
+}
+
+addr_t getlong(word_t off, word_t seg)
+{
+    addr_t addr;
+
+    if (memread(off, seg, &addr, sizeof(addr)) != sizeof(addr))
+        return 0;
+    return addr;
 }
 
 void process_name(unsigned int off, unsigned int seg)
@@ -100,13 +111,24 @@ static char *segtype[] =
 void display_seg(word_t mem)
 {
     seg_t segbase = getword(mem + offsetof(segment_s, base), ds);
-    segext_t segsize = getword(mem + offsetof(segment_s, size), ds);
+    selext_t segsize = getword(mem + offsetof(segment_s, size), ds);
     word_t segflags = getword(mem + offsetof(segment_s, flags), ds) & SEG_FLAG_TYPE;
     byte_t ref_count = getword(mem + offsetof(segment_s, ref_count), ds);
     struct task_struct *t;
+    addr_t addr;
+    unsigned int segsize_hi;
 
-    printf("   %04x   %s %7ld %4d  ",
-        segbase, segtype[segflags], (long)segsize << 4, ref_count);
+    if (pmode) {
+        addr = getlong(mem + offsetof(segment_s, addr), ds) << 4;
+
+        /* handle variable-sized 'size' field in protected mode */
+        segsize_hi = getword(mem + offsetof(segment_s, size)+2, ds);
+        segsize += (unsigned long)segsize_hi <<  16;
+    } else
+        addr = (unsigned long)segbase << 4;
+
+    printf("   %06lx   %04x   %s %8lu %4d  ",
+        addr, segbase, segtype[segflags], segsize << 4, ref_count);
     if (segflags == SEG_FLAG_CSEG || segflags == SEG_FLAG_DSEG) {
         if ((t = find_process(mem)) != NULL) {
             process_name(t->t_begstack, t->t_regs.ss);
@@ -119,16 +141,19 @@ void display_seg(word_t mem)
 void dump_segs(void)
 {
     word_t n, mem, arena = 2;
-    seg_t segbase, oldbase = 0;
+    addr_t addr, oldaddr = 0;       /* paragraph addresses */
 
-    printf("    SEG   TYPE    SIZE  CNT  NAME\n");
+    printf("    ADDR    SEG   TYPE      SIZE  CNT  NAME\n");
     n = getword (seg_all + offsetof(list_s, next), ds);
     while (n != seg_all) {
         mem = n - offsetof(segment_s, all);
-        segbase = getword(mem + offsetof(segment_s, base), ds);
-        if (segbase < oldbase)
+        if (pmode)
+             addr = getlong(mem + offsetof(segment_s, addr), ds);
+        else
+            addr = getword(mem + offsetof(segment_s, base), ds);
+        if (addr < oldaddr || ((addr & 0x000F0000) && !(oldaddr & 0x000F0000)))
             printf("[Arena %d]\n", arena++);
-        oldbase = segbase;
+        oldaddr = addr;
         display_seg(mem);
         printf("\n");
 
@@ -145,8 +170,8 @@ void dump_heap(void)
         { "free", "MEM ", "DRVR", "TTY ", "TASK", "BUFH", "PIPE", "INOD", "FILE", "CACH"};
 
     /* split into two to save floppy space; linker will combine 2nd with above printf */
-    printf("  HEAP   TYPE  SIZE");
-    printf("    SEG   TYPE    SIZE  CNT  NAME\n");
+    printf("  HEAP   TYPE   SIZE");
+    printf("    ADDR    SEG   TYPE     SIZE  CNT  NAME\n");
 
     word_t n = getword (heap_all + offsetof(list_s, next), ds);
     while (n != heap_all) {
@@ -188,7 +213,9 @@ void dump_heap(void)
         n = getword(n + offsetof(list_s, next), ds);
     }
 
-    printf("  Heap/free   %5u/%5u Total mem %7ld\n", total_size, total_free, total_segsize);
+    printf("  Heap %d/%3dK used, %dK free\n", (total_size-total_free+523) >> 10,
+        (total_size+512) >> 10,
+        (total_free+512) >> 10);
 }
 
 void usage(void)
@@ -244,6 +271,7 @@ int main(int argc, char **argv)
           perror("meminfo");
           return 1;
     }
+    pmode = (ds == SEL_KDATA);
     if (memread(taskoff, ds, &task_table, sizeof(task_table)) != sizeof(task_table)) {
         perror("taskinfo");
     }
@@ -255,8 +283,9 @@ int main(int argc, char **argv)
         /* note MEM_GETUSAGE amounts are floors, so total may display less by 1k than actual*/
         printf("  Main %d/%dK used, %dK free, ",
             mu.main_used, mu.main_used + mu.main_free, mu.main_free);
-        printf("XMS %d/%dK used, %dK free\n",
+        printf("XMS %d/%dK used, %dK free, ",
             mu.xms_used, mu.xms_used + mu.xms_free, mu.xms_free);
+        printf("Total %dK\n", mu.main_used + mu.main_free + mu.xms_used + mu.xms_free);
     }
 
     return 0;
