@@ -288,6 +288,7 @@ void mm_get_usage (struct mem_usage *mu)
 {
     unsigned int free = 0;
     unsigned int used = 0;
+    unsigned long xmsused = 0;
 
     list_s * n = _seg_all.next;
 
@@ -297,11 +298,15 @@ void mm_get_usage (struct mem_usage *mu)
         /*if (used) printk ("seg %X: size %u used %u count %u\n",
             BASE(seg), seg->size, seg->flags, seg->ref_count);*/
 
-        if (seg->flags == SEG_FLAG_FREE)
-            free += seg->size;
-        else
-            used += seg->size;
-
+        if (seg->addr & 0xFFFF0000) {
+            if (seg->flags != SEG_FLAG_FREE)
+                xmsused += seg->size;
+        } else {
+            if (seg->flags == SEG_FLAG_FREE)
+                free += seg->size;
+            else
+                used += seg->size;
+        }
         n = seg->all.next;
     }
 
@@ -311,7 +316,7 @@ void mm_get_usage (struct mem_usage *mu)
     mu->main_free = ((free + 31) >> 6);
     mu->main_used = ((used + 31) >> 6);
 #ifdef CONFIG_FS_XMS
-    mu->xms_used = xms_alloc_ptr - KBYTES(XMS_START_ADDR);
+    mu->xms_used = xms_alloc_ptr - KBYTES(XMS_START_ADDR) + xmsused;
     mu->xms_free = SETUP_XMS_KBYTES - mu->xms_used;
 #else
     mu->xms_free = 0;

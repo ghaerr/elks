@@ -213,7 +213,9 @@ void dump_heap(void)
         n = getword(n + offsetof(list_s, next), ds);
     }
 
-    printf("  Heap/free   %5u/%5u Total mem %7ld\n", total_size, total_free, total_segsize);
+    printf("  Heap %d/%3dK used, %dK free\n", (total_size-total_free+523) >> 10,
+        (total_size+512) >> 10,
+        (total_free+512) >> 10);
 }
 
 void usage(void)
@@ -281,8 +283,9 @@ int main(int argc, char **argv)
         /* note MEM_GETUSAGE amounts are floors, so total may display less by 1k than actual*/
         printf("  Main %d/%dK used, %dK free, ",
             mu.main_used, mu.main_used + mu.main_free, mu.main_free);
-        printf("XMS %d/%dK used, %dK free\n",
+        printf("XMS %d/%dK used, %dK free, ",
             mu.xms_used, mu.xms_used + mu.xms_free, mu.xms_free);
+        printf("Total %dK\n", mu.main_used + mu.main_free + mu.xms_used + mu.xms_free);
     }
 
     return 0;
