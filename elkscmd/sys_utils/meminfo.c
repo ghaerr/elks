@@ -141,7 +141,7 @@ void display_seg(word_t mem)
 void dump_segs(void)
 {
     word_t n, mem, arena = 2;
-    addr_t addr, oldaddr = 0;
+    addr_t addr, oldaddr = 0;       /* paragraph addresses */
 
     printf("    ADDR    SEG   TYPE      SIZE  CNT  NAME\n");
     n = getword (seg_all + offsetof(list_s, next), ds);
@@ -150,8 +150,8 @@ void dump_segs(void)
         if (pmode)
              addr = getlong(mem + offsetof(segment_s, addr), ds);
         else
-            addr = (unsigned long)getword(mem + offsetof(segment_s, base), ds) << 4;
-        if (addr < oldaddr)
+            addr = getword(mem + offsetof(segment_s, base), ds);
+        if (addr < oldaddr || ((addr & 0x000F0000) && !(oldaddr & 0x000F0000)))
             printf("[Arena %d]\n", arena++);
         oldaddr = addr;
         display_seg(mem);
