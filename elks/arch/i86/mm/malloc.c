@@ -176,7 +176,7 @@ segment_s * seg_alloc_fixed (seg_t base, segext_t size, word_t type)
 
 #endif
 
-// Allocate segment, limited to 64K in PM for now
+// Allocate segment
 
 segment_s * seg_alloc (segext_t size, word_t type)
 {
@@ -386,7 +386,8 @@ int sys_sbrk(int increment, segoff_t *pbrk)
 }
 
 // allocate memory for process, return segment
-int sys_fmemalloc(int paras, unsigned short *pseg)
+// size > 64K require PM-incompatible segment arithmetic or 32-bit instruction prefix
+int sys_fmemalloc(unsigned int paras, unsigned short *pseg)
 {
     segment_s *seg;
     int err;
@@ -396,7 +397,11 @@ int sys_fmemalloc(int paras, unsigned short *pseg)
         return err;
     if (paras == 0)
         return -EINVAL;
-    seg = seg_alloc((segext_t)paras, SEG_FLAG_FDAT);
+#ifdef CONFIG_286_PMODE
+    if (paras > 0x1000)
+        printk("fmemalloc: warning size %uK > 64K\n", paras >> 6);
+#endif
+    seg = seg_alloc(paras, SEG_FLAG_FDAT);
     if (!seg) {
         debug_brk("(%P)FMEMALLOC %ld FAIL\n", (unsigned long)paras << 4);
         return -ENOMEM;
