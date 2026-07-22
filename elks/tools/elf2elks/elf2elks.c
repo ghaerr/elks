@@ -1024,6 +1024,19 @@ main(int argc, char **argv)
   output_scns_stuff ();
   output_relocs ();
   output_symtab ();
+  /*
+   * Release the input file before end_output() renames the temp over it.
+   * elf2elks converts in place (input file == output file), and libelf reads
+   * sections lazily, so the input stays open (and may be mmap'd) all through
+   * output generation.  On Linux renaming over an open file is fine, but on a
+   * Windows-backed share (VirtualBox vboxsf, WSL drvfs) the open handle makes
+   * rename() fail with EPERM.  elf_end() drops libelf's hold (unmaps if mmap'd);
+   * close() drops the fd.  Guard the globals so error_exit() stays idempotent.
+   */
+  elf_end (elf);
+  elf = NULL;
+  close (ifd);
+  ifd = -1;
   end_output ();
   return 0;
 }
