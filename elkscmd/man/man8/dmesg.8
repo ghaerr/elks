@@ -22,8 +22,8 @@ The ring buffer is enabled and sized by the
 parameter in
 .BR /bootopts .
 For example,
-.B dmesg=4096
-allocates a 4096-byte buffer.
+.B dmesg=4
+allocates a 4K buffer (4096 bytes).
 If
 .B dmesg=
 is not specified, the ring buffer is not created and
@@ -44,11 +44,11 @@ Messages were read successfully, or the ring buffer is not configured.
 .SH FILES
 .TP
 .B /dev/kmem
-Memory device used to read the ring buffer via ioctls.
+Memory device used to read the ring buffer.
 .TP
 .B /bootopts
 Boot options file; the
 .B dmesg=
-parameter controls the buffer size.
+parameter controls the buffer size in K.
 .SH "SEE ALSO"
 .BR syslog (8).
