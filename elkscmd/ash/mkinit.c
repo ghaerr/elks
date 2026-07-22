@@ -182,9 +182,7 @@ int main(int argc, char **argv)
 		readfile(*ap);
 	output();
 	if (file_changed()) {
-		unlink(OUTFILE);
-		link(OUTTEMP, OUTFILE);
-		unlink(OUTTEMP);
+		rename(OUTTEMP, OUTFILE);
 	} else {
 		unlink(OUTTEMP);
 		if (touch(OUTOBJ))
