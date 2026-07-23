@@ -12,6 +12,14 @@
 #include "deveth.h"
 #include "timer.h"
 
+#define DEBUG       0       /* =1 for dhcp status debug messages */
+
+#if DEBUG
+#define debug       printf
+#else
+#define debug(...)
+#endif
+
 static int dhcp_state = DHCP_STATE_INIT;
 static timeq_t dhcp_retry_time;
 static int dhcp_retry_count;
@@ -204,7 +212,7 @@ void dhcp_init(void)
     dhcp_send_discover();
     dhcp_set_retry();
 
-    printf("dhcp: sending DISCOVER\n");
+    debug("dhcp: sending DISCOVER\n");
 }
 
 void dhcp_timer(void)
@@ -218,7 +226,7 @@ void dhcp_timer(void)
     if (TIME_GEQ(Now, dhcp_retry_time)) {
 	dhcp_retry_count++;
 	if (dhcp_retry_count > DHCP_MAX_RETRIES) {
-	    printf("dhcp: timeout, restarting\n");
+	    debug("dhcp: timeout, restarting\n");
 	    dhcp_state = DHCP_STATE_INIT;
 	    dhcp_retry_count = 0;
 	    dhcp_start_time = Now;
@@ -229,11 +237,11 @@ void dhcp_timer(void)
 	}
 	switch (dhcp_state) {
 	case DHCP_STATE_DISCOVER:
-	    printf("dhcp: retry DISCOVER\n");
+	    debug("dhcp: retry DISCOVER\n");
 	    dhcp_send_discover();
 	    break;
 	case DHCP_STATE_REQUESTING:
-	    printf("dhcp: retry REQUEST\n");
+	    debug("dhcp: retry REQUEST\n");
 	    dhcp_send_request();
 	    break;
 	}
@@ -282,14 +290,14 @@ void dhcp_input(struct iphdr_s *iph, uint16_t src_port, unsigned char *data, int
 	if (msg_type == DHCP_OFFER) {
 	    dhcp_yiaddr = msg->yiaddr;
 	    dhcp_parse_options_full(opts, optlen);
-	    printf("dhcp: received OFFER from ");
-	    printf("%s", in_ntoa(iph->saddr));
-	    printf(", ip %s\n", in_ntoa(dhcp_yiaddr));
+	    debug("dhcp: received OFFER from ");
+	    debug("%s", in_ntoa(iph->saddr));
+	    debug(", ip %s\n", in_ntoa(dhcp_yiaddr));
 	    dhcp_state = DHCP_STATE_REQUESTING;
 	    dhcp_retry_count = 0;
 	    dhcp_send_request();
 	    dhcp_set_retry();
-	    printf("dhcp: sending REQUEST\n");
+	    debug("dhcp: sending REQUEST\n");
 	}
 	break;
 
@@ -299,11 +307,9 @@ void dhcp_input(struct iphdr_s *iph, uint16_t src_port, unsigned char *data, int
 	    dhcp_parse_options_full(opts, optlen);
 	    if (dhcp_server_ip == 0)
 		dhcp_server_ip = iph->saddr;
-	    printf("dhcp: received ACK, ip ");
-	    printf("%s", in_ntoa(msg->yiaddr));
-	    printf(", gateway ");
-	    printf("%s", in_ntoa(dhcp_gateway_val));
-	    printf(", netmask %s\n", in_ntoa(dhcp_netmask_val));
+	    printf("\ndhcp: ip %s, ", in_ntoa(msg->yiaddr));
+	    printf("gateway %s, ", in_ntoa(dhcp_gateway_val));
+	    printf("netmask %s\n", in_ntoa(dhcp_netmask_val));
 	    local_ip = msg->yiaddr;
 	    if (dhcp_netmask_val)
 		netmask_ip = dhcp_netmask_val;
@@ -313,7 +319,7 @@ void dhcp_input(struct iphdr_s *iph, uint16_t src_port, unsigned char *data, int
 	    dhcp_timer_active = 0;		/* stop retry timer */
 	} else if (msg_type == DHCP_NAK) {
 	    /* NAK — start over with a new transaction */
-	    printf("dhcp: received NAK, restarting\n");
+	    debug("dhcp: received NAK, restarting\n");
 	    dhcp_state = DHCP_STATE_INIT;
 	    dhcp_retry_count = 0;
 	    dhcp_start_time = Now;

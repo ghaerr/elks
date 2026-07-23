@@ -320,11 +320,21 @@ static void tcpdev_read(void)
 	}
 	return;
     }
+
+#if 0
+    /* send ACK to restart server should window have been full (unless it's netstat)*/
+    if (cb->remport != NETCONF_PORT || cb->remaddr != 0)
+	if (cb->remport != local_ip) {	/* no ack to localhost either*/
+	    debug_window("[%lu]tcp: extra ACK seq %ld, app read %d bytes\n", get_time(),
+		cb->rcv_nxt - cb->irs, data_avail);
+	    tcp_send_ack(cb);
+	}
+#endif
     /* Fix the 'zero window problem': if the previous ACK advertized a window smaller
      * than the MSS - AND the sender needs that size, the sender will stop until a
-     * larger window is advertized by the receiver (fast) or wait for a timeout, typically 2 or
-     * more seconds and then send a packet using the advertized size. If the window size was zero,
-     * that send-size will be 1 byte.
+     * larger window is advertized by the receiver (fast) or wait for a timeout, typically
+     * 2 or more seconds and then send a packet using the advertized size. If the window
+     * size was 0, that send-size will be 1 byte.
      * (MSS is MTU minus headers, MTU - 40).
      *
      * Skip this for the netconf TCB (remport=NETCONF_PORT, remaddr=0). This is a special
@@ -335,6 +345,11 @@ static void tcpdev_read(void)
      */
     if ((cb->remport != NETCONF_PORT || cb->remaddr != 0) &&
 	CB_BUF_SPACE(cb) - data_avail <= MTU - 40) {
+
+	//printf("Extra ACK, size %d, space %d\n", data_avail, CB_BUF_SPACE(cb));
+	//printf("tcp: extra ACK seq %ld, last win %d this data %d\n",
+		//cb->rcv_nxt - cb->irs, CB_BUF_SPACE(cb)-data_avail, data_avail);
+
 	tcp_send_ack(cb);
     }
 }
