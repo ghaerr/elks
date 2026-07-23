@@ -1,7 +1,6 @@
 /*
  * DHCP client, internal to ktcp.
  */
-#include <sys/types.h>
 #include <stdio.h>
 #include <string.h>
 #include <arpa/inet.h>
@@ -25,11 +24,11 @@ static timeq_t dhcp_retry_time;
 static int dhcp_retry_count;
 static timeq_t dhcp_start_time;
 
-static uint32_t dhcp_xid;
-static uint32_t dhcp_yiaddr;
-static uint32_t dhcp_server_ip;
-static uint32_t dhcp_netmask_val;
-static uint32_t dhcp_gateway_val;
+static __u32 dhcp_xid;
+static __u32 dhcp_yiaddr;
+static __u32 dhcp_server_ip;
+static __u32 dhcp_netmask_val;
+static __u32 dhcp_gateway_val;
 
 static unsigned char dhcp_buf[DHCP_MSG_LEN];
 
@@ -44,12 +43,12 @@ static void dhcp_send_discover(void)
     msg->htype = 1;
     msg->hlen = 6;
     msg->xid = htonl(dhcp_xid);
-    msg->secs = htons((uint16_t)(((Now - dhcp_start_time) * 60) / 1000));
+    msg->secs = htons((__u16)(((Now - dhcp_start_time) * 60) / 1000));
     msg->flags = htons(0x8000);
     memcpy(msg->chaddr, eth_local_addr, 6);
 
     opts = (unsigned char *)(msg + 1);
-    *(uint32_t *)opts = htonl(DHCP_MAGIC_COOKIE);
+    *(__u32 *)opts = htonl(DHCP_MAGIC_COOKIE);
     opts += 4;
 
     *opts++ = DHCP_OPT_MSG_TYPE;
@@ -80,12 +79,12 @@ static void dhcp_send_request(void)
     msg->htype = 1;
     msg->hlen = 6;
     msg->xid = htonl(dhcp_xid);
-    msg->secs = htons((uint16_t)(((Now - dhcp_start_time) * 60) / 1000));
+    msg->secs = htons((__u16)(((Now - dhcp_start_time) * 60) / 1000));
     msg->flags = htons(0x8000);
     memcpy(msg->chaddr, eth_local_addr, 6);
 
     opts = (unsigned char *)(msg + 1);
-    *(uint32_t *)opts = htonl(DHCP_MAGIC_COOKIE);
+    *(__u32 *)opts = htonl(DHCP_MAGIC_COOKIE);
     opts += 4;
 
     *opts++ = DHCP_OPT_MSG_TYPE;
@@ -94,12 +93,12 @@ static void dhcp_send_request(void)
 
     *opts++ = DHCP_OPT_REQ_IP;
     *opts++ = 4;
-    *(uint32_t *)opts = dhcp_yiaddr;
+    *(__u32 *)opts = dhcp_yiaddr;
     opts += 4;
 
     *opts++ = DHCP_OPT_SERVER_ID;
     *opts++ = 4;
-    *(uint32_t *)opts = dhcp_server_ip;
+    *(__u32 *)opts = dhcp_server_ip;
     opts += 4;
 
     *opts++ = DHCP_OPT_END;
@@ -203,8 +202,10 @@ void dhcp_init(void)
     dhcp_retry_count = 0;
     dhcp_start_time = Now;
 
-    dhcp_xid = ((uint32_t)eth_local_addr[0] << 24) | ((uint32_t)eth_local_addr[1] << 16) |
-               (eth_local_addr[2] << 8)  | eth_local_addr[3];
+    dhcp_xid = ((unsigned long)eth_local_addr[0] << 24) |
+	       ((unsigned long)eth_local_addr[1] << 16) |
+                              (eth_local_addr[2] << 8)  |
+                               eth_local_addr[3];
     dhcp_xid ^= (Now & 0xFF) << 8;
 
     udp_register(DHCP_CLIENT_PORT, dhcp_input);
@@ -254,7 +255,7 @@ void dhcp_timer(void)
  * Handles OFFER, ACK, and NAK replies from the DHCP server.
  * Registered in dhcp_init() via udp_register().
  */
-void dhcp_input(struct iphdr_s *iph, uint16_t src_port, unsigned char *data, int len)
+void dhcp_input(struct iphdr_s *iph, __u16 src_port, unsigned char *data, int len)
 {
     struct dhcp_message_s *msg = (struct dhcp_message_s *)data;
     unsigned char *opts;
@@ -275,7 +276,7 @@ void dhcp_input(struct iphdr_s *iph, uint16_t src_port, unsigned char *data, int
 
     if (optlen < 4)
 	return;
-    if (*(uint32_t *)opts != htonl(DHCP_MAGIC_COOKIE))	/* DHCP option marker */
+    if (*(__u32 *)opts != htonl(DHCP_MAGIC_COOKIE))	/* DHCP option marker */
 	return;
     opts += 4;
     optlen -= 4;
