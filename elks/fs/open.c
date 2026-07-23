@@ -98,24 +98,6 @@ int sys_chmod(char *filename, mode_t mode)
     register struct inode *inodep;
     int error = namei(filename, &inode, 0, 0);
 
-#ifdef USE_NOTIFY_CHANGE
-    struct iattr newattrs;
-    register struct iattr *nap = &newattrs;
-
-    inodep = inode;
-    if (error) return error;
-    if (IS_RDONLY(inodep)) {
-        iput(inodep);
-        return -EROFS;
-    }
-    if (mode == (mode_t) -1)
-        mode = inodep->i_mode;
-    nap->ia_mode = (mode & S_IALLUGO) | (inodep->i_mode & ~S_IALLUGO);
-    nap->ia_valid = ATTR_MODE | ATTR_CTIME;
-    inodep->i_dirt = 1;
-    error = notify_change(inodep, nap);
-    iput(inodep);
-#else
     if (!error) {
         inodep = inode;
         if (IS_RDONLY(inodep)) {
@@ -136,44 +118,8 @@ int sys_chmod(char *filename, mode_t mode)
       echmod:
         iput(inodep);
     }
-#endif
     return error;
 }
-
-#ifdef USE_NOTIFY_CHANGE
-static int do_chown(register struct inode *inode, uid_t user, gid_t group)
-{
-    struct iattr newattrs;
-    register struct iattr *nap = &newattrs;
-
-    if (IS_RDONLY(inode)) return -EROFS;
-    if (user == (uid_t) - 1) user = inode->i_uid;
-    if (group == (gid_t) - 1) group = inode->i_gid;
-    nap->ia_mode = inode->i_mode;
-    nap->ia_uid = user;
-    nap->ia_gid = group;
-    nap->ia_valid = ATTR_UID | ATTR_GID | ATTR_CTIME;
-
-    /*
-     * If the owner has been changed, remove the setuid bit
-     */
-    if (user != inode->i_uid && (inode->i_mode & S_ISUID)) {
-        nap->ia_mode &= ~S_ISUID;
-        nap->ia_valid |= ATTR_MODE;
-    }
-
-    /*
-     * If the group has been changed, remove the setgid bit
-     */
-    if (group != inode->i_gid && (inode->i_mode & S_ISGID)) {
-        nap->ia_mode &= ~S_ISGID;
-        nap->ia_valid |= ATTR_MODE;
-    }
-
-    inode->i_dirt = 1;
-    return notify_change(inode, nap);
-}
-#endif
 
 static int FARPROC do_chown(register struct inode *inode, uid_t user, gid_t group)
 {

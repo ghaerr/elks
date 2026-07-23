@@ -318,47 +318,6 @@ struct file_system_type {
 #define ASYNCIO_REENTRANT     static
 #endif
 
-#if USE_NOTIFY_CHANGE
-/*
- * Attribute flags.  These should be or-ed together to figure out what
- * has been changed!
- */
-
-#define ATTR_MODE       1
-#define ATTR_UID        2
-#define ATTR_GID        4
-#define ATTR_SIZE       8
-#define ATTR_ATIME      16
-#define ATTR_MTIME      32
-#define ATTR_CTIME      64
-#define ATTR_ATIME_SET  128
-#define ATTR_MTIME_SET  256
-#define ATTR_FORCE      512
-
-/*
- * This is the Inode Attributes structure, used for notify_change(). It uses
- * the above definitions as flags, to know which values have changed. Also in
- * this manner, a Filesystem can look at only the values it cares about.
- *
- * Basically, these are the attributes that the VFS layer can request to
- * change from the FS layer.
- *
- * Derek Atkins <warlord@MIT.EDU> 94-10-20
- */
-struct iattr {
-    unsigned int                ia_valid;
-    umode_t                     ia_mode;
-    uid_t                       ia_uid;
-    gid_t                       ia_gid;
-    off_t                       ia_size;
-    time_t                      ia_atime;
-    time_t                      ia_mtime;
-    time_t                      ia_ctime;
-};
-
-extern int notify_change(struct inode *,struct iattr *);
-#endif
-
 extern int sys_open(const char *,int,mode_t);
 extern int sys_close(unsigned int);     /* yes, it's really unsigned */
 extern int sys_access(const char *, mode_t);

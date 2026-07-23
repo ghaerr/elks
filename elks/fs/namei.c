@@ -354,19 +354,7 @@ int open_namei(const char *pathname, int flag, mode_t mode,
     }
     if (!error) {
         if (flag & O_TRUNC) {
-
-#ifdef USE_NOTIFY_CHANGE
-            struct iattr newattrs;
-            newattrs.ia_size = 0;
-            newattrs.ia_valid = ATTR_SIZE;
-            if ((error = notify_change(inode, &newattrs))) {
-                iput(inode);
-                return error;
-            }
-#else
             inode->i_size = 0L;
-#endif
-
             down(&inode->i_sem);
             if ((iop = inode->i_op) && iop->truncate) iop->truncate(inode);
             up(&inode->i_sem);
