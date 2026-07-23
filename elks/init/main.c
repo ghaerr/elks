@@ -116,11 +116,8 @@ void start_kernel(void)
     clr_irq();                      /* we're running on the kernel interrupt stack! */
 
 #ifdef CONFIG_286_PMODE
-    /*
-     * We must enter protected mode before calling far_start_kernel as setup.S
-     * relocated all .fartext CS segments to SEL_KFTEXT selectors.
-     */
-    gdt_init();
+    pm_early_init();                /* setup CS/DS/.fartext selectors, enter PM */
+    pm_init();                      /* discardable remainder of PM initialization */
 
     xms_bootopts = XMS_PMODE;       /* default to XMS on unless xms=off in /bootopts */
 #endif
