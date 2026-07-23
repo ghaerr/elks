@@ -128,4 +128,16 @@
 
 #endif /* __ia16__ */
 
+#ifdef __WATCOMC__
+
+unsigned char inb(int port);
+#pragma aux inb parm[dx] =              \
+    "in al,dx";
+
+void outb(unsigned int value, int port);
+#pragma aux outb parm [ax] [dx] =         \
+    "out dx,al";
+
+#endif
+
 #endif /* !__ARCH_8086_IO_H*/
