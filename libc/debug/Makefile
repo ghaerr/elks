@@ -5,7 +5,10 @@ LIB ?= out.a
 
 include $(TOPDIR)/libc/$(COMPILER).inc
 
-OBJS = \
+OBJS = prectimer.o
+
+ifeq "$(COMPILER)" "ia16"
+OBJS += \
 	instrument.o \
 	readprologue.o \
 	syms.o \
@@ -15,6 +18,7 @@ OBJS = \
 	# end of list
 
 #OBJS += rdtsc.o
+endif
 
 all: $(LIB)
 
