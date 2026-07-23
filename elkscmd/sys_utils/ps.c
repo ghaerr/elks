@@ -17,7 +17,6 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/mem.h>
 #include <linuxmt/memory.h>
-#include <linuxmt/major.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/fixedpt.h>
 #include <arch/irq.h>
@@ -236,12 +235,12 @@ int main(int argc, char **argv)
         /* CSEG*/
         cseg = (word_t)task_table.mm[SEG_CODE];
         if (f_listall) printf(" %4x ",
-            cseg? getword(fd, (word_t)cseg+offsetof(struct segment, base), ds): 0);
+            cseg? getword(fd, (word_t)cseg+offsetof(segment_s, base), ds): 0);
 
         /* DSEG*/
         dseg = (word_t)task_table.mm[SEG_DATA];
         if (f_listall) printf("%4x",
-            dseg? getword(fd, (word_t)dseg+offsetof(struct segment, base), ds): 0);
+            dseg? getword(fd, (word_t)dseg+offsetof(segment_s, base), ds): 0);
 
         if (dseg) {
             /* heap*/
@@ -254,8 +253,8 @@ int main(int argc, char **argv)
             //printf("%5u ", (word_t)(task_table.t_begstack - task_table.t_regs.sp));
 
             /* size*/
-            segext_t size = getword(fd, (word_t)cseg+offsetof(struct segment, size), ds)
-                            + getword(fd, (word_t)dseg+offsetof(struct segment, size), ds);
+            segext_t size = getword(fd, (word_t)cseg+offsetof(segment_s, size), ds)
+                            + getword(fd, (word_t)dseg+offsetof(segment_s, size), ds);
             printf("%6ld ", (long)size << 4);
 
             process_name(fd, task_table.t_begstack, task_table.t_regs.ss);

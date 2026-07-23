@@ -400,7 +400,7 @@ int fs_may_remount_ro(kdev_t dev)
     do {
         inode = file->f_inode;
         if (!file->f_count || !inode || inode->i_dev != dev) continue;
-        if (S_ISREG(inode->i_mode) && (file->f_mode & 2)) {
+        if (S_ISREG(inode->i_mode) && (file->f_mode & FMODE_WRITE)) {
                 debug_sup("REMOUNT RO fail: open file\n");
                 return 0;
         }

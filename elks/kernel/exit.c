@@ -4,6 +4,7 @@
  * Handle sys_wait4() and sys_exit().
  */
 
+#include <linuxmt/config.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/timer.h>
 #include <linuxmt/errno.h>
