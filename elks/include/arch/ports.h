@@ -139,9 +139,12 @@
 #define EL3_FLAGS       0x80
 
 /* AMD PCnet/LANCE, pcnet.c: port 0 = autodetect via PCI on 386+,
- * for ISA LANCE boards set port/irq with le0= in /bootopts */
-#define LANCE_PORT      0
-#define LANCE_IRQ       9
+ * for ISA LANCE boards set port/irq with le0= in /bootopts.
+ * Default matches the fixed VirtualBox Am79C960 (PCnet-ISA) resources
+ * (I/O 0x300 IRQ 3), also the classic NE2100/NE1500 factory default;
+ * a nonzero port skips the 32-bit PCI config probe (286-safe). */
+#define LANCE_PORT      0x300
+#define LANCE_IRQ       3
 #define LANCE_FLAGS     0x80
 
 /* bioshd.c*/
