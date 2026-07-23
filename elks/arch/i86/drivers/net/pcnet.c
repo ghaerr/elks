@@ -1,16 +1,27 @@
 /*
  * AMD PCnet/LANCE Ethernet driver for ELKS
  *
- * Supports the PCnet-PCI family (Am79C970/970A/973, as emulated by
- * VirtualBox and QEMU '-device pcnet') and, via /bootopts, ISA LANCE
- * boards (Am7990/79C960, NE1500/NE2100 class) which share the same
- * programming model.
+ * Supports ISA LANCE boards (Am7990/79C960, NE1500/NE2100 class) and
+ * the register-compatible PCnet-PCI family (Am79C970/970A/973).
+ *
+ * Configuration is static: the default is I/O 0x300 IRQ 3 (LANCE_PORT/
+ * LANCE_IRQ in arch/ports.h) - the fixed resources of the VirtualBox
+ * Am79C960 and the NE2100 factory default.  Boards at other addresses
+ * are set with le0=irq,port in /bootopts.  There is no PCI config-space
+ * probe: a PCnet-PCI card needs le0= set to the BIOS-assigned BAR values
+ * AND firmware that enables bus mastering for the card.  QEMU's SeaBIOS
+ * does not (verified: '-device pcnet' with le0=11,0xc000 attaches and
+ * reads the MAC, but DMA is dead - no packet ever hits the wire), so on
+ * QEMU prefer ne2k; this driver targets the VirtualBox/ISA case.
+ * QEMU workaround (verified): boot with '-boot order=na' - the bundled
+ * iPXE option ROM opens the NIC first, which sets the bus-master bit
+ * and leaves it set; after PXE times out and the floppy boots, le0
+ * works normally (adds a few seconds per boot).
  *
  * The chip is driven in 16-bit LANCE mode (SWSTYLE 0): all register
  * access through two 16-bit I/O ports (RAP/RDP), descriptor rings and
  * buffers in main memory addressed with 24-bit physical addresses -
- * fully 8086-compatible.  The only 32-bit instructions are in the
- * optional PCI config probe, which is skipped below a 386.
+ * fully 8086-compatible, no 32-bit instructions anywhere.
  *
  * July 2026 - written for ELKS using the wd/el3 driver framework.
  */
@@ -38,7 +49,7 @@
 
 #include "eth-msgs.h"
 
-/* runtime configuration set automatically by PCI, unless le0= set in /bootopts */
+/* runtime configuration: ports.h defaults, overridden by le0= in /bootopts */
 #define net_irq     (netif_parms[ETH_LANCE].irq)
 #define net_port    (netif_parms[ETH_LANCE].port)
 #define net_flags   (netif_parms[ETH_LANCE].flags)
@@ -135,41 +146,6 @@ static void NICPROC wbcr(word_t idx, word_t val)
 {
     outw(idx, net_port + PCNET_RAP);
     outw(val, net_port + PCNET_BDP);
-}
-
-/* ------------------------------------------------------------------ */
-/* Automatic PCI configuration space access requires 32-bit port I/O
- * using functions pci_cfg_read/pci_cfg/write in pcnet-asm.S.
- * devfn_reg is (dev << 11) | (func << 8) | reg for bus 0.
- */
-#define PCI_VENDOR_AMD  0x1022
-#define PCI_DEV_PCNET   0x2000
-
-/* scan PCI bus 0 for the PCnet; fill port/irq from BAR0 and INT_LINE */
-static int INITPROC pcnet_pci_find(void)
-{
-    unsigned int dev;
-
-    if (arch_cpu < CPU_80386)           /* 32-bit port I/O unavailable */
-        return 0;
-    for (dev = 0; dev < 32; dev++) {
-        unsigned int base = dev << 11;  /* function 0 */
-        unsigned long id = pci_cfg_read(base + 0x00);
-
-        if ((word_t)id != PCI_VENDOR_AMD || (word_t)(id >> 16) != PCI_DEV_PCNET)
-            continue;
-        unsigned long bar0 = pci_cfg_read(base + 0x10);
-        if (!((word_t)bar0 & 1))         /* must be an I/O BAR */
-            continue;
-        net_port = (word_t)bar0 & 0xFFFC;
-        net_irq  = (word_t)pci_cfg_read(base + 0x3C) & 0xFF;   /* INT_LINE */
-        /* enable I/O space + bus master in the command register */
-        pci_cfg_write(base + 0x04, (word_t)pci_cfg_read(base + 0x04) | 0x0005);
-        printk("PCI dev %u ", dev);
-        return 1;
-    }
-    printk("%s PCI not found\n", dev_name);
-    return -1;
 }
 
 /* ------------------------------------------------------------------ */
@@ -561,8 +537,10 @@ void INITPROC pcnet_drv_init(void)
     byte_t *mac = netif_stat.mac_addr;
 
     printk("eth: ");
-    if (!net_port && pcnet_pci_find() < 0)
+    if (!net_port) {
+        printk("%s no I/O port set, use le0= in /bootopts\n", dev_name);
         return;
+    }
     printk("%s at 0x%x, irq %d", dev_name, net_port, net_irq);
     if (pcnet_probe()) {
         printk(" not found\n");
