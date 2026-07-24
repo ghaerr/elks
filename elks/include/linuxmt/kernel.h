@@ -8,8 +8,6 @@
  * 'kernel.h' contains some often-used function prototypes etc
  */
 
-#ifdef __KERNEL__
-
 #define INT_MAX		((int)(~0U>>1))
 #define UINT_MAX	(~0U)
 #define LONG_MAX	((long)(~0UL>>1))
@@ -31,6 +29,11 @@ extern unsigned char arch_cpu;
 extern char running_qemu;
 extern dev_t dev_console;
 extern int debug_level;
+
+extern seg_t kernel_cs, kernel_ds, kernel_ftext;
+extern short *_endtext, *_endftext, *_enddata, *_endbss;
+extern short endistack[], istack[];
+extern unsigned int heapsize;
 
 extern void do_exit(int) noreturn;
 
@@ -59,7 +62,5 @@ extern int sys_execve(const char *,char *,size_t);
  */
 
 #define suser() (current->euid == 0)
-
-#endif
 
 #endif

@@ -20,10 +20,10 @@
 #include <linuxmt/major.h>
 #include <linuxmt/fs.h>
 #include <linuxmt/kernel.h>
+#include <linuxmt/segment.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/debug.h>
-#include <linuxmt/memory.h>
 #include "arch/io.h"
 #include "ssd.h"
 #include "spi.h"

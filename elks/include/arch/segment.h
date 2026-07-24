@@ -70,13 +70,4 @@
 #define XMSADDR(seg, offs) ((unsigned long)((((unsigned long)(seg)) << 0) + (unsigned)(offs)))
 #endif
 
-#ifndef __ASSEMBLER__
-#include <linuxmt/types.h>
-
-extern seg_t kernel_cs, kernel_ds, kernel_ftext;
-extern short *_endtext, *_endftext, *_enddata, *_endbss;
-extern short endistack[], istack[];
-extern unsigned int heapsize;
-#endif
-
 #endif

@@ -16,7 +16,7 @@
 #include <autoconf.h>           /* for CONFIG_ options */
 #include <linuxmt/mm.h>
 #include <linuxmt/mem.h>
-#include <linuxmt/memory.h>
+#include <linuxmt/segment.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/fixedpt.h>
 #include <arch/irq.h>

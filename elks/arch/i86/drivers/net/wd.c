@@ -55,7 +55,7 @@
 #include <arch/irq.h>
 #include <arch/ports.h>
 #include <arch/segment.h>
-#include <linuxmt/memory.h>
+#include <linuxmt/segment.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/major.h>
 #include <linuxmt/ioctl.h>

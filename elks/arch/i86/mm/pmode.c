@@ -5,6 +5,7 @@
 #include <linuxmt/config.h>
 #include <linuxmt/types.h>
 #include <linuxmt/kernel.h>
+#include <linuxmt/segment.h>
 #include <linuxmt/memory.h>
 #include <linuxmt/limits.h>
 #include <linuxmt/init.h>

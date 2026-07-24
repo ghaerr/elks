@@ -14,7 +14,7 @@
 #include <arch/ports.h>
 #else
 #include <linuxmt/mem.h>
-#include <linuxmt/memory.h>
+#include <linuxmt/segment.h>
 #include <sys/linksym.h>
 #include <sys/ioctl.h>
 #include <stdio.h>
@@ -31,10 +31,10 @@
 #endif
 
 #include <linuxmt/prectimer.h>
+#include <linuxmt/segment.h>
 #include <arch/param.h>
 #include <arch/irq.h>
 #include <arch/io.h>
-
 
 /*
  * Each ptick corresponds to the elapsed time for a countdown in the 8254 PIT.

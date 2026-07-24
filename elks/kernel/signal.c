@@ -6,6 +6,7 @@
 
 #include <linuxmt/sched.h>
 #include <linuxmt/kernel.h>
+#include <linuxmt/segment.h>
 #include <linuxmt/signal.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/debug.h>

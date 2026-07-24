@@ -13,7 +13,7 @@
 #include <linuxmt/types.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/mem.h>
-#include <linuxmt/memory.h>
+#include <linuxmt/segment.h>
 #include <linuxmt/heap.h>
 #include <linuxmt/sched.h>
 #include <arch/segment.h>

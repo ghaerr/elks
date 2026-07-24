@@ -15,7 +15,6 @@
  * July 2026 - written for ELKS using the wd/el3 driver framework.
  */
 
-#include <linuxmt/memory.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/major.h>
 #include <linuxmt/ioctl.h>
@@ -26,6 +25,7 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/debug.h>
 #include <linuxmt/kernel.h>
+#include <linuxmt/segment.h>
 #include <linuxmt/string.h>
 #include <linuxmt/netstat.h>
 #include <linuxmt/init.h>

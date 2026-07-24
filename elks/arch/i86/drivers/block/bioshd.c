@@ -42,7 +42,7 @@
 #include <linuxmt/fs.h>
 #include <linuxmt/string.h>
 #include <linuxmt/mm.h>
-#include <linuxmt/memory.h>
+#include <linuxmt/segment.h>
 #include <linuxmt/timer.h>
 #include <linuxmt/devnum.h>
 #include <linuxmt/debug.h>

@@ -50,7 +50,7 @@
 #include <linuxmt/ata.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/heap.h>
-#include <linuxmt/memory.h>
+#include <linuxmt/segment.h>
 #include <linuxmt/debug.h>
 #include <linuxmt/prectimer.h>
 #include <arch/io.h>

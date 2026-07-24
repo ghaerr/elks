@@ -79,6 +79,7 @@
 #include <linuxmt/fs.h>
 #include <linuxmt/stat.h>
 #include <linuxmt/kernel.h>
+#include <linuxmt/segment.h>
 #include <linuxmt/timer.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/signal.h>
@@ -1445,9 +1446,11 @@ static void floppy_interrupt(int irq, struct pt_regs *regs)
     handler();
 }
 
+#ifndef CONFIG_286_PMODE    /* PM: IRQ via IDT; don't touch the real-mode IVT at seg 0 */
 /* non-portable, should use int_vector_set and new function get_int_vector */
 #define FLOPPY_VEC      (_MK_FP(0, (FLOPPY_IRQ+8) << 2))
 static __u32 old_floppy_vec;
+#endif
 
 static void DFPROC floppy_deregister(void)
 {

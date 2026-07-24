@@ -20,7 +20,7 @@
 #include <linuxmt/fcntl.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/mm.h>
-#include <linuxmt/memory.h>
+#include <linuxmt/segment.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/debug.h>
 #include <linuxmt/mem.h>

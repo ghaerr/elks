@@ -5,7 +5,7 @@
 #include <linuxmt/types.h>
 #include <linuxmt/fcntl.h>
 #include <linuxmt/ntty.h>
-#include <linuxmt/memory.h>
+#include <linuxmt/segment.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/string.h>
 #include <linuxmt/fs.h>
