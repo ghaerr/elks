@@ -1,12 +1,12 @@
 #include <linuxmt/config.h>
 #include <linuxmt/debug.h>
 #include <linuxmt/kernel.h>
+#include <linuxmt/segment.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/string.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/signal.h>
 #include <linuxmt/types.h>
-#include <linuxmt/memory.h>
 #include <linuxmt/init.h>
 
 #include <arch/segment.h>

@@ -13,6 +13,7 @@
 #include <linuxmt/config.h>
 #include <linuxmt/debug.h>
 #include <linuxmt/mm.h>
+#include <linuxmt/segment.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/string.h>
 #include <linuxmt/errno.h>

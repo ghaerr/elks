@@ -1,8 +1,6 @@
 /*
  * Internal UDP implementation for DHCP. Not accessible through sockets.
  */
-#include <sys/types.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <arpa/inet.h>
@@ -14,7 +12,7 @@
 
 struct udp_sock udp_socks[MAX_UDP_SOCKS];
 
-int udp_register(uint16_t local_port, udp_callback_t cb)
+int udp_register(__u16 local_port, udp_callback_t cb)
 {
     int i;
 
@@ -31,7 +29,7 @@ int udp_register(uint16_t local_port, udp_callback_t cb)
     return 0;
 }
 
-void udp_unregister(uint16_t local_port)
+void udp_unregister(__u16 local_port)
 {
     int i;
 
@@ -43,7 +41,7 @@ void udp_unregister(uint16_t local_port)
     }
 }
 
-void udp_send(ipaddr_t dst, uint16_t dstport, uint16_t srcport,
+void udp_send(ipaddr_t dst, __u16 dstport, __u16 srcport,
 	      unsigned char *data, int datalen, ipaddr_t src)
 {
     unsigned char buf[sizeof(struct udphdr_s) + 576];
@@ -69,8 +67,8 @@ void udp_process(struct iphdr_s *iph, unsigned char *packet)
 {
     struct udphdr_s *udp = (struct udphdr_s *)packet;
     int udplen = ntohs(udp->len);
-    uint16_t dest = ntohs(udp->dest);
-    uint16_t src = ntohs(udp->src);
+    __u16 dest = ntohs(udp->dest);
+    __u16 src = ntohs(udp->src);
     unsigned char *data = packet + sizeof(struct udphdr_s);
     int datalen = udplen - sizeof(struct udphdr_s);
     int i;

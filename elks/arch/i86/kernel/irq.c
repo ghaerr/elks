@@ -18,6 +18,7 @@
 #include <linuxmt/errno.h>
 #include <linuxmt/init.h>
 #include <linuxmt/kernel.h>
+#include <linuxmt/segment.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/timer.h>
 #include <linuxmt/types.h>

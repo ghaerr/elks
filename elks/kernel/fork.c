@@ -1,4 +1,3 @@
-#include <linuxmt/config.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/string.h>

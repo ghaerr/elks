@@ -8,8 +8,8 @@
 #include <linuxmt/genhd.h>
 #include <linuxmt/biosparm.h>
 #include <linuxmt/major.h>
-#include <linuxmt/memory.h>
 #include <linuxmt/kernel.h>
+#include <linuxmt/segment.h>
 #include <linuxmt/kdev_t.h>
 #include <linuxmt/debug.h>
 #include <linuxmt/sched.h>

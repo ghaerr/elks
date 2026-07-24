@@ -4,13 +4,12 @@
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
-#include <linuxmt/debug.h>
-
-#include <linuxmt/types.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/kernel.h>
+#include <linuxmt/segment.h>
 #include <linuxmt/signal.h>
 #include <linuxmt/errno.h>
+#include <linuxmt/debug.h>
 #include <linuxmt/wait.h>
 #include <linuxmt/mm.h>
 

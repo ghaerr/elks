@@ -4,7 +4,6 @@ include watcom.inc
 
 #NOTBUILT = \
 	asm	    \
-	debug	\
 	gcc	    \
 	math	\
 	crt0.S	\
@@ -12,6 +11,7 @@ include watcom.inc
 SUBDIRS =	\
 	watcom	\
 	ctype	\
+	debug	\
 	error	\
 	getent	\
 	malloc	\

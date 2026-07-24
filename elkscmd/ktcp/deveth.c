@@ -19,7 +19,6 @@
 #include <string.h>
 #include <limits.h>
 #include <errno.h>
-#include <linuxmt/limits.h>
 #include "config.h"
 #include "tcp.h"
 #include "ip.h"

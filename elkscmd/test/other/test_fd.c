@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <linuxmt/biosparm.h>
-#include <linuxmt/memory.h>
+#include <linuxmt/segment.h>
 
 struct biosparms bdt;
 

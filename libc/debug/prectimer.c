@@ -8,17 +8,13 @@
  * Use 8254 PIT to measure elapsed time in pticks = 0.8381 usecs.
  */
 
-#include <linuxmt/prectimer.h>
+#ifdef __KERNEL__
+#include <linuxmt/config.h>
 #include <linuxmt/sched.h>
-#include <linuxmt/kernel.h>
-#include <arch/param.h>
 #include <arch/ports.h>
-#include <arch/irq.h>
-#include <arch/io.h>
-
-#ifndef __KERNEL__
+#else
 #include <linuxmt/mem.h>
-#include <linuxmt/memory.h>
+#include <linuxmt/segment.h>
 #include <sys/linksym.h>
 #include <sys/ioctl.h>
 #include <stdio.h>
@@ -33,6 +29,12 @@
 #endif
 
 #endif
+
+#include <linuxmt/prectimer.h>
+#include <linuxmt/segment.h>
+#include <arch/param.h>
+#include <arch/irq.h>
+#include <arch/io.h>
 
 /*
  * Each ptick corresponds to the elapsed time for a countdown in the 8254 PIT.

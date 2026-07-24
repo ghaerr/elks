@@ -9,6 +9,7 @@ endif
 #endif
 
 INCLUDES = -I$(TOPDIR)/libc/include -I$(TOPDIR)/elks/include
+INCLUDES += -I$(TOPDIR)/include
 # Watcom headers now included in libc/include/watcom
 INCLUDES += -I$(TOPDIR)/libc/include/watcom
 # Don't pull in headers from Watcom installation

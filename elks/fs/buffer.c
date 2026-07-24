@@ -3,6 +3,7 @@
 #include <linuxmt/init.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/kernel.h>
+#include <linuxmt/segment.h>
 #include <linuxmt/major.h>
 #include <linuxmt/string.h>
 #include <linuxmt/mm.h>
