@@ -159,12 +159,17 @@ void INITPROC pm_init(void)
     desc_set(MK_SEL(GDT_VIDEO, SEL_GDT, SEL_RPL0), (addr_t)SEG_VIDEO << 4, 32768L,
         DESC_KDATA);
 
-    /* direct floppy DMA track buffer */
+#ifdef SEG_TRACK
+    /* low-memory DMA track buffer (direct floppy) */
     desc_set(MK_SEL(GDT_TRACKBUF, SEL_GDT, SEL_RPL0), SEG_TRACK << 4, TRACKSEGSZ,
         DESC_KDATA);
+#endif
 
-    /* ATA/CF DMA sector buffer */
-    desc_set(MK_SEL(GDT_DMABUF, SEL_GDT, SEL_RPL0), SEG_DMASEG << 4, 512, DESC_KDATA);
+#ifdef SEG_DMASEG
+    /* shared low-memory DMA bounce buffer (ATA/CF) */
+    desc_set(MK_SEL(GDT_DMABUF, SEL_GDT, SEL_RPL0), SEG_DMASEG << 4, DMASEGSZ,
+        DESC_KDATA);
+#endif
 }
 
 /* Setup CS/DS/.fartext selectors, as setup.S already patched the kernel's
