@@ -51,14 +51,11 @@ static void ring_read(int fd, unsigned int seg, struct dmesg_queue *q)
     if (first > avail)
         first = avail;
 
-    //printf("FIRST %d, len %d\n", tail, first);
     ring_display(fd, seg, tail, first);
 
     /* second part: wrap around from start of ring */
-    if (avail > first) {
-        //printf("LAST %d, len %d\n", 0, avail-first);
+    if (avail > first)
         ring_display(fd, seg, 0, avail - first);
-    }
 }
 
 int main(void)
@@ -84,7 +81,6 @@ int main(void)
         return 1;
     }
 
-    //printf("len %d, size %d, head %d\n", q.len, q.size, q.head);
     ring_read(fd, seg, &q);
 
     close(fd);

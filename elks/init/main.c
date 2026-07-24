@@ -813,6 +813,9 @@ void INITPROC dmesg_init(void)
         if (dmesg > 63) dmesg = 63;
         dmesg_seg = memend - (dmesg << 6);
         memend -= (dmesg << 6);
+#ifdef CONFIG_286_PMODE
+        dmesg_seg = desc_alloc((addr_t)dmesg_seg << 4, (addr_t)dmesg << 10, DESC_KDATA);
+#endif
 
         q = _MK_FP(dmesg_seg, 0); 
         q->size = (dmesg << 10) - 3 * sizeof(int);
