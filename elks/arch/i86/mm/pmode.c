@@ -159,13 +159,13 @@ void INITPROC pm_init(void)
     desc_set(MK_SEL(GDT_VIDEO, SEL_GDT, SEL_RPL0), (addr_t)SEG_VIDEO << 4, 32768L,
         DESC_KDATA);
 
-#ifdef SEG_TRACK
+#ifdef TRACKSEGSZ
     /* low-memory DMA track buffer (direct floppy) */
     desc_set(MK_SEL(GDT_TRACKBUF, SEL_GDT, SEL_RPL0), SEG_TRACK << 4, TRACKSEGSZ,
         DESC_KDATA);
 #endif
 
-#ifdef SEG_DMASEG
+#ifdef DMASEGSZ
     /* shared low-memory DMA bounce buffer (ATA/CF) */
     desc_set(MK_SEL(GDT_DMABUF, SEL_GDT, SEL_RPL0), SEG_DMASEG << 4, DMASEGSZ,
         DESC_KDATA);
