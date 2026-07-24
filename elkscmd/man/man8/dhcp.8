@@ -1,10 +1,12 @@
 .TH DHCP 8
 .SH NAME
-dhcp \- DHCP client configuration for ktcp
+dhcp \- DHCP client implementation in ktcp
 .SH SYNOPSIS
 .B ktcp
-.RB [ \-d ]
-.RI [ options ]
+.RI [ -d ]
+.RI [ local_ip ]
+.RI [ gateway ]
+.RI [ netmask ]
 .br
 .SH DESCRIPTION
 .B DHCP
@@ -14,7 +16,9 @@ from a local DHCP server at startup.
 .PP
 DHCP is enabled automatically when
 .B LOCALIP
-is not set in the environment, /bootopts, or passed to ktcp.
+is not set in the environment,
+.B /bootopts ,
+or passed to ktcp.
 To force DHCP even when a local IP is configured, use the
 .B \-d
 flag.
@@ -31,19 +35,18 @@ When
 .B LOCALIP
 is not set, ktcp enables DHCP and negotiates an address.
 .PP
-The network configuration file
-.B /etc/net.cfg
-sets default values for
-.BR localip ,
-.BR gateway ,
+The
+environment variables
+.BR LOCALIP ,
+.BR GATEWAY ,
 and
-.BR netmask .
-These are passed to ktcp by the
-.B net
+.BR NETMASK
+are passed to ktcp by the
+.B /bin/net
 script.
 If
-.B localip
-is empty, DHCP will be used.
+.B LOCALIP
+is not set, DHCP will be used.
 .SH STATE MACHINE
 The client follows the standard DHCP exchange:
 .PP
@@ -83,6 +86,35 @@ Router / default gateway (option 3)
 DNS server (option 6)
 .IP \(bu 2
 Lease time (option 51)
+.SH "UDP IMPLEMENTATION"
+DHCP uses the UDP layer built into ktcp.
+UDP provides a lightweight, connectionless transport on top of IP.
+Unlike TCP, there is no handshake or reliable delivery; packets are sent
+and received directly.
+.SS Sending
+A UDP send constructs an 8-byte header (source port, destination port,
+length, zeroed checksum) and passes the packet to the IP layer.
+The IP layer adds its header and hands the packet to the appropriate
+network driver (Ethernet or SLIP).
+.SS Receiving
+When an incoming IP packet has protocol 0x11 (UDP), the IP layer calls
+.BR udp_process (),
+which looks up the destination port in a table of registered sockets.
+Each registered socket has a callback function; when a matching port is
+found, the callback is invoked with the IP header, source port, and
+payload data.
+If no socket is registered for the destination port, an ICMP
+port-unreachable message is sent back.
+.SS Registration
+A subsystem (like DHCP) registers a port and callback via
+.BR udp_register ()
+before sending any packets.
+This reserves one of the 4 available UDP socket slots
+.RB ( MAX_UDP_SOCKS ).
+The DHCP client registers port 68 and receives all replies in its
+.BR dhcp_input ()
+callback.
+
 .SH FILES
 .TP
 .B /bootopts
@@ -95,10 +127,7 @@ to use a static address, or leave unset for DHCP.
 Network configuration file sourced by
 .BR /bin/net .
 Contains default values for
-.BR localip ,
-.BR gateway ,
-.BR netmask ,
-and link type.
+link type and daemons to auto-launch.
 .TP
 .B /bin/net
 Network startup script that starts ktcp with the configured options.
@@ -126,6 +155,5 @@ NETMASK=255.255.255.0
 Only one DHCP client can run per interface.
 The client uses UDP port 68 and does not renew the lease before expiry.
 .SH "SEE ALSO"
-.BR netconf (8),
 .BR ifconfig (8),
 .BR ktcp (8).
