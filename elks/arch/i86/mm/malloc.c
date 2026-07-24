@@ -332,12 +332,12 @@ static int set_brk(segoff_t brk, int increment)
     segoff_t newbrk = brk + increment;
     segoff_t stacklow;
 
-    /***unsigned int memfree, memused;
-    mm_get_usage(&memfree, &memused);
+    /***static struct mem_usage m;
+    mm_get_usage(&m);
     printk("brk(%P): new %x, edat %x, ebrk %x, free %x sp %x, eseg %x, %d/%dK\n",
         newbrk, current->t_enddata, current->t_endbrk,
         current->t_regs.sp - current->t_endbrk,
-        current->t_regs.sp, current->t_endseg, memfree, memused);***/
+        current->t_regs.sp, current->t_endseg, m.main_free, m.main_used);***/
 
     if ((increment > 0 && newbrk < brk) || (increment < 0 && newbrk > brk)) {
         printk("(%P)SBRK %d FAIL, OUT OF HEAP (address wrap)\n", increment);

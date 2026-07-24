@@ -14,7 +14,7 @@ int verfy_area(void *p, size_t len)
     segoff_t offset;
 
     /* Kernel tasks can always access user process boundaries */
-    if (kernel_ds == current->t_regs.ds)
+    if (KERNEL_DS == current->t_regs.ds)
         return 0;
 
     offset = (segoff_t)((char *)p + len);

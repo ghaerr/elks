@@ -10,12 +10,12 @@ reads the kernel message ring buffer via
 and prints all messages to standard output.
 The ring buffer resides in far memory (carved from top of
 conventional RAM) and contains messages from device drivers,
-the memory manager, the process scheduler, and other
+the memory manager, kernel debug statements, and other
 kernel subsystems.
 .PP
 Typical uses include diagnosing boot-time hardware problems,
-verifying device driver attachment, and checking for kernel errors
-after a system event.
+verifying device driver attachment, or displaying kernel messages
+after they may have scrolled off the screen.
 .PP
 The ring buffer is enabled and sized by the
 .B dmesg=
@@ -29,9 +29,9 @@ If
 is not specified, the ring buffer is not created and
 .B dmesg
 will report that the buffer is not configured.
+The maximum buffer size is 63K.
 .PP
 When the buffer is full, the oldest messages are silently discarded.
-On a busy system,
 .B dmesg
 may not show messages from early boot.
 .SH EXIT STATUS
@@ -50,5 +50,5 @@ Memory device used to read the ring buffer.
 Boot options file; the
 .B dmesg=
 parameter controls the buffer size in K.
-.SH "SEE ALSO"
-.BR syslog (8).
+.SH SEE ALSO
+.BR bootopts (5).
