@@ -10,6 +10,7 @@
 #le0=9,0x340,,0x80
 #comirq=,,7,10
 #umb=0xC000:0x800,0xD000:0x1000
+dmesg=1
 hma=kernel
 #xms=off
 #xms=on
@@ -41,4 +42,3 @@ hma=kernel
 #console=ttyS0,19200 3
 #MOUSE_PORT=/dev/ttyS1
 #DEBUG_PORT=none
-dmesg=2
