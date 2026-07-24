@@ -58,7 +58,7 @@ dev_t dev_console;
 #define DEVCONSOLE  MKDEV(TTY_MAJOR,TTY_MINOR_OFFSET)   /* /dev/tty1*/
 #endif
 static void (*kputc)(dev_t, int) = 0;
-void dmesg_addch(int c);
+static void dmesg_addch(int c);
 
 void set_console(dev_t dev)
 {
@@ -369,8 +369,9 @@ void dprintk(const char *fmt, ...)
     vprintk(fmt, p);
     va_end(p);
 }
+#endif
 
-void dmesg_addch(int c)
+static void dmesg_addch(int c)
 {
     struct dmesg_queue __far *q = _MK_FP(dmesg_seg, 0);
 
@@ -382,5 +383,3 @@ void dmesg_addch(int c)
         q->len++;
     set_irq();
 }
-
-#endif
