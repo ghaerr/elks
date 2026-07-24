@@ -200,7 +200,7 @@ static void save_path(struct inode *inode, const char *pathname)
 {
 #ifdef CHECK_FREECNTS
     if (!inode->i_path[0])
-        fmemcpyb(inode->i_path, kernel_ds, (void *)pathname, current->t_regs.ds,
+        fmemcpyb(inode->i_path, KERNEL_DS, (void *)pathname, current->t_regs.ds,
             sizeof(inode->i_path));
 #endif
 }

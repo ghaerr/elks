@@ -52,7 +52,7 @@ static int minix_follow_link(struct inode *dir,
 	    map_buffer(bh);
 	    pds = &current->t_regs.ds;
 	    ds = *pds;
-	    *pds = kernel_ds;
+	    *pds = KERNEL_DS;
 	    error = open_namei(bh->b_data, flag, mode, res_inode, dir);
 	    *pds = ds;
 	    /* current-> */ link_count--;
