@@ -119,11 +119,8 @@ void start_kernel(void)
     clr_irq();                      /* we're running on the kernel interrupt stack! */
 
 #ifdef CONFIG_286_PMODE
-    /*
-     * We must enter protected mode before calling far_start_kernel as setup.S
-     * relocated all .fartext CS segments to SEL_KFTEXT selectors.
-     */
-    gdt_init();
+    pm_early_init();                /* setup CS/DS/.fartext selectors, enter PM */
+    pm_init();                      /* discardable remainder of PM initialization */
 
     xms_bootopts = XMS_PMODE;       /* default to XMS on unless xms=off in /bootopts */
 #endif
@@ -226,14 +223,12 @@ static void INITPROC early_kernel_init(void)
 
     /* create near heap at end of kernel bss */
     heap_init();                    /* init near memory allocator */
-    heapofs = setup_arch();          /* sets membase and memend globals */
+    heapofs = setup_arch();         /* sets membase and memend globals */
     heap_add((void *)heapofs, heapsize);
-#ifdef CONFIG_286_PMODE
-    /* force 256K base system ram to force immediate usage of XMS allocations */
-    memend = 256 << 6;      // DEBUG REMOVE
-#endif
+    //memend = 256 << 6;            /* force early XMS allocations in PM */
     dmesg_init();
     mm_init(membase, memend);       /* init far/main memory allocator */
+
 #ifdef CONFIG_BOOTOPTS
     struct umbseg *p;
     /* now able to add umb memory segments */
@@ -289,8 +284,8 @@ static void INITPROC kernel_init(void)
     selext_t xms_start = (XMS_START_ADDR >> 4) + (xms_alloc_ptr << 6);
     selext_t xms_end   = (XMS_START_ADDR >> 4) + ((addr_t)SETUP_XMS_KBYTES << 6);
     seg_add(xms_start, xms_end);            /* add remaining XMS memory paragraphs */
-    printk("mem: xms start %08lx end %08lx total %dK\n",
-        xms_start << 4, xms_end << 4, (xms_end - xms_start) >> 6);
+    printk("xms: %luK, start %06lx end %06lx\n",
+        (xms_end - xms_start) >> 6, xms_start << 4, xms_end << 4);
 #endif
 
     seg_t s = init_seg + (((word_t)(void *)__start_fartext_init + 15) >> 4);
@@ -813,6 +808,7 @@ static char * INITPROC option(char *s)
 void INITPROC dmesg_init(void)
 {
     struct dmesg_queue __far *q;
+    seg_t para;
 
     if (dmesg) {
         if (dmesg > 63) dmesg = 63;

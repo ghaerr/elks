@@ -18,6 +18,8 @@ struct dmesg_queue {
     unsigned char    base[1];
 };
 
+#define errmsg(str) write(STDERR_FILENO, str, sizeof(str) - 1)
+
 static int memread(int fd, word_t off, seg_t seg, void *buf, int size)
 {
     if (lseek(fd, _MK_LP(seg, off), SEEK_SET) == (off_t)-1)
@@ -61,24 +63,18 @@ int main(void)
     struct dmesg_queue q;
 
     if ((fd = open("/dev/kmem", O_RDONLY|O_ALT)) < 0) {
-        write(2, "dmesg: cannot open /dev/kmem\n", 29);
+        errmsg("no dev/kmem\n");
         return 1;
     }
 
-    if (ioctl(fd, MEM_GETDMSG, &seg) < 0) {
-        write(2, "dmesg: kernel message log not enabled\n", 38);
-        close(fd);
-        return 1;
-    }
-
-    if (seg == 0) {
-        write(2, "dmesg: not configured (add dmesg= to /bootopts)\n", 49);
+    if (ioctl(fd, MEM_GETDMSG, &seg) < 0 || seg == 0) {
+        errmsg("dmesg not configured\n");
         close(fd);
         return 0;
     }
 
     if (memread(fd, 0, seg, &q, sizeof(q) - 1) != sizeof(q) - 1) {
-        write(2, "dmesg: cannot read header\n", 26);
+        errmsg("dmesg: cannot read header\n");
         close(fd);
         return 1;
     }

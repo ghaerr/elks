@@ -83,7 +83,7 @@ struct dtr {
  */
 #define MAX_IDT_ENTRIES 129     /* 0..NR_IRQS required, needs 129 for 0x80 syscall */
 
-void gdt_init(void);            /* build fixed GDT selector enries */
+void pm_early_init(void);       /* build early CS, DS and .fartext GDT selector enries */
 void pm_fault_vector(void);     /* PM exception handler: display info and halt */
 void pm_exception_handler(int arg); /* display exception info and panic */
 

@@ -7,6 +7,7 @@
 #include <linuxmt/kernel.h>
 #include <linuxmt/memory.h>
 #include <linuxmt/limits.h>
+#include <linuxmt/init.h>
 
 #include <arch/segment.h>
 #include <arch/seg286.h>
@@ -140,56 +141,9 @@ static void idt_init(void)
         idt_gate_set(v, (unsigned)pm_fault_vector + 32*8, SEL_KCODE, GATE_INT286);
 }
 
-/* Called from near text start_kernel. Build the GDT/IDT, then switch to PM.
- * No return to real mode, and BIOS calls aren't allowed after the switch.
- */
-void gdt_init(void)
+/* Called after pm_early_init after kernel CS, DS and .fartext set */
+void INITPROC pm_init(void)
 {
-    addr_t   data_base  = (addr_t)kernel_ds << 4;
-    static struct dtr gdtr, idtr;
-
-    /* enable A20 while still in real mode (calls BIOS) */
-    if (!enable_a20_gate())
-        printk("A20 fail ");
-
-    /* separate descriptors for near text, far text and data.
-     * setup.S has patched the kernel's far-call/far-data segments to these
-     * selectors (SEL_KCODE/SEL_KFTEXT/SEL_KDATA) instead of paragraphs.
-     */
-    desc_set(MK_SEL(GDT_NULL,   SEL_GDT, SEL_RPL0), 0, 0, 0);
-
-    desc_set(MK_SEL(GDT_KCODE,  SEL_GDT, SEL_RPL0),
-        (addr_t)kernel_cs << 4, (unsigned)_endtext, DESC_KCODE);
-
-    /* Full 64K limit: gdt_init runs before setup_arch() computes membase,
-     * so (membase - kernel_ds) << 4 here would be garbage (membase still 0),
-     * truncating the limit and #GP-faulting the first heap access above it
-     * on hardware that enforces limits (VT-x/KVM; QEMU TCG doesn't check).
-     * setup_arch() extends the kernel data segment to a maximum of 64K for
-     * the near heap anyway, matching the KDATA_EXEC alias below.
-     */
-    desc_set(MK_SEL(GDT_KDATA,  SEL_GDT, SEL_RPL0),
-        data_base, 65536L, DESC_KDATA);
-
-    if (kernel_ftext) {
-        desc_set(MK_SEL(GDT_KFTEXT, SEL_GDT, SEL_RPL0),
-            (addr_t)kernel_ftext << 4, (unsigned)_endftext, DESC_KCODE);
-    }
-
-    /* KCODE same base/limit as KDATA but executable+readable. IRQ trampolines are
-     * built in the kernel data segment, and an IDT gate needs an executable selector.
-     */
-    desc_set(MK_SEL(GDT_KDATA_EXEC, SEL_GDT, SEL_RPL0), data_base, 65536L, DESC_KCODE);
-
-    /* IDT replaces real mode IVT interrupt vector table + 8 bytes from 0:0 to 0:0407.
-     * NOTE: With the normal MAX_IDT_ENTRIES of 129 (required for syscall INT 0x80),
-     * the IDT which uses 8 bytes/entry will overwrite the first 1K IVT plus the
-     * first 8 bytes of the BIOS data area which starts at 0x40:0. The first 8
-     * bytes of the BDA contain the port addresses of COM1-COM4, which aren't used
-     * by ELKS setupb/setupw anyways.
-     */
-    desc_set(MK_SEL(GDT_IDT, SEL_GDT, SEL_RPL0), 0, MAX_IDT_ENTRIES * 8, DESC_KDATA);
-
     /* setupb/setupw setup.S data segment */
     desc_set(MK_SEL(GDT_SETUP, SEL_GDT, SEL_RPL0), SEG_INITSEG << 4, 512, DESC_KDATA);
 
@@ -210,6 +164,47 @@ void gdt_init(void)
 
     /* ATA/CF DMA sector buffer */
     desc_set(MK_SEL(GDT_DMABUF, SEL_GDT, SEL_RPL0), SEG_DMASEG << 4, 512, DESC_KDATA);
+}
+
+/* Setup CS/DS/.fartext selectors, as setup.S already patched the kernel's
+ * CS/DS/far-call segments to fixed selectors, then switch to PM.
+ * No return to real mode, and BIOS calls aren't allowed after the switch.
+ */
+void pm_early_init(void)
+{
+    addr_t   data_base  = (addr_t)kernel_ds << 4;
+    static struct dtr gdtr, idtr;
+
+    /* enable A20 while still in real mode (calls BIOS) */
+    if (!enable_a20_gate())
+        printk("A20 fail ");
+
+    //desc_set(MK_SEL(GDT_NULL, SEL_GDT, SEL_RPL0), 0, 0, 0);
+
+    desc_set(MK_SEL(GDT_KCODE,  SEL_GDT, SEL_RPL0),
+        (addr_t)kernel_cs << 4, (unsigned)_endtext, DESC_KCODE);
+
+    /* set 64K DS limit for now: we run before setup_arch() computes membase */
+    desc_set(MK_SEL(GDT_KDATA,  SEL_GDT, SEL_RPL0), data_base, 65536L, DESC_KDATA);
+
+    if (kernel_ftext) {
+        desc_set(MK_SEL(GDT_KFTEXT, SEL_GDT, SEL_RPL0),
+            (addr_t)kernel_ftext << 4, (unsigned)_endftext, DESC_KCODE);
+    }
+
+    /* KCODE same base/limit as KDATA but executable+readable. IRQ trampolines are
+     * built in the kernel data segment, and an IDT gate needs an executable selector.
+     */
+    desc_set(MK_SEL(GDT_KDATA_EXEC, SEL_GDT, SEL_RPL0), data_base, 65536L, DESC_KCODE);
+
+    /* IDT replaces real mode IVT interrupt vector table + 8 bytes from 0:0 to 0:0407.
+     * NOTE: With the normal MAX_IDT_ENTRIES of 129 (required for syscall INT 0x80),
+     * the IDT which uses 8 bytes/entry will overwrite the first 1K IVT plus the
+     * first 8 bytes of the BIOS data area which starts at 0x40:0. The first 8
+     * bytes of the BDA contain the port addresses of COM1-COM4, which aren't used
+     * by ELKS setupb/setupw anyways.
+     */
+    desc_set(MK_SEL(GDT_IDT, SEL_GDT, SEL_RPL0), 0, MAX_IDT_ENTRIES * 8, DESC_KDATA);
 
     /* initialize IVT using real mode sel_idt segment 0 to fault-catch stubs */
     idt_init();
