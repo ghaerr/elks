@@ -53,6 +53,8 @@ int nr_ext_bufs, nr_xms_bufs, nr_map_bufs;
 int xms_bootopts;
 int ata_mode = -1;              /* =AUTO default set ATA CF driver mode automatically */
 char running_qemu;
+int dmesg;                  /* dmesg buffer size in K from /bootopts */
+seg_t dmesg_seg;            /* segment of dmesg circular queue */
 static int boot_console;
 static segext_t umbtotal;
 static kdev_t disabled[4];      /* disabled devices using disable= */
@@ -98,6 +100,7 @@ static void FARPROC far_start_kernel(void);
 static void INITPROC early_kernel_init(void);
 static void INITPROC kernel_init(void);
 static void INITPROC kernel_banner(seg_t init, seg_t extra);
+static void INITPROC dmesg_init();
 static void init_task(void);
 static void idle_loop(void);
 
@@ -223,6 +226,7 @@ static void INITPROC early_kernel_init(void)
     heapofs = setup_arch();         /* sets membase and memend globals */
     heap_add((void *)heapofs, heapsize);
     //memend = 256 << 6;            /* force early XMS allocations in PM */
+    dmesg_init();
     mm_init(membase, memend);       /* init far/main memory allocator */
 
 #ifdef CONFIG_BOOTOPTS
@@ -667,6 +671,10 @@ static int INITPROC parse_options(void)
             heapsize = (unsigned int)simple_strtol(line+5, 10);
             continue;
         }
+        if (!strncmp(line,"dmesg=",6)) {
+            dmesg = (unsigned int)simple_strtol(line+6, 10);
+            continue;
+        }
         if (!strncmp(line,"task=",5)) {
             max_tasks = (int)simple_strtol(line+5, 10);
             continue;
@@ -796,3 +804,19 @@ static char * INITPROC option(char *s)
     return s;
 }
 #endif /* CONFIG_BOOTOPTS*/
+
+void INITPROC dmesg_init(void)
+{
+    struct dmesg_queue __far *q;
+    seg_t para;
+
+    if (dmesg) {
+        if (dmesg > 63) dmesg = 63;
+        dmesg_seg = memend - (dmesg << 6);
+        memend -= (dmesg << 6);
+
+        q = _MK_FP(dmesg_seg, 0); 
+        q->size = (dmesg << 10) - 4 * sizeof(int);
+        q->len = q->head = q->tail = 0;
+    }   
+}      

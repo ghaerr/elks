@@ -30,6 +30,15 @@ extern char running_qemu;
 extern dev_t dev_console;
 extern int debug_level;
 
+extern seg_t dmesg_seg;     /* segment or selector of dmesg circular queue */
+
+struct dmesg_queue {
+    unsigned int     len;    /* # chars in queue */
+    unsigned int     size;   /* queue size */
+    unsigned int     head;
+    unsigned int     tail;
+    unsigned char   base[]; /* queue data follows */
+};
 extern seg_t kernel_cs, kernel_ds, kernel_ftext;
 extern short *_endtext, *_endftext, *_enddata, *_endbss;
 extern short endistack[], istack[];
@@ -45,6 +54,7 @@ extern void panic(const char *, ...) noreturn;
 extern void printk(const char *, ...);
 extern void kputchar(int);
 extern void early_putchar(int);
+
 
 extern int wait_for_keypress(void);
 extern int in_group_p(gid_t);

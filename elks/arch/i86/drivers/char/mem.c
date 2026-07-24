@@ -164,6 +164,9 @@ static int kmem_ioctl(struct inode *inode, struct file *file, int cmd, char *arg
     case MEM_GETSEGALL:
         retword = (unsigned)&_seg_all;
         break;
+    case MEM_GETDMSG:
+        retword = dmesg_seg;
+        break;
         /* fall thru */
     default:
         return -EINVAL;

@@ -12,6 +12,7 @@
 #define MEM_GETMAXTASKS 10
 #define MEM_GETJIFFADDR 11
 #define MEM_GETSEGALL   12
+#define MEM_GETDMSG     13
 
 struct mem_usage {              /* all in Kbytes */
     unsigned int main_free;
