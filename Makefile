@@ -23,7 +23,9 @@ image:
 images:
 	$(MAKE) -C image images
 
-kimage: kernel image
+kimage:
+	$(MAKE) -C elks all
+	$(MAKE) -C image
 
 kernel:
 	$(MAKE) -C elks all
@@ -90,6 +92,9 @@ kconfig:
 
 defconfig:
 	$(RM) .config
+	@yes '' | ${MAKE} config
+
+yesconfig:
 	@yes '' | ${MAKE} config
 
 include/autoconf.h: .config
