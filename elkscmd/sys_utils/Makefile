@@ -37,6 +37,7 @@ PRGS = \
 	decomp \
 	sysctl \
 	dmesg \
+	logout \
 	clock \
 	# EOL
 
@@ -127,6 +128,9 @@ sysctl: sysctl.o
 
 dmesg: dmesg.o
 	$(LD) $(LDFLAGS) -o dmesg dmesg.o $(LDLIBS)
+
+logout: logout.o
+	$(LD) $(LDFLAGS) -o logout logout.o $(LDLIBS)
 
 test_unreal: test_unreal.o unreal.o
 	$(LD) -melks-libc -mcmodel=small -c test_unreal.S -o test_unreal.o

@@ -89,6 +89,7 @@ file_utils/sync                 :fileutil       :360k
 file_utils/touch                :fileutil           :720k
 sys_utils/chmem                 :sysutil            :720k
 sys_utils/kill                  :sysutil        :360c :720k
+sys_utils/logout                :sysutil        :360c :720k
 sys_utils/ps            :sash   :sysutil        :360k           :128k       :nocomp
 sys_utils/ps :::uptime          :sysutil                        :128k   :1440k
 sys_utils/makeboot              :sysutil        :360k
