@@ -101,7 +101,8 @@ hostfwd=tcp::8045-:49825,\
 hostfwd=tcp::8046-:49826,\
 hostfwd=tcp::8047-:49827,\
 hostfwd=tcp::8048-:49828,\
-hostfwd=tcp::8049-:49829"
+hostfwd=tcp::8049-:49829,\
+hostfwd=tcp::49152-:49152"
 
 # new style
 #NET="-net nic,model=ne2k_isa -net user,$FWD"

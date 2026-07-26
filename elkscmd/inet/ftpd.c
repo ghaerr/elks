@@ -109,6 +109,7 @@ struct cmd_tab cmdtab[] = {
 
 static int debug = 0;
 static int nofork = 0;
+static int qemu = 0;
 static int timeout = 900;
 static int maxtimeout = 7200;
 static int controlfd;
@@ -527,6 +528,8 @@ int do_pasv(int *datafd) {
 		return -1;
 	}
 
+	if (qemu)
+		pasv.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 	a = (char *) &pasv.sin_addr;
 	p = (char *) &pasv.sin_port;
 	sprintf(str, "227 Entering Passive Mode (%d,%d,%d,%d,%d,%d)\r\n", UC(a[0]),
@@ -623,7 +626,7 @@ int do_stor(int datafd, char *input) {
 }
 
 void usage() {
-	printf("Usage: ftpd [-d] [-D] [-P min:max] [<listen-port>]\n");
+	printf("Usage: ftpd [-d] [-D] [-q] [-P min:max] [<listen-port>]\n");
 	exit(1);
 }
 
@@ -653,7 +656,9 @@ int main(int argc, char **argv) {
 					pasv_max_port = pasv_min_port;
 				}
 				if (debug) printf("PASV port range: %u-%u\n", pasv_min_port, pasv_max_port);
-			} else
+			} 			else if (argv[0][1] == 'q')
+				qemu++;
+			else
 				usage();
 		} else {
 			myport = atoi(argv[0]);
