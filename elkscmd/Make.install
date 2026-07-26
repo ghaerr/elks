@@ -228,6 +228,7 @@ install:
 		fi \
 	done < Filelist
 	rm Filelist
+	chmod 4755 $(DESTDIR)/bin/sudo 2>/dev/null || true
 ifdef CONFIG_APP_BUSYELKS
 	$(MAKE) -C busyelks links
 endif
