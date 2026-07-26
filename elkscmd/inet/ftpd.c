@@ -775,6 +775,10 @@ int main(int argc, char **argv) {
 				switch (code) {
 
 				case CMD_PORT:
+					if (qemu) {
+						send_reply(502, "Active mode not supported in QEMU, use passive mode");
+						break;
+					}
 					if (datafd >= 0) { /* connection already open, close it! */
 						close(datafd);
 						datafd = -1;
