@@ -32,6 +32,7 @@ typedef struct segment segment_s;
 #define SEG_FLAG_FREE    0x00
 #define SEG_FLAG_USED	 0x80
 #define SEG_FLAG_ALIGN1K 0x40
+#define SEG_FLAG_XMS     0x20   /* allocate only from XMS (PM only for now) */
 #define SEG_FLAG_TYPE	 0x0F
 #define SEG_FLAG_CSEG	 0x01   /* app code segment */
 #define SEG_FLAG_DSEG	 0x02   /* app auto (stack/heap) data segment */
@@ -69,8 +70,9 @@ int fs_memcmp(const void *,const void *,size_t);
 /* Memory allocation */
 
 void INITPROC seg_add(SELEXT_T start, SELEXT_T end);
-segment_s * seg_alloc_fixed (seg_t, segext_t, word_t);
 segment_s * seg_alloc (segext_t, word_t);
+segment_s * seg_alloc_xms (selext_t size, word_t type);     /* PM only for now */
+segment_s * seg_alloc_fixed (seg_t, segext_t, word_t);
 void seg_free (segment_s *);
 segment_s * seg_get (segment_s *);
 void seg_put (segment_s *);
