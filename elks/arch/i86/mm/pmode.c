@@ -37,15 +37,6 @@ sel_t desc_set(sel_t sel, addr_t base, addr_t limit, byte_t access)
 {
     struct gdt_entry *d = &gdt[SEL_INDEX(sel)];
 
-    /* Allow selector limit of max 64K for now for automatic 80286 compatibility.
-     * User mode fmemalloc allocations are also limited to 64K max segments
-     * unless 32-bit instructions are used within the application.
-     */
-    if ((limit >> 16) > 1) {                /* limit size to 64K max for now */
-        printk("desc_set: %08lx limit > 64K\n", limit);
-        return 0;
-    }
-
     d->limit_lo     = (word_t)limit - 1;    /* limit is bytes-1 */
     d->base_lo      = base & 0xFFFF;
     d->base_hi      = (base >> 16) & 0xFF;
@@ -190,8 +181,7 @@ void pm_early_init(void)
     desc_set(MK_SEL(GDT_KCODE,  SEL_GDT, SEL_RPL0),
         (addr_t)kernel_cs << 4, (unsigned)_endtext, DESC_KCODE);
 
-    /* set 64K DS limit for now: we run before setup_arch() computes membase */
-    desc_set(MK_SEL(GDT_KDATA,  SEL_GDT, SEL_RPL0), data_base, 65536L, DESC_KDATA);
+    desc_set(MK_SEL(GDT_KDATA,  SEL_GDT, SEL_RPL0), data_base, 65536, DESC_KDATA);
 
     if (kernel_ftext) {
         desc_set(MK_SEL(GDT_KFTEXT, SEL_GDT, SEL_RPL0),
@@ -201,7 +191,7 @@ void pm_early_init(void)
     /* KCODE same base/limit as KDATA but executable+readable. IRQ trampolines are
      * built in the kernel data segment, and an IDT gate needs an executable selector.
      */
-    desc_set(MK_SEL(GDT_KDATA_EXEC, SEL_GDT, SEL_RPL0), data_base, 65536L, DESC_KCODE);
+    desc_set(MK_SEL(GDT_KDATA_EXEC, SEL_GDT, SEL_RPL0), data_base, 65536, DESC_KCODE);
 
     /* IDT replaces real mode IVT interrupt vector table + 8 bytes from 0:0 to 0:0407.
      * NOTE: With the normal MAX_IDT_ENTRIES of 129 (required for syscall INT 0x80),

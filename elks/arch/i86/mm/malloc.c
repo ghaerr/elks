@@ -35,7 +35,18 @@ static byte_t seg_pm_access(word_t type)
 /* allocate selector for passed segment_s structure, 0 = GDT full or limit exceeded */
 static int seg_pm_attach(segment_s *seg, word_t type)
 {
-    seg->base = desc_alloc(seg->addr << 4, seg->size << 4, seg_pm_access(type));
+    selext_t limit = seg->size << 4;
+
+    /* Allow non-XMS selector limit of max 64K for now for automatic 80286 compatibility.
+     * User mode fmemalloc allocations are also limited to 64K max segments
+     * unless 32-bit instructions are used within the application.
+     */
+    if (!(type & SEG_FLAG_XMS) && (limit >> 16) > 1) {
+        printk("seg_alloc: %08lx limit > 64K\n", limit);
+        return 0;
+    }
+
+    seg->base = desc_alloc(seg->addr << 4, limit, seg_pm_access(type));
     return seg->base;
 }
 
@@ -118,7 +129,11 @@ static segment_s * seg_free_get (SELEXT_T size0, word_t type)
 
         if (type & SEG_FLAG_ALIGN1K)
             size00 = size0 + ((~BASE(seg) + 1) & ((1024 >> 4) - 1));
-        if ((seg->flags == SEG_FLAG_FREE) && (size1 >= size00) && (size1 < best_size)) {
+        if ((seg->flags == SEG_FLAG_FREE) && (size1 >= size00) && (size1 < best_size)
+#ifdef CONFIG_286_PMODE
+            && (!(type & SEG_FLAG_XMS) || (seg->addr & 0x000F0000))
+#endif
+                                ) {
             best_seg  = seg;
             best_size = size1;
             incr = size00 - size0;
@@ -177,7 +192,8 @@ segment_s * seg_alloc_fixed (seg_t base, segext_t size, word_t type)
 
 #endif
 
-// Allocate segment
+// Allocate segment (size < 1M)
+// NOTE: May allocate from main memory or XMS in PM
 
 segment_s * seg_alloc (segext_t size, word_t type)
 {
@@ -192,6 +208,25 @@ segment_s * seg_alloc (segext_t size, word_t type)
     }
     return seg;
 }
+
+#ifdef CONFIG_286_PMODE
+// Allocate any size segment (>= 1M ok) from XMS only
+// Primarily used for ramdisk support, not for general use
+// NOTE: Can't use desc_limit, no support for accessing data outside xms_fmemcpy
+
+segment_s * seg_alloc_xms (selext_t size, word_t type)
+{
+    segment_s * seg = 0;
+
+    type |= SEG_FLAG_XMS;
+    seg = seg_free_get (size, type);
+    if (seg && !seg_pm_attach(seg, type)) {
+        seg_free(seg);
+        seg = 0;
+    }
+    return seg;
+}
+#endif
 
 
 // Free segment
@@ -316,7 +351,7 @@ void mm_get_usage (struct mem_usage *mu)
     mu->main_free = ((free + 31) >> 6);
     mu->main_used = ((used + 31) >> 6);
 #ifdef CONFIG_FS_XMS
-    mu->xms_used = xms_alloc_ptr - KBYTES(XMS_START_ADDR) + xmsused;
+    mu->xms_used = xms_alloc_ptr - KBYTES(XMS_START_ADDR) + (xmsused >> 6);
     mu->xms_free = SETUP_XMS_KBYTES - mu->xms_used;
 #else
     mu->xms_free = 0;

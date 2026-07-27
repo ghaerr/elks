@@ -25,6 +25,7 @@
 /* current implementation requires no other XMS allocations other than XMS buffers */
 static ramdesc_t     xms_ram_base;      /* ramdisk XMS memory start address */
 static unsigned  int xms_ram_size;      /* ramdisk size in Kbytes */
+static segment_s *   xms_seg;           /* saved segment_s for PM dealloc */
 
 /* initialize SSD device */
 sector_t ssddev_init(void)
@@ -43,12 +44,18 @@ int ssddev_ioctl(struct inode *inode, struct file *file,
         debug_blk("SSD: ioctl make %d\n", arg);
         if (xms_ram_size)
             return -EBUSY;
+#ifdef CONFIG_286_PMODE
+        xms_seg = seg_alloc_xms((selext_t)arg << 6, SEG_FLAG_RAMDSK);
+        if (!xms_seg)
+            return -ENOMEM;
+        xms_ram_base = xms_seg->addr << 4;  /* NOTE: selector in seg->base not used */
+#else
         xms_ram_base = xms_alloc(arg);      /* in Kbytes */
         if (!xms_ram_base)
             return -ENOMEM;
+#endif
         xms_ram_size = arg;
         ssd_num_sects = arg << 1;
-
         /* clear XMS not supported w/INT 15 */
         if (xms_enabled != XMS_INT15) {
             for (sector_t sector = 0; sector < ssd_num_sects; sector++)
@@ -62,8 +69,13 @@ int ssddev_ioctl(struct inode *inode, struct file *file,
         if (xms_ram_size) {
             invalidate_inodes(inode->i_rdev);
             invalidate_buffers(inode->i_rdev);
+#ifdef CONFIG_286_PMODE
+            seg_free(xms_seg);
+#else
             xms_alloc_ptr -= xms_ram_size;      /* NOTE: no xms_free yet */
+#endif
             xms_ram_size = 0;
+            ssd_num_sects = 0;
             ssd_initialized = 0;
             return 0;
         }
