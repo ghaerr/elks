@@ -133,7 +133,7 @@ static segment_s * seg_free_get (SELEXT_T size0, word_t type)
 #ifdef CONFIG_286_PMODE
             && (!(type & SEG_FLAG_XMS) || (seg->addr & 0x000F0000))
 #endif
-                                ) {
+                                                                    ) {
             best_seg  = seg;
             best_size = size1;
             incr = size00 - size0;

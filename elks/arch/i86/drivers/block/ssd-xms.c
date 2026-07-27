@@ -56,6 +56,7 @@ int ssddev_ioctl(struct inode *inode, struct file *file,
 #endif
         xms_ram_size = arg;
         ssd_num_sects = arg << 1;
+
         /* clear XMS not supported w/INT 15 */
         if (xms_enabled != XMS_INT15) {
             for (sector_t sector = 0; sector < ssd_num_sects; sector++)
