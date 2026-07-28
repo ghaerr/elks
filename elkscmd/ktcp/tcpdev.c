@@ -169,6 +169,8 @@ static void tcpdev_accept(void)
     //accept_ret.sock = db->newsock;	/* report back new socket*/
     accept_ret.addr_ip = cb->remaddr;
     accept_ret.addr_port = htons(cb->remport);
+    accept_ret.locaddr = cb->localaddr;
+    accept_ret.locport = htons(cb->localport);
     write(tcpdevfd, &accept_ret, sizeof(accept_ret));
 }
 
@@ -200,6 +202,8 @@ void tcpdev_notify_accept(struct tcpcb_s *cb)
     //accept_ret.sock = listencb->newsock;	/* report back new socket*/
     accept_ret.addr_ip = cb->remaddr;
     accept_ret.addr_port = htons(cb->remport);
+    accept_ret.locaddr = cb->localaddr;
+    accept_ret.locport = htons(cb->localport);
 
     debug_accept("tcpdev notify_accept: ACCEPT (SYN received before accept) sock[%p] newsock[%p]\n",
 						listencb->sock, listencb->newsock);

@@ -1,4 +1,4 @@
-id:1:initdefault:
+id:3:initdefault:
 si::sysinit:/etc/rc.sys
 
 #l1:1:wait:/etc/rc 1

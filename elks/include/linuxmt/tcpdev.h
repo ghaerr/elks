@@ -97,6 +97,8 @@ struct tdb_accept_ret {
     struct socket *sock;
     __u32 addr_ip;
     __u16 addr_port;
+    __u32 locaddr;
+    __u16 locport;
 };
 
 struct tdb_bind_ret {

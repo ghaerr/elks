@@ -528,6 +528,13 @@ int do_pasv(int *datafd) {
 		return -1;
 	}
 
+	/* Get current local IP from control connection */
+	{
+		struct sockaddr_in local;
+		unsigned int len = sizeof(local);
+		if (getsockname(controlfd, (struct sockaddr *)&local, &len) == 0)
+			pasv.sin_addr.s_addr = local.sin_addr.s_addr;
+	}
 	if (qemu)
 		pasv.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 	a = (char *) &pasv.sin_addr;
@@ -656,13 +663,13 @@ int main(int argc, char **argv) {
 					pasv_max_port = pasv_min_port;
 				}
 				if (debug) printf("PASV port range: %u-%u\n", pasv_min_port, pasv_max_port);
-			} 			else if (argv[0][1] == 'q')
+			} else if (argv[0][1] == 'q')
 				qemu++;
 			else
 				usage();
 		} else {
 			myport = atoi(argv[0]);
-			break;	/* ignore rest of command line if any */
+			break;
 		}
 	}
 
