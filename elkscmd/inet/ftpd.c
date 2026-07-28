@@ -642,7 +642,7 @@ int main(int argc, char **argv) {
 	int listenfd, fd, ret;
 	pid_t pid;
 	unsigned int myport = FTP_PORT;
-	struct sockaddr_in servaddr, myaddr;
+	struct sockaddr_in servaddr;
 	struct sockaddr_in client;
 
 	while (--argc) {
@@ -700,9 +700,6 @@ int main(int argc, char **argv) {
 		perror("listen");
 		exit(3);
 	}
-	ret = sizeof(myaddr);	/* save my own address for later use */
-	if (getsockname(listenfd, (struct sockaddr *) &myaddr, (unsigned int *)&ret) < 0)
-		perror("getsockname");
 
 	if (!nofork) {
 		/* become daemon, debug output on 1 and 2*/
@@ -753,10 +750,14 @@ int main(int argc, char **argv) {
 			close(listenfd);
 			signal(SIGCHLD, SIG_DFL);
 
-			if (debug)
+			if (debug) {
+				struct sockaddr_in local;
+				unsigned int len = sizeof(local);
+				getsockname(controlfd, (struct sockaddr *)&local, &len);
 				printf("local: %s, remote: %s\n", 
-					in_ntoa(myaddr.sin_addr.s_addr),
+					in_ntoa(local.sin_addr.s_addr),
 					in_ntoa(client.sin_addr.s_addr));
+			}
 
 			send_reply(220, "Welcome - ELKS FTP server speaking");
 
