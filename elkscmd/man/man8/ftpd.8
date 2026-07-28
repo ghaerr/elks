@@ -4,8 +4,11 @@ ftpd \- Internet File Transfer Protocol server
 .SH SYNOPSIS
 .B ftpd
 .RB [ \-d ]
-.RB [ \-q ]
 .RB [ \-D ]
+.RB [ \-n
+.IR ip ]
+.RB [ \-P
+.IR min:max ]
 .RI [ port ]
 .SH DESCRIPTION
 .B Ftpd
@@ -25,20 +28,24 @@ will normally detach itself from the controlling terminal. If the
 option is specified, such detach is prevented. 
 .PP
 If the
-.B \-q
-option is specified or the environment variable 
-.I QEMU=1 
-is present,
+.B \-n
+option is specified,
 .B ftpd
-will enter QEMU mode and assume to be running in the QEMU emulator
-and remap ports and IP-addresses accordingly.
-The mappings correspond with the setup provided for QEMU in the 
-.I qemu.sh
-script in the distribution. When QEMU mode is active, the server 
-will check for loopback connections and turn off QEMU mode 
-if detected, in order for file transfers to work correctly. Loopback mode is meaningful for testing only.
+will use the given IP address instead of the local address when responding to PASV requests.
+This is useful when running behind NAT or in virtual machines such as QEMU.
+If the server has no local address (e.g. SLIRP), use
+.B \-n 127.0.0.1
+to redirect clients to the loopback address.
 .PP
-The QEMU and debug modes can also be set from the client via the SITE command, see below.
+If the
+.B \-P
+option is specified, it sets the range of ports used for passive data connections.
+The format is
+.I min:max
+(e.g.
+.BR "\-P 49152:49153" ).
+If only one port is given, it is used as both minimum and maximum.
+If not specified, the kernel selects an available port automatically.
 .PP
 The ftp server
 will timeout an inactive session after 15 minutes. 
@@ -95,9 +102,6 @@ command implements the following subcommands:
 .i IDLE 
 subcommand to set the timeout value. Acceptable range is 30 to 2700 seconds.
 .PP
-.I QEMU
-- which will toggle QEMU mode.
-.PP
 .I DEBUG
 - which will increase the server's debug level.
 .PP
@@ -129,7 +133,3 @@ CWD to any directory is allowed, which - in combination with the DELETE and RMDI
 ftp(1), ftpget(1), ftpput(1)
 .SH BUGS
 The lack of security measures makes it easy for inexperienced users to inflict havoc on the system.
-.PP
-When running under QEMU, 
-.B ftpd
-will hang if file transefers (including using the DIR and LS commands) unless QEMU mode has been set.

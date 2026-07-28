@@ -109,7 +109,7 @@ struct cmd_tab cmdtab[] = {
 
 static int debug = 0;
 static int nofork = 0;
-static int qemu = 0;
+static char *pasv_ip = NULL;
 static int timeout = 900;
 static int maxtimeout = 7200;
 static int controlfd;
@@ -535,8 +535,8 @@ int do_pasv(int *datafd) {
 		if (getsockname(controlfd, (struct sockaddr *)&local, &len) == 0)
 			pasv.sin_addr.s_addr = local.sin_addr.s_addr;
 	}
-	if (qemu)
-		pasv.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+	if (pasv_ip)
+		pasv.sin_addr.s_addr = in_aton(pasv_ip);
 	a = (char *) &pasv.sin_addr;
 	p = (char *) &pasv.sin_port;
 	sprintf(str, "227 Entering Passive Mode (%d,%d,%d,%d,%d,%d)\r\n", UC(a[0]),
@@ -633,7 +633,7 @@ int do_stor(int datafd, char *input) {
 }
 
 void usage() {
-	printf("Usage: ftpd [-d] [-D] [-q] [-P min:max] [<listen-port>]\n");
+	printf("Usage: ftpd [-d] [-D] [-n ip] [-P min:max] [<listen-port>]\n");
 	exit(1);
 }
 
@@ -663,9 +663,11 @@ int main(int argc, char **argv) {
 					pasv_max_port = pasv_min_port;
 				}
 				if (debug) printf("PASV port range: %u-%u\n", pasv_min_port, pasv_max_port);
-			} else if (argv[0][1] == 'q')
-				qemu++;
-			else
+			} 			else if (argv[0][1] == 'n') {
+				argc--; argv++;
+				pasv_ip = argv[0];
+				if (debug) printf("PASV IP: %s\n", pasv_ip);
+			} else
 				usage();
 		} else {
 			myport = atoi(argv[0]);
@@ -783,8 +785,8 @@ int main(int argc, char **argv) {
 				switch (code) {
 
 				case CMD_PORT:
-					if (qemu) {
-						send_reply(502, "Active mode not supported in QEMU, use passive mode");
+					if (pasv_ip) {
+						send_reply(502, "Active mode not available, use passive mode");
 						break;
 					}
 					if (datafd >= 0) { /* connection already open, close it! */
