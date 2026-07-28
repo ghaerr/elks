@@ -24,6 +24,8 @@
 #define DEV_CFA     MKDEV(ATHD_MAJOR, 0)
 #define DEV_CFB     MKDEV(ATHD_MAJOR, 8)
 #define DEV_ROM     MKDEV(ROMFLASH_MAJOR, 0)
+#define DEV_MFMA    MKDEV(MFMHD_MAJOR, 0)
+#define DEV_MFMB    MKDEV(MFMHD_MAJOR, 8)
 
 /* char devices */
 #define DEV_TTY1    MKDEV(TTY_MAJOR, 0)

@@ -52,6 +52,9 @@ int tracing;
 int nr_ext_bufs, nr_xms_bufs, nr_map_bufs;
 int xms_bootopts;
 int ata_mode = -1;              /* =AUTO default set ATA CF driver mode automatically */
+int mfmhd_slow_profile;         /* /bootopts mfm= bit 0: slow controller timing */
+int mfmhd_pio;                  /* /bootopts mfm= bit 1: PIO sector transfers */
+int mfmhd_trace;                /* /bootopts mfm= bit 2: driver request tracing */
 char running_qemu;
 seg_t dmesg_seg;                /* segment of dmesg circular queue */
 static int dmesg;               /* dmesg buffer size in K from /bootopts */
@@ -380,19 +383,21 @@ static struct dev_name_struct {
     const char *name;
     int num;
 } devices[] = {
-	/* the 6 partitionable drives must be first */
+	/* the 8 partitionable drives must be first */
 	{ "hda",     DEV_HDA },         /* 0 */
 	{ "hdb",     DEV_HDB },
 	{ "hdc",     DEV_HDC },
 	{ "hdd",     DEV_HDD },
 	{ "cfa",     DEV_CFA },
 	{ "cfb",     DEV_CFB },
-	{ "fd0",     DEV_FD0 },         /* 6 */
+	{ "mfma",    DEV_MFMA },
+	{ "mfmb",    DEV_MFMB },
+	{ "fd0",     DEV_FD0 },         /* 8 */
 	{ "fd1",     DEV_FD1 },
-	{ "df0",     DEV_DF0 },         /* 8 */
+	{ "df0",     DEV_DF0 },         /* 10 */
 	{ "df1",     DEV_DF1 },
 	{ "rom",     DEV_ROM },
-	{ "ttyS0",   DEV_TTYS0 },       /* 11 */
+	{ "ttyS0",   DEV_TTYS0 },       /* 13 */
 	{ "ttyS1",   DEV_TTYS1 },
 	{ "tty1",    DEV_TTY1 },
 	{ "tty2",    DEV_TTY2 },
@@ -409,18 +414,21 @@ char *root_dev_name(kdev_t dev)
 {
     int i;
     unsigned int mask;
+    unsigned int len;
 #define NAMEOFF 13
-    static char name[18] = "ROOTDEV=/dev/";
+    static char name[20] = "ROOTDEV=/dev/";
 
     name[8] = '/';
-    for (i=0; i<11; i++) {
-        mask = (i < 6)? 0xfff8: 0xffff;
+    for (i=0; i<13; i++) {
+        mask = (i < 8)? 0xfff8: 0xffff;
         if (devices[i].num == (dev & mask)) {
             strcpy(&name[NAMEOFF], devices[i].name);
-            if (i < 6) {
+            if (i < 8) {
                 if (dev & 0x07) {
-                    name[NAMEOFF+3] = '0' + (dev & 7);
-                    name[NAMEOFF+4] = '\0';
+                    /* device names are no longer all three characters */
+                    len = strlen(devices[i].name);
+                    name[NAMEOFF + len] = '0' + (dev & 7);
+                    name[NAMEOFF + len + 1] = '\0';
                 }
             }
             return name;
@@ -661,6 +669,13 @@ static int INITPROC parse_options(void)
         }
         if (!strncmp(line,"xtide=",6)) {
             ata_mode = (int)simple_strtol(line+6, 10);
+            continue;
+        }
+        if (!strncmp(line,"mfm=",4)) {
+            int mfm_opts = (int)simple_strtol(line+4, 10);
+            mfmhd_slow_profile = mfm_opts & 1;  /* bit 0: slow controller timing */
+            mfmhd_pio = (mfm_opts >> 1) & 1;    /* bit 1: PIO sector transfers */
+            mfmhd_trace = (mfm_opts >> 2) & 1;  /* bit 2: driver request tracing */
             continue;
         }
         if (!strncmp(line,"cache=",6)) {

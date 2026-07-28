@@ -55,6 +55,7 @@ extern int INITPROC get_ide_data(int, struct drive_infot *);
 extern struct gendisk * directhd_init(void);
 extern void INITPROC floppy_init(void);
 extern struct gendisk * INITPROC ata_cf_init(void);
+extern struct gendisk * INITPROC mfmhd_init(void);
 extern void INITPROC rd_init(void);
 extern void INITPROC ssd_init(void);
 extern void INITPROC romflash_init(void);

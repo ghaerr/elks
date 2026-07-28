@@ -665,6 +665,31 @@ ATA CF Hard Disk support
 CONFIG_BLK_DEV_ATA_CF
   Select this driver to use ATA support for CF devices.
 
+XT MFM hard disk support
+CONFIG_BLK_DEV_MFMHD
+  Select this driver for XT-style Xebec command-block MFM controllers,
+  including Western Digital WD1002A-WX1-compatible boards and Seagate
+  ST11M/ST11R or FileCard-class controllers.  It does not drive IDE/ATA,
+  ESDI or generic RLL controllers.  Command and status bytes use programmed
+  I/O; sector data uses the PC/XT 8237 hard-disk DMA channel 3 by default,
+  or programmed I/O with mfm=2 in /bootopts for machines whose chipset does
+  not service DRQ3 like a true IBM XT.  Completion is polled, so no IRQ is
+  installed.  One controller with up to two drives is supported, as
+  /dev/mfma and /dev/mfmb.  Less common tunables (BIOS geometry table,
+  step-rate code, fixed geometry overrides, maintenance ioctls) are set at
+  the top of elks/arch/i86/drivers/block/mfmhd.c.
+
+MFM controller I/O port
+CONFIG_MFMHD_PORT
+  Controller base I/O port.  WD1002A-WX1 and IBM/Xebec XT controllers
+  normally use 0x320; jumper W4 can select 0x324.
+
+Seagate MFM controller profile
+CONFIG_MFMHD_SEAGATE
+  Say Y for Seagate ST11M/ST11R and FileCard-class controllers, which use
+  the ST11 geometry command.  Say N for WD1002A-WX1 and IBM/Xebec-compatible
+  boards.
+
 #############################################################################
 
 Options that do not need help texts.
