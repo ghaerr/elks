@@ -55,6 +55,7 @@ int ata_mode = -1;              /* =AUTO default set ATA CF driver mode automati
 int mfmhd_slow_profile;         /* /bootopts mfm= bit 0: slow controller timing */
 int mfmhd_pio;                  /* /bootopts mfm= bit 1: PIO sector transfers */
 int mfmhd_trace;                /* /bootopts mfm= bit 2: driver request tracing */
+int amstrad_iga_override;       /* /bootopts iga= 1 forces on, 2 forces off */
 char running_qemu;
 seg_t dmesg_seg;                /* segment of dmesg circular queue */
 static int dmesg;               /* dmesg buffer size in K from /bootopts */
@@ -680,6 +681,10 @@ static int INITPROC parse_options(void)
             mfmhd_slow_profile = mfm_opts & 1;  /* bit 0: slow controller timing */
             mfmhd_pio = (mfm_opts >> 1) & 1;    /* bit 1: PIO sector transfers */
             mfmhd_trace = (mfm_opts >> 2) & 1;  /* bit 2: driver request tracing */
+            continue;
+        }
+        if (!strncmp(line,"iga=",4)) {
+            amstrad_iga_override = (int)simple_strtol(line+4, 10);
             continue;
         }
         if (!strncmp(line,"cache=",6)) {

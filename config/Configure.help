@@ -690,6 +690,18 @@ CONFIG_MFMHD_SEAGATE
   the ST11 geometry command.  Say N for WD1002A-WX1 and IBM/Xebec-compatible
   boards.
 
+Amstrad PC1640 IGA hardware scroll
+CONFIG_CONSOLE_AMSTRAD_IGA
+  Direct console support for the Amstrad PC1512/PC1640 integrated Paradise
+  PEGA display adapter.  The adapter is detected from the Amstrad PPI
+  status byte and the PC1640 option register; when present, and unless
+  disabled by switch SW10, the console scrolls by moving the CRTC start
+  address through the video bank instead of copying text, and keeps the
+  BIOS data area display state coherent.  The /bootopts option iga=1
+  forces the feature on and iga=2 forces it off, overriding detection.
+  On any other machine the driver behaves exactly like the standard
+  direct console.  Say N unless targeting an Amstrad PC1512/PC1640.
+
 #############################################################################
 
 Options that do not need help texts.

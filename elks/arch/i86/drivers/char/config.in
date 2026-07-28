@@ -19,6 +19,11 @@ mainmenu_option next_comment
 		fi
 		bool '  Scancode keyboard driver'	CONFIG_KEYBOARD_SCANCODE y
 		bool '  Dual-screen console support'    CONFIG_CONSOLE_DUAL n
+		if [ "$CONFIG_CONSOLE_DUAL" != "y" ]; then
+			bool '  Amstrad PC1640 IGA hardware scroll' CONFIG_CONSOLE_AMSTRAD_IGA n
+		else
+			define_bool CONFIG_CONSOLE_AMSTRAD_IGA n
+		fi
 	fi
 	bool 'Serial Console'	CONFIG_CONSOLE_SERIAL		n
 	if [[ "$CONFIG_CONSOLE_DIRECT" = "y" || "$CONFIG_CONSOLE_BIOS" = "y" ]]; then
