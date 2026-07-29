@@ -64,13 +64,13 @@ struct dtr {
     addr_t base;            /* 24-bit linear physical base address from real mode */
 };
 
-/* selector = (index << 3) | TI | RPL */
-#define SEL_RPL0    0x00
-#define SEL_RPL3    0x03
-#define SEL_GDT     0x00
-#define SEL_LDT     0x04
-#define MK_SEL(index, ti, rpl)  (((unsigned)(index) << 3) | (ti) | (rpl))
-#define SEL_INDEX(sel)          ((unsigned)(sel) >> 3)
+/* selector flags */
+#define SELF_RPL0   0x00
+#define SELF_RPL3   0x03
+#define SELF_GDT    0x00
+#define SELF_LDT    0x04
+#define MK_SEL(sel, ti, rpl)    ((sel) | (ti) | (rpl))
+#define SEL_INDEX(sel)          ((unsigned)(sel) & ~3)
 
 /* ---- HAL hooks (implemented in pmode.c and pmode.S) ---- */
 
