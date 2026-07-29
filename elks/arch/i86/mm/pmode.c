@@ -165,7 +165,7 @@ void INITPROC pm_init(void)
 void pm_early_init(void)
 {
     addr_t   data_base  = (addr_t)kernel_ds << 4;
-    static struct dtr gdtr, idtr; //FIXME
+    struct dtr gdtr, idtr;
 
     /* enable A20 while still in real mode (calls BIOS) */
     if (!enable_a20_gate())
