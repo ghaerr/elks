@@ -19,22 +19,9 @@ fi
 # start networking
 #
 # check /bootopts "net=" env variable
-case "$net" in
-ne0|wd0|3c0|le0|ul0)
+if test "$net" != ""; then
 	net start $net
-	;;
-slip)
-	net start slip
-	;;
-cslip)
-	net start cslip
-	;;
-*)
-	if test "$net" != ""; then
-		echo "Unrecognized /bootopts network option: net=$net"
-	fi
-	;;
-esac
+fi
 
 # View message of day
 #if test -f /etc/motd; then

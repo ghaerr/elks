@@ -1,13 +1,11 @@
 # Start/stop ELKS networking
 #
-# Usage: net [start|stop|restart|show] [ne0|wd0|3c0|le0|slip|cslip] [baud] [device]
+# Usage: net [start|stop|restart|show] [<ethdev>|slip|cslip] [baud] [device]
 #
 # Examples:
-#	net start ne0			start ethernet networking
-#	net start slip			start slip networking
-#	net start slip 19200	start slip at 19200 baud
+#	net start ne0			start NE2K
+#	net start slip 19200		start slip at 19200 baud
 #	net start cslip 4800 /dev/ttyS1
-#	net show				shows settings for 'net start'
 #
 # See slattach.sh for Linux slip setup
 # See qemu.sh NET= line for host forwarding into ELKS using QEMU
@@ -19,7 +17,9 @@ source /etc/net.cfg
 
 usage()
 {
-	echo "Usage: net [start|stop|show] [ne0|wd0|3c0|le0|ul0|slip|cslip] [baud] [device]"
+	echo "Usage: net [start|stop|show] [<ethdev>|slip|cslip] [baud] [device]"
+	echo "Known <ethdev> devices:"
+	ls -l /dev | grep 9, | cut -c 56-
 	exit 1
 }
 
@@ -42,11 +42,9 @@ start_network()
 		getty_off
 		ktcp="ktcp -b -p cslip -s $baud -l $device $localip $gateway $netmask"
 		;;
-	ne0|wd0|3c0|le0|ul0)
+	*)
 		ktcp="ktcp -b -p $link $mtu $localip $gateway $netmask"
 		;;
-	*)
-		usage ;;
 	esac
 	# run ktcp as background daemon if successful starting networking
 	echo $ktcp
@@ -88,8 +86,7 @@ restart)
 	stop_network
 	start_network ;;
 show)
-	echo -n ip $localip gateway $gateway mask $netmask $link
-	if test "$link" = "slip"; then echo "" $baud $device; else echo; fi ;;
+	ifconfig ;;
 *) usage ;;
 esac
 
