@@ -220,6 +220,7 @@ int main(int argc,char **argv)
 			   !strcmp(optarg, "3c0")? LINK_ETHER :
 			   !strcmp(optarg, "ee0")? LINK_ETHER :
 			   !strcmp(optarg, "le0")? LINK_ETHER :
+			   !strcmp(optarg, "ul0")? LINK_ETHER :
 			   !strcmp(optarg, "slip")? LINK_SLIP :
 			   !strcmp(optarg, "cslip")? LINK_CSLIP:
 			   -1;

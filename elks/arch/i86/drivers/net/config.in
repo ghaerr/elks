@@ -9,6 +9,7 @@ mainmenu_option next_comment
 		bool 'NE2K'			CONFIG_ETH_NE2K y
 		bool 'WD/SMC8003'	CONFIG_ETH_WD y
 		bool '3C509'		CONFIG_ETH_EL3 y
+		bool 'SMC Ultra/83C790'	CONFIG_ETH_ULTRA y
 		bool 'AMD PCnet/LANCE'	CONFIG_ETH_PCNET n
 	fi
 endmenu

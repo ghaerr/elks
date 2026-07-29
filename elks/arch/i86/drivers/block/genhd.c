@@ -29,7 +29,8 @@
 #include <arch/system.h>
 #include "blk.h"
 
-#if defined(CONFIG_BLK_DEV_BHD) || defined(CONFIG_BLK_DEV_ATA_CF)
+#if defined(CONFIG_BLK_DEV_BHD) || defined(CONFIG_BLK_DEV_ATA_CF) || \
+    defined(CONFIG_BLK_DEV_MFMHD)
 
 #define NR_SECTS(p)     p->nr_sects
 #define START_SECT(p)   p->start_sect
@@ -362,10 +363,10 @@ void GENPROC init_partitions(struct gendisk *hd)
         check_partition(hd, MKDEV(hd->major, first_minor));
     }
 }
-#endif /* CONFIG_BLK_DEV_BHD || CONFIG_BLK_DEV_ATA_CF */
+#endif /* CONFIG_BLK_DEV_BHD || CONFIG_BLK_DEV_ATA_CF || CONFIG_BLK_DEV_MFMHD */
 
 #if defined(CONFIG_BLK_DEV_BFD) || defined(CONFIG_BLK_DEV_BHD) || \
-    defined(CONFIG_BLK_DEV_ATA_CF)
+    defined(CONFIG_BLK_DEV_ATA_CF) || defined(CONFIG_BLK_DEV_MFMHD)
 
 int ioctl_hdio_geometry(struct gendisk *hd, kdev_t dev, struct hd_geometry *loc)
 {

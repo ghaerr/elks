@@ -84,7 +84,11 @@ endif
 
 ifdef CONFIG_ARCH_IBMPC
   ifdef CONFIG_CONSOLE_DIRECT
-    OBJS += console-direct.o bell-8254.o
+    ifdef CONFIG_CONSOLE_AMSTRAD_IGA
+      OBJS += console-direct-amstrad.o bell-8254.o
+    else
+      OBJS += console-direct.o bell-8254.o
+    endif
   endif
   ifdef CONFIG_CONSOLE_DUAL
     OBJS += crtc-6845.o
@@ -152,6 +156,8 @@ KeyMaps/keymaps.h:
 	$(MAKE) -C KeyMaps keymaps.h
 
 console-direct.o: console.c
+
+console-direct-amstrad.o: console.c
 
 console-direct-pc98.o: console.c
 
