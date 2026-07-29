@@ -15,7 +15,6 @@ ftp \- Internet file transfer program
 .B \-u 
 .I username
 ]
-.RB [ \-q ]
 .RI [ host
 [
 .I port
@@ -346,13 +345,6 @@ will attempt to autologin at startup.
 .B \-p \fIpassword\fR
 Use this password to attempt auto-login to the remote server. If auto-login fails, the connection will be closed and the 'ftp>' prompt will appear. A new connection may be established using the
 'open' command.
-.SH "QEMU support"
-When running ftp inside the QEMU emulator, use the 
-.B \-q option with 
-.B ftp 
-in order to map addresses and ports correctly. With this option, `passive' mode file transfers
-between the local system and the host are fully supported. If connecting inside the system (loopback), both `passive' 
-and `port' modes work.
 .SH "SEE ALSO"
 ftpd(8)
 ftpput(1)

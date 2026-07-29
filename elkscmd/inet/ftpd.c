@@ -34,8 +34,6 @@
 #define		FALSE		0
 #define		FTP_PORT	21
 #define		MAXARGS 256     /* max names in wildcard expansion */
-#define		PASV_PORT	49821U	/* 'random' port for passive connections */
-#define		QEMU_PORT	8041U	/* outside port for QEMU */
 
 #ifndef MAXPATHLEN
 #define		MAXPATHLEN	256
@@ -110,12 +108,13 @@ struct cmd_tab cmdtab[] = {
 };
 
 static int debug = 0;
-static int qemu = 0;
 static int nofork = 0;
+static char *pasv_ip = NULL;
 static int timeout = 900;
 static int maxtimeout = 7200;
 static int controlfd;
-static char real_ip[20];
+static unsigned int pasv_min_port = 0;
+static unsigned int pasv_max_port = 0;
 
 int do_nlist(int, char *);
 
@@ -232,9 +231,6 @@ int do_active(char *client_ip, unsigned int client_port, unsigned int server_por
 	/* initiate data connection fd with client ip and client port             */
 	bzero(&cliaddr, sizeof(cliaddr));
 
-	if (qemu) ip = real_ip;		/* for QEMU hack, use this IP instead of 
-					 * the one sent by the client. */
-	//printf("DEBUG: connect to (real) %s/%u\n", ip, client_port);
 	cliaddr.sin_family = AF_INET;
 	cliaddr.sin_port = htons(client_port);
 	cliaddr.sin_addr.s_addr = in_aton(ip);
@@ -504,7 +500,7 @@ int do_pasv(int *datafd) {
 
 	pasv.sin_family = AF_INET;
 	pasv.sin_addr.s_addr = htonl(INADDR_ANY);
-	if (qemu) port = PASV_PORT;	// Force predictable port #
+	if (pasv_min_port) port = pasv_min_port;
 	pasv.sin_port = htons(port);
 	i = 0;
 	while (bind(fd, (struct sockaddr *)&pasv, sizeof(pasv)) < 0) {
@@ -517,8 +513,7 @@ int do_pasv(int *datafd) {
 			return -1;
 		} 
 		port++;
-		if (qemu) 
-			if (port >= (PASV_PORT + 9)) port = PASV_PORT;
+		if (pasv_max_port && port > pasv_max_port) port = pasv_min_port;
     		pasv.sin_port = htons(port);
 	}
 	i = sizeof(pasv);
@@ -533,21 +528,22 @@ int do_pasv(int *datafd) {
 		return -1;
 	}
 
+	/* Get current local IP from control connection */
+	{
+		struct sockaddr_in local;
+		unsigned int len = sizeof(local);
+		if (getsockname(controlfd, (struct sockaddr *)&local, &len) == 0)
+			pasv.sin_addr.s_addr = local.sin_addr.s_addr;
+	}
+	if (pasv_ip)
+		pasv.sin_addr.s_addr = in_aton(pasv_ip);
 	a = (char *) &pasv.sin_addr;
 	p = (char *) &pasv.sin_port;
 	sprintf(str, "227 Entering Passive Mode (%d,%d,%d,%d,%d,%d)\r\n", UC(a[0]),
 		UC(a[1]), UC(a[2]), UC(a[3]), UC(p[0]), UC(p[1]));
-
-	if (qemu) {
-		unsigned int qport = QEMU_PORT + port - PASV_PORT;
-		sprintf(str, "227 Entering Passive Mode (127,0,0,1,%u,%u)\r\n",
-			htons(qport)&0xff, htons(qport)>>8);
-	}
     	write(controlfd, str, strlen(str));
 	if (debug) printf("%s", str);
 	i = sizeof(pasv);
-	//FIXME: The accept() will block forever - this will happen in QEMU if an external client
-	// requests a passive mode connection.
 	if ((*datafd = accept(fd, (struct sockaddr *)&pasv, (unsigned int *)&i)) < 0 ) {
 		perror("accept");
 		close(fd);
@@ -637,54 +633,17 @@ int do_stor(int datafd, char *input) {
 }
 
 void usage() {
-	printf("Usage: ftpd [-d] [-D] [-q] [<listen-port>]\n");
+	printf("Usage: ftpd [-d] [-D] [-n ip] [-P min:max] [<listen-port>]\n");
 	exit(1);
 }
 
-
-/*
- * Get the current interface IP address from ktcp.
- *
- * The kernel caches sock->localaddr at bind time from ktcp's response,
- * and never refreshes it. So getsockname() on the listen socket always
- * returns the IP that was current when ftpd started, even after ifconfig
- * changes the interface address. This stale value makes loopback detection
- * (myaddr == client_addr) fail after an ifconfig, because myaddr still
- * holds the old IP while the client connects from the new one.
- *
- * Creating a fresh socket and binding to INADDR_ANY forces ktcp to respond
- * with its current local_ip global — which IS updated by ifconfig via the
- * NS_SET_IP netconf path. We then read it back via getsockname() and
- * discard the throwaway socket.
- */
-static unsigned long get_current_ip(void)
-{
-	int fd;
-	struct sockaddr_in test;
-	unsigned int len = sizeof(test);
-	unsigned long ip = 0;
-
-	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-		return ip;
-
-	test.sin_family = AF_INET;
-	test.sin_addr.s_addr = htonl(INADDR_ANY);
-	test.sin_port = htons(0);
-
-	if (bind(fd, (struct sockaddr *)&test, sizeof(test)) == 0)
-		getsockname(fd, (struct sockaddr *)&test, (unsigned int *)&len);
-	ip = test.sin_addr.s_addr;
-	close(fd);
-	return ip;
-}
 
 int main(int argc, char **argv) {
 	int listenfd, fd, ret;
 	pid_t pid;
 	unsigned int myport = FTP_PORT;
-	struct sockaddr_in servaddr, myaddr;
+	struct sockaddr_in servaddr;
 	struct sockaddr_in client;
-	char *cp;
 
 	while (--argc) {
 		argv++;
@@ -693,19 +652,28 @@ int main(int argc, char **argv) {
 				debug++;
 			else if (argv[0][1] == 'D') 
 				nofork++;
-			else if (argv[0][1] == 'q') {
-				qemu++;
+			else if (argv[0][1] == 'P') {
+				argc--; argv++;
+				char *colon = strchr(argv[0], ':');
+				if (colon) {
+					pasv_min_port = atoi(argv[0]);
+					pasv_max_port = atoi(colon + 1);
+				} else {
+					pasv_min_port = atoi(argv[0]);
+					pasv_max_port = pasv_min_port;
+				}
+				if (debug) printf("PASV port range: %u-%u\n", pasv_min_port, pasv_max_port);
+			} 			else if (argv[0][1] == 'n') {
+				argc--; argv++;
+				pasv_ip = argv[0];
+				if (debug) printf("PASV IP: %s\n", pasv_ip);
 			} else
 				usage();
 		} else {
 			myport = atoi(argv[0]);
-			break;	/* ignore rest of command line if any */
+			break;
 		}
 	}
-	if ((cp = getenv("QEMU")) != NULL) 
-		qemu = atoi(cp);
-	if (qemu && debug)
-		printf("QEMU mode\n");
 
 	if ((listenfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 		perror("ftpd");
@@ -734,9 +702,6 @@ int main(int argc, char **argv) {
 		perror("listen");
 		exit(3);
 	}
-	ret = sizeof(myaddr);	/* save my own address for later use */
-	if (getsockname(listenfd, (struct sockaddr *) &myaddr, (unsigned int *)&ret) < 0)
-		perror("getsockname");
 
 	if (!nofork) {
 		/* become daemon, debug output on 1 and 2*/
@@ -787,39 +752,14 @@ int main(int argc, char **argv) {
 			close(listenfd);
 			signal(SIGCHLD, SIG_DFL);
 
-			/*
-			 * Refresh myaddr so the loopback check below sees the current
-			 * interface IP, not the stale one captured at startup.
-			 *
-			 * Without this, after ifconfig changes the address:
-			 *   - myaddr = 10.0.2.15 (old, captured at startup)
-			 *   - client = 127.0.0.1 or the new IP
-			 *   - Neither matches myaddr, so qemu stays ON
-			 *   - PASV then reports 127,0,0,1:8041 (QEMU-mapped port)
-			 *   - but the server really listens on port 49821
-			 *   - Client tries 127.0.0.1:8041 inside the guest -> refused
-			 */
-			myaddr.sin_addr.s_addr = get_current_ip();
-
-			strncpy(real_ip, in_ntoa(client.sin_addr.s_addr), 20); // Save for QEMU hack
-			/*
-			 * Disable QEMU mode for loopback connections.
-			 *
-			 * Two checks:
-			 *   1) client IP == myaddr (current local IP) — catches
-			 *      "ftp <local-ip>" after ifconfig
-			 *   2) client IP == 127.0.0.1 — catches "ftp localhost",
-			 *      which in_gethostbyname() always resolves to
-			 *      INADDR_LOOPBACK (hardcoded fast-path in libc)
-			 */
-			if (qemu && (myaddr.sin_addr.s_addr == client.sin_addr.s_addr ||
-			    client.sin_addr.s_addr == htonl(INADDR_LOOPBACK))) {
-				if (debug) printf("Loopback detected, disabling qemu mode.\n");
-				qemu = 0; 
+			if (debug) {
+				struct sockaddr_in local;
+				unsigned int len = sizeof(local);
+				getsockname(controlfd, (struct sockaddr *)&local, &len);
+				printf("local: %s, remote: %s\n", 
+					in_ntoa(local.sin_addr.s_addr),
+					in_ntoa(client.sin_addr.s_addr));
 			}
-			if (debug)
-				printf("local: %s, remote: %s, QEMU: %d\n", 
-					in_ntoa(myaddr.sin_addr.s_addr), real_ip, qemu);
 
 			send_reply(220, "Welcome - ELKS FTP server speaking");
 
@@ -845,6 +785,10 @@ int main(int argc, char **argv) {
 				switch (code) {
 
 				case CMD_PORT:
+					if (pasv_ip) {
+						send_reply(502, "Active mode not available, use passive mode");
+						break;
+					}
 					if (datafd >= 0) { /* connection already open, close it! */
 						close(datafd);
 						datafd = -1;
@@ -1006,15 +950,6 @@ int main(int argc, char **argv) {
 					if (!strncasecmp(namebuf, "DEBU", 4)) {
 						debug++;
 						send_reply(200, "Debug level increased");
-						break;
-					}
-					if (!strncasecmp(namebuf, "QEMU", 4)) {
-						qemu++;
-						qemu &= 1;
-						if (qemu) 
-							send_reply(200, "QEMU mode now active");
-						else 
-							send_reply(200, "QEMU mode deactivated");
 						break;
 					}
 					if (strncasecmp(namebuf, "IDLE", 4)) {

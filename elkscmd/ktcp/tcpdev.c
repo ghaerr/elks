@@ -116,14 +116,17 @@ reject:
     }
 
     n->tcpcb.sock = db->sock;
-    n->tcpcb.localaddr = local_ip;
+    if (db->addr.sin_addr.s_addr == htonl(0x7f000001))
+        n->tcpcb.localaddr = db->addr.sin_addr.s_addr;
+    else
+        n->tcpcb.localaddr = local_ip;
     n->tcpcb.localport = port;
     n->tcpcb.state = TS_CLOSED;
 
     bind_ret.type = TDT_BIND;
     bind_ret.ret_value = 0;
     bind_ret.sock = db->sock;
-    bind_ret.addr_ip = local_ip;
+    bind_ret.addr_ip = n->tcpcb.localaddr;
     bind_ret.addr_port = htons(port);
     write(tcpdevfd, &bind_ret, sizeof(bind_ret));
 }
@@ -169,6 +172,8 @@ static void tcpdev_accept(void)
     //accept_ret.sock = db->newsock;	/* report back new socket*/
     accept_ret.addr_ip = cb->remaddr;
     accept_ret.addr_port = htons(cb->remport);
+    accept_ret.locaddr = cb->localaddr;
+    accept_ret.locport = htons(cb->localport);
     write(tcpdevfd, &accept_ret, sizeof(accept_ret));
 }
 
@@ -200,6 +205,8 @@ void tcpdev_notify_accept(struct tcpcb_s *cb)
     //accept_ret.sock = listencb->newsock;	/* report back new socket*/
     accept_ret.addr_ip = cb->remaddr;
     accept_ret.addr_port = htons(cb->remport);
+    accept_ret.locaddr = cb->localaddr;
+    accept_ret.locport = htons(cb->localport);
 
     debug_accept("tcpdev notify_accept: ACCEPT (SYN received before accept) sock[%p] newsock[%p]\n",
 						listencb->sock, listencb->newsock);
