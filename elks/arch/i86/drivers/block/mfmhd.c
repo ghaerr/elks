@@ -460,22 +460,24 @@ static int access_count[MFM_MAX_DRIVES];
 static unsigned char mfmhd_control_shadow;
 static int mfmhd_quiet_probe;
 static char *mfmhd_bounce;
-extern int mfmhd_slow_profile;  /* /bootopts mfm= bit 0 selects slow timing */
+extern int mfm_opts;        /* /bootopts mfm= options */
+int mfmhd_slow_profile;     /* mfm= bit 0 selects slow timing */
 /*
- * /bootopts mfm= bit 1 moves sector payloads over programmed I/O instead of
+ * mfm= bit 1 moves sector payloads over programmed I/O instead of
  * 8237 DMA channel 3.  Machines whose chipset does not service DRQ3 the way
  * a true IBM XT does (the Amstrad PC1512/PC1640 among them) need this; the
  * driver also sets it by itself after a failed DMA transfer.
  */
-extern int mfmhd_pio;
+int mfmhd_pio;
 /*
- * /bootopts mfm= bit 2.  Tracing is off unless explicitly requested: these
+ * mfm= bit 2.  Tracing is off unless explicitly requested: these
  * printks go to the console, which is the only diagnostic channel that
  * survives a hard lock-up (the dmesg ring is lost with the machine, and the
  * one serial port is taken by the SerDrive root disk).  Whatever printed last
  * before a freeze stays on screen.
  */
-extern int mfmhd_trace;
+int mfmhd_trace;
+
 static jiff_t mfmhd_probe_deadline;     /* 0 once probing is over */
 
 static int
@@ -2070,6 +2072,10 @@ struct gendisk * INITPROC mfmhd_init(void)
         printk("mfmhd: disabled\n");
         return NULL;
     }
+
+    mfmhd_slow_profile = mfm_opts & 1;  /* bit 0: slow controller timing */
+    mfmhd_pio = (mfm_opts >> 1) & 1;    /* bit 1: PIO sector transfers */
+    mfmhd_trace = (mfm_opts >> 2) & 1;  /* bit 2: driver request tracing */
 
     mfmhd_init_ports();
     mfmhd_debug_set(10, -1, MFMHD_PORT, 0);

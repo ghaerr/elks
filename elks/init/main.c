@@ -36,8 +36,8 @@
 
 #define ARRAYLEN(a)     (sizeof(a)/sizeof(a[0]))
 
+/* external driver options */
 struct netif_parms netif_parms[MAX_ETHS] = {
-
     /* NOTE:  The order must match the defines in netstat.h:
      * ETH_NE2K, ETH_WD, ETH_EL3, ETH_ULTRA, ETH_LANCE */
     { NE2K_IRQ, NE2K_PORT, 0, NE2K_FLAGS },
@@ -46,16 +46,19 @@ struct netif_parms netif_parms[MAX_ETHS] = {
     { ULTRA_IRQ, ULTRA_PORT, ULTRA_RAM, ULTRA_FLAGS },
     { LANCE_IRQ, LANCE_PORT, 0, LANCE_FLAGS },
 };
+int mfmhd_slow_profile;         /* /bootopts mfm= bit 0: slow controller timing */
+int mfmhd_pio;                  /* /bootopts mfm= bit 1: PIO sector transfers */
+int mfmhd_trace;                /* /bootopts mfm= bit 2: driver request tracing */
+int mfm_opts;                   /* CONFIG_BLK_DEV_MFM mfm= options */
+int iga_opts;                   /* CONFIG_CONSOLE_AMSTRAD_IGA iga= options */
+
+/* internal non-driver globals */
 seg_t kernel_cs, kernel_ds;     /* always segment values even in PM */
 int root_mountflags;
 int tracing;
 int nr_ext_bufs, nr_xms_bufs, nr_map_bufs;
 int xms_bootopts;
 int ata_mode = -1;              /* =AUTO default set ATA CF driver mode automatically */
-int mfmhd_slow_profile;         /* /bootopts mfm= bit 0: slow controller timing */
-int mfmhd_pio;                  /* /bootopts mfm= bit 1: PIO sector transfers */
-int mfmhd_trace;                /* /bootopts mfm= bit 2: driver request tracing */
-int amstrad_iga_override;       /* /bootopts iga= 1 forces on, 2 forces off */
 char running_qemu;
 seg_t dmesg_seg;                /* segment of dmesg circular queue */
 static int dmesg;               /* dmesg buffer size in K from /bootopts */
@@ -675,23 +678,20 @@ static int INITPROC parse_options(void)
             nr_xms_bufs = (int)simple_strtol(line+7, 10);
             continue;
         }
+        if (!strncmp(line,"cache=",6)) {
+            nr_map_bufs = (int)simple_strtol(line+6, 10);
+            continue;
+        }
         if (!strncmp(line,"xtide=",6)) {
             ata_mode = (int)simple_strtol(line+6, 10);
             continue;
         }
         if (!strncmp(line,"mfm=",4)) {
-            int mfm_opts = (int)simple_strtol(line+4, 10);
-            mfmhd_slow_profile = mfm_opts & 1;  /* bit 0: slow controller timing */
-            mfmhd_pio = (mfm_opts >> 1) & 1;    /* bit 1: PIO sector transfers */
-            mfmhd_trace = (mfm_opts >> 2) & 1;  /* bit 2: driver request tracing */
+            mfm_opts = (int)simple_strtol(line+4, 10);
             continue;
         }
         if (!strncmp(line,"iga=",4)) {
-            amstrad_iga_override = (int)simple_strtol(line+4, 10);
-            continue;
-        }
-        if (!strncmp(line,"cache=",6)) {
-            nr_map_bufs = (int)simple_strtol(line+6, 10);
+            iga_opts = (int)simple_strtol(line+4, 10);
             continue;
         }
         if (!strncmp(line,"heap=",5)) {

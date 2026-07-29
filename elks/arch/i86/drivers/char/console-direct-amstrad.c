@@ -11,7 +11,7 @@
  * added enough ansi escape sequences for visual editing
  *
  * Amstrad PC1512/PC1640 integrated Paradise PEGA (IGA) support, 2026.
- * Built instead of console-direct.c when CONFIG_CONSOLE_AMSTRAD_IGA is set.
+ * Linked in when CONFIG_CONSOLE_AMSTRAD_IGA is set.
  *
  * The PEGA answers at the CGA/MDA addresses but adds a hardware scroll
  * that must be driven through the 6845 start address, and reports the
@@ -152,7 +152,7 @@ static unsigned char amstrad_iga_sw6;
 static unsigned char amstrad_iga_sw7;
 static unsigned char amstrad_iga_sw9;
 static unsigned char amstrad_iga_sw10;
-extern int amstrad_iga_override; /* /bootopts iga= 1 forces on, 2 forces off */
+extern int iga_opts;        /* /bootopts iga= 1 forces on, 2 forces off */
 
 static unsigned char INITPROC AmstradStatus1(void)
 {
@@ -216,9 +216,9 @@ static void INITPROC AmstradIgaReadSwitches(void)
 
 apply_override:
     /* /bootopts iga= diagnostic override: 1 forces on, 2 forces off. */
-    if (amstrad_iga_override == 1)
+    if (iga_opts == 1)
         amstrad_iga_active = 1;
-    else if (amstrad_iga_override == 2)
+    else if (iga_opts == 2)
         amstrad_iga_active = 0;
 }
 
@@ -228,7 +228,7 @@ static void INITPROC AmstradIgaPrintSwitches(void)
            amstrad_iga_active ? "enabled" : "disabled",
            amstrad_iga_status1, amstrad_iga_ddm, amstrad_iga_sw6,
            amstrad_iga_sw7, amstrad_iga_sw9, amstrad_iga_sw10,
-           amstrad_iga_override ? " (forced)" :
+           iga_opts ? " (forced)" :
            (amstrad_iga_sw10 ? " internal-adapter-off" : ""));
 }
 
@@ -608,7 +608,7 @@ void INITPROC console_init(void)
 
     kbd_init();
 
-    printk("Direct console, %s kbd %ux%u"TERM_TYPE"(%d virtual consoles%s)\n",
+    printk("Amstrad IGA console, %s kbd %ux%u"TERM_TYPE"(%d virtual consoles%s)\n",
            kbd_name, Width, Height, NumConsoles,
            UseRambuf ? ", RAM-buffered" : "");
     AmstradIgaPrintSwitches();

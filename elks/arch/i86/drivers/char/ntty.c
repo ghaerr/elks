@@ -485,7 +485,7 @@ void INITPROC tty_init(void)
     } while (ttyp > ttys);
 
     for (i = TTY_MINOR_OFFSET ; i < NR_CONSOLES + TTY_MINOR_OFFSET ; i++) {
-#if defined(CONFIG_CONSOLE_DIRECT)
+#if defined(CONFIG_CONSOLE_DIRECT) || defined(CONFIG_CONSOLE_AMSTRAD_IGA)
         ttyp->ops = &dircon_ops;
 #elif defined(CONFIG_CONSOLE_BIOS)
         ttyp->ops = &bioscon_ops;

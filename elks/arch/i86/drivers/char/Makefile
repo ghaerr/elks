@@ -84,11 +84,10 @@ endif
 
 ifdef CONFIG_ARCH_IBMPC
   ifdef CONFIG_CONSOLE_DIRECT
-    ifdef CONFIG_CONSOLE_AMSTRAD_IGA
-      OBJS += console-direct-amstrad.o bell-8254.o
-    else
-      OBJS += console-direct.o bell-8254.o
-    endif
+    OBJS += console-direct.o bell-8254.o
+  endif
+  ifdef CONFIG_CONSOLE_AMSTRAD_IGA
+    OBJS += console-direct-amstrad.o bell-8254.o
   endif
   ifdef CONFIG_CONSOLE_DUAL
     OBJS += crtc-6845.o
