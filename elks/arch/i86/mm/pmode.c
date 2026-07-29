@@ -26,16 +26,17 @@
 #error BIOS INT 16h non-scancode keyboard disallowed in PM build. Use CONFIG_KEYBOARD_SCANCODE
 #endif
 
-/* Global Descriptor Table */
-static struct gdt_entry gdt[MAX_GDT_ENTRIES];
+/* segment/selectors for accessing GDT and IDT during and after init */
+static sel_t sel_gdt;           /* GDT segment then selector */
+static sel_t sel_idt = 0;       /* IDT segment/selector, init to real mode segment 0 */
 
 /* round-robin hint for the next candidate free slot */
-static int next_dyn = GDT_FIRST_DYN;
+static sel_t next_dyn = SEL_FIRST_DYN;
 
 /* set GDT entry for passed selector */
 sel_t desc_set(sel_t sel, addr_t base, addr_t limit, byte_t access)
 {
-    struct gdt_entry *d = &gdt[SEL_INDEX(sel)];
+    struct gdt_entry __far *d = _MK_FP(sel_gdt, SEL_INDEX(sel));
 
     d->limit_lo     = (word_t)limit - 1;    /* limit is bytes-1 */
     d->base_lo      = base & 0xFFFF;
@@ -49,7 +50,8 @@ sel_t desc_set(sel_t sel, addr_t base, addr_t limit, byte_t access)
 /* Change access byte for passed selector */
 void desc_chaccess(sel_t sel, byte_t access)
 {
-    gdt[SEL_INDEX(sel)].access = access;
+    struct gdt_entry __far *d = _MK_FP(sel_gdt, SEL_INDEX(sel));
+    d->access = access;
 }
 
 /* Find a free GDT slot, fill it, return its selector (0 = table full or limit > 64K).
@@ -61,34 +63,38 @@ void desc_chaccess(sel_t sel, byte_t access)
  */
 sel_t desc_alloc(addr_t base, seloff_t limit, byte_t access)
 {
-    int i, scanned;
-    sel_t sel = 0;
+    struct gdt_entry __far *d;
+    sel_t i, sel = 0;
+    int scanned;
     flag_t flags;
 
     save_flags(flags);  /* may be called at interrupt time through xms_fmemcpy */
     clr_irq();
     i = next_dyn;
-    for (scanned = 0; scanned < MAX_GDT_ENTRIES - GDT_FIRST_DYN; scanned++) {
-        if (gdt[i].access == 0) {
-            sel = desc_set(MK_SEL(i, SEL_GDT, SEL_RPL0), base, limit, access);
-            next_dyn = (i + 1 < MAX_GDT_ENTRIES) ? i + 1 : GDT_FIRST_DYN;
+    for (scanned = 0; scanned < MAX_GDT_ENTRIES - (SEL_FIRST_DYN >> 3); scanned++) {
+        d = _MK_FP(sel_gdt, i);
+        if (d->access == 0) {
+            sel = desc_set(i, base, limit, access);
+            next_dyn = (i + 8 < GDT_SIZE) ? i + 8 : SEL_FIRST_DYN;
             break;
         }
-        if (++i >= MAX_GDT_ENTRIES) i = GDT_FIRST_DYN;
+        if ((i += 8) >= GDT_SIZE) i = SEL_FIRST_DYN;
     }
     restore_flags(flags);
+    if (!sel) printk("desc_alloc: FAIL!\n");
     return sel;
 }
 
 void desc_free(sel_t sel)
 {
-    gdt[SEL_INDEX(sel)].access = 0;                      /* clear Present */
+    struct gdt_entry __far *d = _MK_FP(sel_gdt, SEL_INDEX(sel));
+    d->access = 0;                  /* clear present bit */
 }
 
 /* return selector physical base address (< 16M) */
 addr_t desc_base(sel_t sel)
 {
-    struct gdt_entry *d = &gdt[SEL_INDEX(sel)];
+    struct gdt_entry __far *d = _MK_FP(sel_gdt, SEL_INDEX(sel));
 
     return ((addr_t)d->base_hi << 16) | d->base_lo;
 }
@@ -96,14 +102,14 @@ addr_t desc_base(sel_t sel)
 /* return selector limit (< 64K). FIXME: will need 16M limit for 386 PM/fmemalloc */
 seloff_t desc_limit(sel_t sel)
 {
-    return gdt[SEL_INDEX(sel)].limit_lo;
+    struct gdt_entry __far *d = _MK_FP(sel_gdt, SEL_INDEX(sel));
+    return d->limit_lo;
 }
 
 
 /* Set an entry in the IDT; uses sel_idt which initially points to real mode IVT at 0:0.
  * After idt_init() sel_idt is updated to SEL_IDT for PM access to the IDT.
  */
-static seg_t sel_idt = 0;   /* init for real mode segment 0 */
 void idt_gate_set(unsigned int vect, unsigned int proc, sel_t selector, byte_t access)
 {
     struct idt_gate __far *g;
@@ -136,30 +142,19 @@ static void idt_init(void)
 /* Called after pm_early_init after kernel CS, DS and .fartext set */
 void INITPROC pm_init(void)
 {
-    /* setupb/setupw setup.S data segment */
-    desc_set(MK_SEL(GDT_SETUP, SEL_GDT, SEL_RPL0), SEG_INITSEG << 4, 512, DESC_KDATA);
-
-    /* boot options (/bootopts) segment */
-    desc_set(MK_SEL(GDT_OPTSEG, SEL_GDT, SEL_RPL0), SEG_OPTSEG << 4, 1024, DESC_KDATA);
-
-    /* BIOS data area */
-    desc_set(MK_SEL(GDT_BIOSDATA, SEL_GDT, SEL_RPL0), SEG_BIOSDATA << 4, 256,
-        DESC_KDATA);
-
-    /* text video memory */
-    desc_set(MK_SEL(GDT_VIDEO, SEL_GDT, SEL_RPL0), (addr_t)SEG_VIDEO << 4, 32768L,
-        DESC_KDATA);
+    desc_set(SEL_SETUP, SEG_INITSEG << 4, 512, DESC_KDATA);     /* setup.S data */
+    desc_set(SEL_OPTSEG, SEG_OPTSEG << 4, 1024, DESC_KDATA);    /* /bootopts segment */
+    desc_set(SEL_BIOSDATA, SEG_BIOSDATA << 4, 256, DESC_KDATA); /* BIOS data area */
+    desc_set(SEL_VIDEO, (addr_t)SEG_VIDEO << 4, 32768L, DESC_KDATA); /* text video area */
 
 #ifdef TRACKSEGSZ
     /* low-memory DMA track buffer (direct floppy) */
-    desc_set(MK_SEL(GDT_TRACKBUF, SEL_GDT, SEL_RPL0), SEG_TRACK << 4, TRACKSEGSZ,
-        DESC_KDATA);
+    desc_set(SEL_TRACKBUF, SEG_TRACK << 4, TRACKSEGSZ, DESC_KDATA);
 #endif
 
 #ifdef DMASEGSZ
     /* shared low-memory DMA bounce buffer (ATA/CF) */
-    desc_set(MK_SEL(GDT_DMABUF, SEL_GDT, SEL_RPL0), SEG_DMASEG << 4, DMASEGSZ,
-        DESC_KDATA);
+    desc_set(SEL_DMABUF, SEG_DMASEG << 4, DMASEGSZ, DESC_KDATA);
 #endif
 }
 
@@ -170,28 +165,30 @@ void INITPROC pm_init(void)
 void pm_early_init(void)
 {
     addr_t   data_base  = (addr_t)kernel_ds << 4;
-    static struct dtr gdtr, idtr;
+    struct dtr gdtr, idtr;
 
     /* enable A20 while still in real mode (calls BIOS) */
     if (!enable_a20_gate())
         printk("A20 fail ");
 
-    //desc_set(MK_SEL(GDT_NULL, SEL_GDT, SEL_RPL0), 0, 0, 0);
+    /* Init sel_gdt now with a segment address to allow desc_set to build the
+     * initial GDT in real mode, which is placed just after the kernel data segment.
+     * Then create the SEL_GDT, SEL_IDT ad other selectors, which will be used after
+     * entering PM.
+     */
+    sel_gdt = kernel_ds + 0x1000;
+    fmemsetw(0, sel_gdt, 0, GDT_SIZE >> 1);
 
-    desc_set(MK_SEL(GDT_KCODE,  SEL_GDT, SEL_RPL0),
-        (addr_t)kernel_cs << 4, (unsigned)_endtext, DESC_KCODE);
-
-    desc_set(MK_SEL(GDT_KDATA,  SEL_GDT, SEL_RPL0), data_base, 65536, DESC_KDATA);
-
-    if (kernel_ftext) {
-        desc_set(MK_SEL(GDT_KFTEXT, SEL_GDT, SEL_RPL0),
-            (addr_t)kernel_ftext << 4, (unsigned)_endftext, DESC_KCODE);
-    }
+    //desc_set(SEL_NULL, 0, 0, 0);
+    desc_set(SEL_KCODE, (addr_t)kernel_cs << 4, (unsigned)_endtext, DESC_KCODE);
+    desc_set(SEL_KDATA, data_base, 65536, DESC_KDATA);
+    if (kernel_ftext)
+        desc_set(SEL_KFTEXT, (addr_t)kernel_ftext << 4, (unsigned)_endftext, DESC_KCODE);
 
     /* KCODE same base/limit as KDATA but executable+readable. IRQ trampolines are
      * built in the kernel data segment, and an IDT gate needs an executable selector.
      */
-    desc_set(MK_SEL(GDT_KDATA_EXEC, SEL_GDT, SEL_RPL0), data_base, 65536, DESC_KCODE);
+    desc_set(SEL_KDATA_EXEC, data_base, 65536, DESC_KCODE);
 
     /* IDT replaces real mode IVT interrupt vector table + 8 bytes from 0:0 to 0:0407.
      * NOTE: With the normal MAX_IDT_ENTRIES of 129 (required for syscall INT 0x80),
@@ -200,16 +197,18 @@ void pm_early_init(void)
      * bytes of the BDA contain the port addresses of COM1-COM4, which aren't used
      * by ELKS setupb/setupw anyways.
      */
-    desc_set(MK_SEL(GDT_IDT, SEL_GDT, SEL_RPL0), 0, MAX_IDT_ENTRIES * 8, DESC_KDATA);
+    desc_set(SEL_IDT, 0, MAX_IDT_ENTRIES * 8, DESC_KDATA);
+    desc_set(SEL_GDT, (addr_t)sel_gdt << 4, GDT_SIZE, DESC_KDATA);
 
     /* initialize IVT using real mode sel_idt segment 0 to fault-catch stubs */
     idt_init();
 
-    gdtr.limit = sizeof(gdt) - 1;
-    gdtr.base  = data_base + (unsigned)&gdt; /* linear address of GDT */
+    gdtr.limit = GDT_SIZE - 1;
+    gdtr.base  = (addr_t)sel_gdt << 4;      /* linear address of GDT */
     idtr.limit = MAX_IDT_ENTRIES * sizeof(struct idt_gate) - 1;
     idtr.base  = 0;                         /* IDT replaces real mode IVT at 0:0 */
-    sel_idt = SEL_IDT;                      /* use SEL_IDT for idt_get_set from now on */
+    sel_idt = SEL_IDT;                      /* use SEL_IDT int idt_get_set from now on */
+    sel_gdt = SEL_GDT;                      /* and SEL_GDT in desc_alloc */
 
     enable_protected_mode(&gdtr, &idtr);    /* enter PM; returns here in protected mode */
 }

@@ -225,8 +225,11 @@ static void INITPROC early_kernel_init(void)
     heap_init();                    /* init near memory allocator */
     heapofs = setup_arch();         /* sets membase and memend globals */
     heap_add((void *)heapofs, heapsize);
+#ifdef CONFIG_286_PMODE
+    membase += GDT_SIZE >> 4;       /* skip GDT table at kernel_ds + 0x1000 */
+#endif
     //memend = 256 << 6;            /* force early XMS allocations in PM */
-    dmesg_init();
+    dmesg_init();                   /* may decrease memend */
     mm_init(membase, memend);       /* init far/main memory allocator */
 
 #ifdef CONFIG_BOOTOPTS
@@ -668,7 +671,9 @@ static int INITPROC parse_options(void)
             continue;
         }
         if (!strncmp(line,"heap=",5)) {
+#ifndef CONFIG_286_PMODE
             heapsize = (unsigned int)simple_strtol(line+5, 10);
+#endif
             continue;
         }
         if (!strncmp(line,"dmesg=",6)) {
@@ -818,7 +823,7 @@ void INITPROC dmesg_init(void)
 #endif
 
         q = _MK_FP(dmesg_seg, 0); 
-        q->size = (dmesg << 10) - 3 * sizeof(int);
+        q->size = (dmesg << 10) - offsetof(struct dmesg_queue, base);
         q->len = q->head = 0;
     }   
 }      
