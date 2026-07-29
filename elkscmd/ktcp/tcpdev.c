@@ -116,14 +116,17 @@ reject:
     }
 
     n->tcpcb.sock = db->sock;
-    n->tcpcb.localaddr = local_ip;
+    if (db->addr.sin_addr.s_addr == htonl(0x7f000001))
+        n->tcpcb.localaddr = db->addr.sin_addr.s_addr;
+    else
+        n->tcpcb.localaddr = local_ip;
     n->tcpcb.localport = port;
     n->tcpcb.state = TS_CLOSED;
 
     bind_ret.type = TDT_BIND;
     bind_ret.ret_value = 0;
     bind_ret.sock = db->sock;
-    bind_ret.addr_ip = local_ip;
+    bind_ret.addr_ip = n->tcpcb.localaddr;
     bind_ret.addr_port = htons(port);
     write(tcpdevfd, &bind_ret, sizeof(bind_ret));
 }
