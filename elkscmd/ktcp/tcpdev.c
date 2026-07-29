@@ -33,7 +33,7 @@ int tcpdev_init(char *fdev)
 {
     int fd  = open(fdev, O_NONBLOCK | O_RDWR);
     if (fd < 0)
-	printf("ktcp: can't open tcpdev device %s\n",fdev);
+	printf("ktcp: can't open %s (is network already running?)\n", fdev);
     return fd;
 }
 

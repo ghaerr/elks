@@ -481,8 +481,9 @@ int do_nlist(int dfd, char *iobuf)
 /* Passive mode: Server listens for incoming data connection */
 int do_pasv(int *datafd) {
 	int fd;
-	unsigned int i = 1, port = 0;
+	unsigned int i = 1, port = 0, len;
 	struct sockaddr_in pasv;
+	struct sockaddr_in local;
 	char *p, *a;
 	char str[100], *pasv_err = "425 Can't open passive connection.\r\n";
 
@@ -504,7 +505,8 @@ int do_pasv(int *datafd) {
 	pasv.sin_port = htons(port);
 	i = 0;
 	while (bind(fd, (struct sockaddr *)&pasv, sizeof(pasv)) < 0) {
-		if (debug) printf("PASV bind failed: host %s port %u\n", in_ntoa(pasv.sin_addr.s_addr), ntohs(pasv.sin_port));
+		if (debug) printf("PASV bind failed: host %s port %u\n",
+			in_ntoa(pasv.sin_addr.s_addr), ntohs(pasv.sin_port));
 		perror("PASV bind");
 		if (i++ > 10 || errno != EADDRINUSE) {
 			if (debug) printf("Bind: Could not connect on port %u\n", port);
@@ -529,12 +531,9 @@ int do_pasv(int *datafd) {
 	}
 
 	/* Get current local IP from control connection */
-	{
-		struct sockaddr_in local;
-		unsigned int len = sizeof(local);
-		if (getsockname(controlfd, (struct sockaddr *)&local, &len) == 0)
-			pasv.sin_addr.s_addr = local.sin_addr.s_addr;
-	}
+	len = sizeof(local);
+	if (getsockname(controlfd, (struct sockaddr *)&local, &len) == 0)
+		pasv.sin_addr.s_addr = local.sin_addr.s_addr;
 	if (pasv_ip)
 		pasv.sin_addr.s_addr = in_aton(pasv_ip);
 	a = (char *) &pasv.sin_addr;
@@ -662,11 +661,9 @@ int main(int argc, char **argv) {
 					pasv_min_port = atoi(argv[0]);
 					pasv_max_port = pasv_min_port;
 				}
-				if (debug) printf("PASV port range: %u-%u\n", pasv_min_port, pasv_max_port);
-			} 			else if (argv[0][1] == 'n') {
+			} else if (argv[0][1] == 'n') {
 				argc--; argv++;
 				pasv_ip = argv[0];
-				if (debug) printf("PASV IP: %s\n", pasv_ip);
 			} else
 				usage();
 		} else {
