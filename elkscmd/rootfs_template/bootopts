@@ -42,4 +42,3 @@ hma=kernel
 #console=ttyS0,19200 3
 #MOUSE_PORT=/dev/ttyS1
 #DEBUG_PORT=none
-FTPDARGS=-q -P 49152:49152
