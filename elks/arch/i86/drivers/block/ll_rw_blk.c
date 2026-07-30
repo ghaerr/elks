@@ -371,6 +371,10 @@ void INITPROC blk_dev_init(void)
     struct gendisk *hddisk = directhd_init();
 #endif
 
+#ifdef CONFIG_BLK_DEV_MFMHD
+    struct gendisk *mfmdisk = mfmhd_init();
+#endif
+
 #ifdef CONFIG_BLK_DEV_FD
     floppy_init();      /* direct floppy, init before SSD for possible XMS track cache */
 #endif
@@ -398,5 +402,10 @@ void INITPROC blk_dev_init(void)
 #ifdef CONFIG_BLK_DEV_ATA_CF
     if (atadisk)
         init_partitions(atadisk);
+#endif
+
+#ifdef CONFIG_BLK_DEV_MFMHD
+    if (mfmdisk)
+        init_partitions(mfmdisk);
 #endif
 }

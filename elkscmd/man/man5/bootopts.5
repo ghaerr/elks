@@ -13,7 +13,7 @@ which contains boot options - configuration settings affecting how ELKS starts a
 A variety of configuration parameters can be set in the /bootopts file
 without requiring kernel recompilation.  Very useful for debugging and quick configuration changes.
 .PP
-.B bootopts
+.B /bootopts
 allows e.g. setting the console to be serial (or any other device, such as virtual Alt2 /dev/tty2), 
 root mount device (FAT and Minix), read-only/read-write, alternative startup process & args, 
 init run level, network start, and set environment variables for the initial startup process, 
@@ -23,9 +23,13 @@ Note: if the kernel is compiled with serial console ON, `console=` redirection w
 ELKS boot options are specified in a Linux 2.0-style format where newlines are optional
 except when it comes to comments: Anything following a hash until the next newline 
 is a comment and ignored. Note however that the 
-.B bootopts
+.B /bootopts
 file may not exceed 511 bytes in length - including comments.
 Also note that the file MUST start with 2 hash characters for validation.
+.PP
+The
+.BR /bootopts
+file is limited to a maximum of 1023 bytes in size.
 .PP
 Here's an expanded version of the distribution (default)
 .B /bootopts
@@ -35,25 +39,44 @@ file, with everything commented out:
 ##      
 #console=ttyS0,57600 root=fd0 net=ne0 3 # sercon+multiuser+net
 #TZ=MDT7            # timezone
-#QEMU=1             # to use ftp/ftpd in qemu
 #init=/bin/init 3   # multiuser serial
 #init=/bin/sh       # singleuser shell
 #LOCALIP=10.0.2.16
-#HOSTNAME=elks16
+#GATEWAY=10.0.2.2
+#NETMASK=255.255.255.0
 #comirq=,,7,10      # IRQ-settings for COM1-4
 #ne0=12,0x300,,0x80
 #wd0=10,0x300,0xCC00,0x80
 #3c0=11,0x330,,0x80
+#le0=9,0x340,,0x80
 #buf=8              # L2/EXT buffers (default 64, max 256)
 #cache=4            # L1 buffers (default 8, max 20)
 #xmsbuf=2975        # number of XMS buffers
 #umb=0xC000:0x800,0xD000:0x1000
 #sync=30            # seconds per auto-sync
+#3                  # multiuser serial
+#n                  # no rc.sys
+#dmesg=1            # 1K dmesg buffer
+#hma=kernel         # place kernel code in HMA
+#xms=off            # force XMS off
+#xms=on             # enable XMS if possible
+#xms=int15          # use BIOS INT 15 for XMS
+#disable=hda,cfa,df0,fd0
+#disable=cfa        # disable ATA/CF driver
+#disable=hda        # disable BIOS HD driver
+#xtide=3 # 0=ATA, 1=XTIDEv1, 2=XTIDEv2 (high speed), 3=XTCF
+#xtide=1    # for PCem
+#root=cfa1          # boot from first partition of first ATA/CF device
+#root=hda1 ro       # boot from readonly first partition of first BIOS HD device
+#root=df0           # boot from direct floppy drive 0
+#enable=df0         # enable direct floppy driver
+#disable=fd0        # disable BIOS floppy driver
 #console=ttyS0,19200 # serial console
 #console=tty2       # alt2 console
 #root=hda1          # First HD, partition 1
 #ro                 # read-only root
 #kstack             # kernel stack overflow checking
+#istack             # interrupt stack checking
 #strace             # system call tracing
 #net=slip
 .fi
@@ -90,13 +113,14 @@ comirq=,7            sets non-standard IRQ (7) on COM2
 .fi
 .PP
 To edit and adapt
-.B bootopts,
+.B /bootopts,
 either edit the file 
-.I elkscmd/rootfs_template/bootopts and run "make" to create another image on the development host, 
+.I elkscmd/rootfs_template/bootopts
+and run "make" to create another image on the development host,
 or edit 
 .B /bootopts
 on a  running ELKS system and reboot. Note that 
-.B bootopts
+.B /bootopts
 is read only once - any change requires a reboot to have effect.
 Also not that the device configuration parameters such as 
 .I comirq=
@@ -109,14 +133,7 @@ the commas may not be omitted.
 /bin/init
 /bootopts	System configuration file
 .fi
-.SH BUGS
-Not all man pages referenced in the SEE ALSO section below exist yet.
-.PP
-.B bootopts
-and the boot-loader that uses it have severe space constraints and can never be really user friendly.
-.SH "SEE ALSO"
-.BR net.cnf (5),
-.BR setup (8),
+.BR /etc/net.cfg (5),
+.BR /etc/mount.cfg (5),
 .BR tty (4),
-.BR mount.cnf (5),
 .BR init (8).

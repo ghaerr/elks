@@ -190,7 +190,7 @@ void catch(int sig)
 
 static void usage(void)
 {
-    printf("Usage: ktcp [-b] [-d] [-m MTU] [-p ee0|ne0|wd0|3c0|slip|cslip] [-s baud] [-l device] [local_ip] [gateway] [netmask]\n");
+    printf("Usage: ktcp [-b] [-d] [-m MTU] [-p <ethdev>|slip|cslip] [-s baud] [-l device] [local_ip] [gateway] [netmask]\n");
     exit(1);
 }
 
@@ -215,17 +215,11 @@ int main(int argc,char **argv)
 		mtu = (int)atol(optarg);
 		break;
 	case 'p':		/* link protocol*/
-	    linkprotocol = !strcmp(optarg, "ne0")? LINK_ETHER :
-			   !strcmp(optarg, "wd0")? LINK_ETHER :
-			   !strcmp(optarg, "3c0")? LINK_ETHER :
-			   !strcmp(optarg, "ee0")? LINK_ETHER :
-			   !strcmp(optarg, "le0")? LINK_ETHER :
-			   !strcmp(optarg, "slip")? LINK_SLIP :
-			   !strcmp(optarg, "cslip")? LINK_CSLIP:
-			   -1;
-	    if (linkprotocol < 0) usage();
+	    linkprotocol = !strcmp(optarg, "slip")? LINK_SLIP :
+			   !strcmp(optarg, "cslip")? LINK_CSLIP :
+			    LINK_ETHER;
 	    if (linkprotocol == LINK_ETHER)
-		strcpy(&ethdev[5], optarg);
+		strncpy(&ethdev[5], optarg, 3);
 	    break;
 	case 's':		/* serial speed*/
 	    baudrate = atol(optarg);

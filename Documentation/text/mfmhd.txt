@@ -1,0 +1,63 @@
+ELKS XT MFM hard disk driver
+============================
+
+The CONFIG_BLK_DEV_MFMHD driver provides direct access to Xebec-style
+command-block controllers used with ST-506/412 MFM hard disks in IBM PC/XT
+class systems.  Supported profiles cover WD1002A-WX1-compatible controllers
+and Seagate ST11M/ST11R or FileCard-class controllers.  It does not drive
+IDE/ATA, ESDI, or generic RLL controllers; ST11R support is limited to the
+documented Seagate command profile.
+
+Hardware resources
+------------------
+
+One controller with up to two drives is supported.  The controller normally
+occupies I/O ports 0x320 through 0x323; jumper W4 can select 0x324 instead
+(set CONFIG_MFMHD_PORT to match).
+
+Command, status, sense, and controller-parameter bytes use programmed I/O.
+Sector payloads use 8237 DMA channel 3, the standard IBM XT hard-disk DMA
+channel.  The driver reserves a fixed 1024-byte buffer below the first 64 KiB
+physical boundary, so an 8237 transfer cannot wrap.  Normal transfers are
+therefore limited to two 512-byte sectors per command.  The controller IRQ is
+kept masked and completion is polled; the driver is fully synchronous.  DMA
+channel 3 must not be shared with another active device.
+
+Configuration
+-------------
+
+Enable "XT MFM hard drive support" under block device drivers and set the
+controller I/O port and profile.  The controller exposes /dev/mfma and
+/dev/mfmb; partition minors follow each whole-disk minor.
+
+Less common tunables are source defines at the top of
+elks/arch/i86/drivers/block/mfmhd.c rather than .config options:
+
+  MFMHD_DRIVES          units to probe (default 2; must be 1 for the
+                        FileCard 20 split-unit geometry)
+  MFMHD_WD1002_BIOS     Super, G, or H controller-ROM geometry table
+  MFMHD_STEP_CODE       WD1002/Xebec command step-rate code
+  MFMHD_DRIVEn_*        fixed cylinder/head/sector geometry overrides;
+                        zero uses the controller table, geometry command,
+                        WD sector-0 values, or FAT BPB probing
+  MFMHD_DIAG_IOCTLS     optional maintenance/diagnostic ioctls
+  MFMHD_TRACE           command handshake tracing for bring-up
+
+Standard MFM media normally uses 17 sectors per track.
+
+Booting and recovery
+--------------------
+
+Use "root=mfma" (or mfmb) in /bootopts to mount a whole device, or use the
+normal partition device name for a partition.  The "mfm=" option is a small
+bit mask: bit 0 (mfm=1) selects conservative controller deadlines and bit 1
+(mfm=2) moves sector payloads over programmed I/O instead of DMA channel 3;
+mfm=3 selects both.  PIO is required on machines whose chipset does not
+service DRQ3 like a true IBM XT (the Amstrad PC1512/PC1640 among them); the
+driver also switches itself to PIO after a failed DMA transfer.  The driver
+retries failed commands, recalibrates the affected unit, and falls back to
+single-sector transfers after repeated errors.
+
+Maintenance ioctls, including format and long-sector commands, are optional
+and disabled by default.  Formatting destroys data and should be enabled only
+for a dedicated maintenance build.

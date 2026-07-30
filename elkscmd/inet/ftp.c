@@ -17,7 +17,6 @@
 #ifdef  BLOATED
 #define GLOB		/* include wildcard processing */
 #endif
-#define	QEMUHACK	/* Include code for QEMU special treatment */
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -158,13 +157,9 @@ static char type = ASCII, atype = ASCII;
 static int prompt = TRUE, glob = TRUE;
 static int check_connected = 0;
 static int connected = 0;
-static char srvr_ip[ADDRBUF], myip[ADDRBUF]; 	/* For qemu hack */
+static char srvr_ip[ADDRBUF], myip[ADDRBUF];
 
 void print_timing(unsigned long, struct timeval *, struct timeval *, char *);
-
-#ifdef QEMUHACK
-static int qemu = 0;
-#endif
 
 /* Trim leading and trailing whitespaces */
 void trim(char *str) {
@@ -816,12 +811,6 @@ int do_active(int cmdfd) {
 	unsigned int myport;
 	char str[BUF_SIZE], port_mode_ip[ADDRBUF], *p;
 
-#ifdef QEMUHACK
-	if (qemu) {
-		printf("Active mode is not supported in QEMU, use passive mode.\n");
-		return -1;
-	}
-#endif
 	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 		perror("socket");
 		return -1;
@@ -903,9 +892,6 @@ int do_passive(int cmdfd) {
 	} 
 
 	ip = ip_addr;
-#ifdef QEMUHACK
-	if (qemu) ip = srvr_ip;
-#endif
 	srvaddr.sin_family = AF_INET;
 	srvaddr.sin_addr.s_addr = in_aton(ip);
 	srvaddr.sin_port = htons(port);
@@ -1057,27 +1043,6 @@ int connect_cmd(char *ip, unsigned int server_port) {
 		printf("Host name not found.\n");
 		return -1;
 	}
-#ifdef QEMUHACK
-	if (qemu) {
-		long madr = in_aton(myip);
-		long loopback = in_aton("127.0.0.1");
-		if ((servaddr.sin_addr.s_addr == loopback) || (servaddr.sin_addr.s_addr == madr)) {
-			printf("loopback detected, disabling QEMU mode.\n");
-			qemu = 0;
-			/*
-			 * Note: we intentionally do NOT remap servaddr to madr here.
-			 * Previously this block also did:
-			 *   servaddr.sin_addr.s_addr = madr;
-			 * which mirrored ktcp's old tcpdev_connect() behaviour of
-			 * rewriting 127.0.0.1 to local_ip.  That was removed when
-			 * ip_route() was taught to loop back ALL 127.x.x.x packets
-			 * internally (commit cf1a0a45).  Keeping 127.0.0.1 as the
-			 * connect target is now correct — ktcp handles the loopback
-			 * regardless of destination address.
-			 */
-		}
-	}
-#endif
 
 	if (debug > 1) printf("Connecting to %s @ port %u\n", in_ntoa(servaddr.sin_addr.s_addr), server_port);
 	if (in_connect(controlfd, (struct sockaddr *) &servaddr, sizeof(servaddr), 10) < 0) {
@@ -1104,14 +1069,6 @@ int do_login(char *user, char *passwd, char *buffer, int len, char *ip,
 	char localbf[50], *lip, *cp;
 	int controlfd = -1;
 
-#ifdef QEMUHACK
-	/* Check for QEMU mode - repeat on every login, since a loopback
-	 * connection may have temporarily disabled QEMU mode. */
-	if ((cp = getenv("QEMU")) != NULL) {
-		qemu = atoi(cp);
-		printf("QEMU set to %d\n", qemu);
-	}
-#endif
 	lip = ip;
 	if (*lip == '\0') {	/* ask for server address */
 				//FIXME: Needs sanity checking on input
@@ -1213,11 +1170,6 @@ int main(int argc, char **argv) {
 				break;
 			case 'i':
 				prompt = FALSE;
-				break;
-#endif
-#ifdef QEMUHACK
-			case 'q':
-				qemu++;
 				break;
 #endif
 			default:

@@ -250,6 +250,8 @@ static int inet_accept(register struct socket *sock, struct socket *newsock, int
     debug_tune("INET(%P) accepted sock %x newsock %x\n", sock, newsock);
     newsock->remaddr = ((struct tdb_accept_ret *)tdin_buf)->addr_ip;
     newsock->remport = ((struct tdb_accept_ret *)tdin_buf)->addr_port;
+    newsock->localaddr = ((struct tdb_accept_ret *)tdin_buf)->locaddr;
+    newsock->localport = ((struct tdb_accept_ret *)tdin_buf)->locport;
     ret = ((struct tdb_accept_ret *)tdin_buf)->ret_value;
     tcpdev_clear_data_avail();
     if (ret >= 0) {

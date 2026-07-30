@@ -138,6 +138,13 @@
 #define EL3_IRQ         11
 #define EL3_FLAGS       0x80
 
+/* SMC Ultra/83C790, ultra.c: irq and ram 0 read the card's own configuration,
+ * override with ul0= in /bootopts if the board is strapped differently */
+#define ULTRA_PORT      0x280
+#define ULTRA_IRQ       0
+#define ULTRA_RAM       0
+#define ULTRA_FLAGS     0x80
+
 /* AMD PCnet/LANCE, pcnet.c: port 0 = autodetect via PCI on 386+,
  * for ISA LANCE boards set port/irq with le0= in /bootopts */
 #define LANCE_PORT      0

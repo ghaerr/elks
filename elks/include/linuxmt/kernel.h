@@ -2,9 +2,9 @@
 #define __LINUXMT_KERNEL_H
 
 struct dmesg_queue {
-    unsigned int     len;       /* # chars in queue */
-    unsigned int     size;      /* queue size */
-    unsigned int     head;
+    unsigned int    len;        /* # chars in queue */
+    unsigned int    size;       /* queue size */
+    unsigned int    head;
     unsigned char   base[];     /* queue data follows */
 };
 

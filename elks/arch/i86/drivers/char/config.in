@@ -8,6 +8,7 @@ mainmenu_option next_comment
 	choice 'Select console driver'			\
 		"Direct         CONFIG_CONSOLE_DIRECT	\
 		 BIOS           CONFIG_CONSOLE_BIOS	\
+		 Amstrad	CONFIG_CONSOLE_AMSTRAD_IGA 	\
 		 8018x		CONFIG_CONSOLE_8018X 	\
 		 NECV25		CONFIG_CONSOLE_NECV25 	\
 		 Headless       CONFIG_CONSOLE_HEADLESS"	Direct
@@ -19,6 +20,10 @@ mainmenu_option next_comment
 		fi
 		bool '  Scancode keyboard driver'	CONFIG_KEYBOARD_SCANCODE y
 		bool '  Dual-screen console support'    CONFIG_CONSOLE_DUAL n
+	fi
+	if [ "$CONFIG_CONSOLE_AMSTRAD_IGA" = "y" ]; then
+		define CONFIG_KEYBOARD_SCANCODE y
+		define CONFIG_CONSOLE_DUAL n
 	fi
 	bool 'Serial Console'	CONFIG_CONSOLE_SERIAL		n
 	if [[ "$CONFIG_CONSOLE_DIRECT" = "y" || "$CONFIG_CONSOLE_BIOS" = "y" ]]; then
