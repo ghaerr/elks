@@ -19,7 +19,7 @@ Create a minimal system for a 360K floppy.
 The common case would be to boot ELKS from a floppy disk and build a hard disk based system 
 from there with a single command, such as
 .sp
-.B # sys -M /dev/hda1
+.B sys -M /dev/hda1
 .PP
 If the 
 .B \-M
@@ -44,11 +44,6 @@ can be run.
 After running 
 .B sys
 successfully, the target drive/partition will be bootable and configured exactly like the source system.
-The next step could then be to use the
-.B setup 
-command to set the hostname and basic parameters (see the
-.B setup
-man-page for details).
 .SH BUGS
 .B sys
 performs limited option checking, so some error messages appear to come from 
@@ -56,7 +51,6 @@ performs limited option checking, so some error messages appear to come from
 instead.
 .SH "SEE ALSO"
 .BR makeboot (8),
-.BR setup (8),
 .BR mkfs (8),
 .BR minix (8),
 .BR FAT (8),

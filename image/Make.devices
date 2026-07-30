@@ -39,7 +39,7 @@ devices:
 # RAM disks.
 
 	$(MKDEV) /dev/rd0	b 1 0
-	$(MKDEV) /dev/rd1	b 1 1
+#	$(MKDEV) /dev/rd1	b 1 1
 
 ##############################################################################
 # Solid state disk

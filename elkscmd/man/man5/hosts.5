@@ -4,15 +4,9 @@ hosts \- hostname to IP address database
 .SH SYNOPSIS
 .B /etc/hosts
 .SH DESCRIPTION
-The hosts database lists the IP addresses and the hostnames that translate
-to these IP addresses. In the absence of name server support on ELKS,
-the 
-.B hosts
-file is used by all network utilities needing name-to-ipaddress translation,
-such as
-.BR ktcp (8)
-and
-.BR telnet (1).
+The hosts database lists IP addresses and the hostnames that translate
+to these IP addresses, withput requiring the use of DNS.
+Normally, DNS over TCP/IP is used to translate host names to IP addresses.
 .PP
 A simple
 .B /etc/hosts
@@ -36,20 +30,15 @@ more than one name, like
 .BR www ,
 if you run a web server on one.
 .PP
-.B /etc/hosts
-is edited by the 
-.BR setup (8)
-command which provides a simple way to enable several ELKS systems on a network.
-Note that the name and IP-address of the local machine may also be set in the
+The IP-address of the local machine may also be set in the
 .I /bootopts
-file.
-
+file using
+.BR LOCALIP=10.0.2.15,
+for example.
 .SH FILES
 .nf
 /etc/hosts	Hosts database
-/bootopts	System configuration file
+/bootopts	Boot-time configuration file
 .fi
 .SH "SEE ALSO"
-.BR net.cnf (5),
-.BR setup (8),
 .BR bootopts (5).

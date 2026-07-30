@@ -207,7 +207,7 @@ void pm_early_init(void)
     gdtr.base  = (addr_t)sel_gdt << 4;      /* linear address of GDT */
     idtr.limit = MAX_IDT_ENTRIES * sizeof(struct idt_gate) - 1;
     idtr.base  = 0;                         /* IDT replaces real mode IVT at 0:0 */
-    sel_idt = SEL_IDT;                      /* use SEL_IDT int idt_get_set from now on */
+    sel_idt = SEL_IDT;                      /* use SEL_IDT in idt_get_set from now on */
     sel_gdt = SEL_GDT;                      /* and SEL_GDT in desc_alloc */
 
     enable_protected_mode(&gdtr, &idtr);    /* enter PM; returns here in protected mode */
