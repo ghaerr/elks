@@ -15,6 +15,7 @@
 extern struct file_operations ne2k_fops;    /* 0 CONFIG_ETH_NE2K */
 extern struct file_operations wd_fops;      /* 1 CONFIG_ETH_WD */
 extern struct file_operations el3_fops;     /* 2 CONFIG_ETH_EL3 */
+extern struct file_operations ultra_fops;   /* 3 CONFIG_ETH_ULTRA */
 extern struct file_operations pcnet_fops;   /* 4 CONFIG_ETH_PCNET */
 
 struct eth eths[MAX_ETHS];
@@ -110,6 +111,10 @@ void INITPROC eth_init(void)
 #ifdef CONFIG_ETH_EL3
     eths[ETH_EL3].ops = &el3_fops;
     el3_drv_init();
+#endif
+#ifdef CONFIG_ETH_ULTRA
+    eths[ETH_ULTRA].ops = &ultra_fops;
+    ultra_drv_init();
 #endif
 #ifdef CONFIG_ETH_PCNET
     eths[ETH_LANCE].ops = &pcnet_fops;

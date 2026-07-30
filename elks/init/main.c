@@ -36,16 +36,23 @@
 
 #define ARRAYLEN(a)     (sizeof(a)/sizeof(a[0]))
 
+/* external driver options */
 struct netif_parms netif_parms[MAX_ETHS] = {
-
     /* NOTE:  The order must match the defines in netstat.h:
-     * ETH_NE2K, ETH_WD, ETH_EL3, ETH_EE16, ETH_LANCE */
+     * ETH_NE2K, ETH_WD, ETH_EL3, ETH_ULTRA, ETH_LANCE */
     { NE2K_IRQ, NE2K_PORT, 0, NE2K_FLAGS },
     { WD_IRQ, WD_PORT, WD_RAM, WD_FLAGS },
     { EL3_IRQ, EL3_PORT, 0, EL3_FLAGS },
-    { 0, 0, 0, 0 },
+    { ULTRA_IRQ, ULTRA_PORT, ULTRA_RAM, ULTRA_FLAGS },
     { LANCE_IRQ, LANCE_PORT, 0, LANCE_FLAGS },
 };
+int mfmhd_slow_profile;         /* /bootopts mfm= bit 0: slow controller timing */
+int mfmhd_pio;                  /* /bootopts mfm= bit 1: PIO sector transfers */
+int mfmhd_trace;                /* /bootopts mfm= bit 2: driver request tracing */
+int mfm_opts;                   /* CONFIG_BLK_DEV_MFM mfm= options */
+int iga_opts;                   /* CONFIG_CONSOLE_AMSTRAD_IGA iga= options */
+
+/* internal non-driver globals */
 seg_t kernel_cs, kernel_ds;     /* always segment values even in PM */
 int root_mountflags;
 int tracing;
@@ -225,8 +232,11 @@ static void INITPROC early_kernel_init(void)
     heap_init();                    /* init near memory allocator */
     heapofs = setup_arch();         /* sets membase and memend globals */
     heap_add((void *)heapofs, heapsize);
+#ifdef CONFIG_286_PMODE
+    membase += GDT_SIZE >> 4;       /* skip GDT table at kernel_ds + 0x1000 */
+#endif
     //memend = 256 << 6;            /* force early XMS allocations in PM */
-    dmesg_init();
+    dmesg_init();                   /* may decrease memend */
     mm_init(membase, memend);       /* init far/main memory allocator */
 
 #ifdef CONFIG_BOOTOPTS
@@ -380,19 +390,21 @@ static struct dev_name_struct {
     const char *name;
     int num;
 } devices[] = {
-	/* the 6 partitionable drives must be first */
+	/* the 8 partitionable drives must be first */
 	{ "hda",     DEV_HDA },         /* 0 */
 	{ "hdb",     DEV_HDB },
 	{ "hdc",     DEV_HDC },
 	{ "hdd",     DEV_HDD },
 	{ "cfa",     DEV_CFA },
 	{ "cfb",     DEV_CFB },
-	{ "fd0",     DEV_FD0 },         /* 6 */
+	{ "mfma",    DEV_MFMA },
+	{ "mfmb",    DEV_MFMB },
+	{ "fd0",     DEV_FD0 },         /* 8 */
 	{ "fd1",     DEV_FD1 },
-	{ "df0",     DEV_DF0 },         /* 8 */
+	{ "df0",     DEV_DF0 },         /* 10 */
 	{ "df1",     DEV_DF1 },
 	{ "rom",     DEV_ROM },
-	{ "ttyS0",   DEV_TTYS0 },       /* 11 */
+	{ "ttyS0",   DEV_TTYS0 },       /* 13 */
 	{ "ttyS1",   DEV_TTYS1 },
 	{ "tty1",    DEV_TTY1 },
 	{ "tty2",    DEV_TTY2 },
@@ -409,18 +421,21 @@ char *root_dev_name(kdev_t dev)
 {
     int i;
     unsigned int mask;
+    unsigned int len;
 #define NAMEOFF 13
-    static char name[18] = "ROOTDEV=/dev/";
+    static char name[20] = "ROOTDEV=/dev/";
 
     name[8] = '/';
-    for (i=0; i<11; i++) {
-        mask = (i < 6)? 0xfff8: 0xffff;
+    for (i=0; i<13; i++) {
+        mask = (i < 8)? 0xfff8: 0xffff;
         if (devices[i].num == (dev & mask)) {
             strcpy(&name[NAMEOFF], devices[i].name);
-            if (i < 6) {
+            if (i < 8) {
                 if (dev & 0x07) {
-                    name[NAMEOFF+3] = '0' + (dev & 7);
-                    name[NAMEOFF+4] = '\0';
+                    /* device names are no longer all three characters */
+                    len = strlen(devices[i].name);
+                    name[NAMEOFF + len] = '0' + (dev & 7);
+                    name[NAMEOFF + len + 1] = '\0';
                 }
             }
             return name;
@@ -637,6 +652,10 @@ static int INITPROC parse_options(void)
             parse_nic(line+4, &netif_parms[ETH_EL3]);
             continue;
         }
+        if (!strncmp(line,"ul0=",4)) {
+            parse_nic(line+4, &netif_parms[ETH_ULTRA]);
+            continue;
+        }
         if (!strncmp(line,"le0=",4)) {
             parse_nic(line+4, &netif_parms[ETH_LANCE]);
             continue;
@@ -659,16 +678,26 @@ static int INITPROC parse_options(void)
             nr_xms_bufs = (int)simple_strtol(line+7, 10);
             continue;
         }
-        if (!strncmp(line,"xtide=",6)) {
-            ata_mode = (int)simple_strtol(line+6, 10);
-            continue;
-        }
         if (!strncmp(line,"cache=",6)) {
             nr_map_bufs = (int)simple_strtol(line+6, 10);
             continue;
         }
+        if (!strncmp(line,"xtide=",6)) {
+            ata_mode = (int)simple_strtol(line+6, 10);
+            continue;
+        }
+        if (!strncmp(line,"mfm=",4)) {
+            mfm_opts = (int)simple_strtol(line+4, 10);
+            continue;
+        }
+        if (!strncmp(line,"iga=",4)) {
+            iga_opts = (int)simple_strtol(line+4, 10);
+            continue;
+        }
         if (!strncmp(line,"heap=",5)) {
+#ifndef CONFIG_286_PMODE
             heapsize = (unsigned int)simple_strtol(line+5, 10);
+#endif
             continue;
         }
         if (!strncmp(line,"dmesg=",6)) {
@@ -818,7 +847,7 @@ void INITPROC dmesg_init(void)
 #endif
 
         q = _MK_FP(dmesg_seg, 0); 
-        q->size = (dmesg << 10) - 3 * sizeof(int);
+        q->size = (dmesg << 10) - offsetof(struct dmesg_queue, base);
         q->len = q->head = 0;
     }   
 }      
