@@ -53,6 +53,7 @@ enum {
 	CMD_REIN,
 	CMD_PORT,
 	CMD_PASV,
+	CMD_EPSV,
 	CMD_TYPE,
 	CMD_STRU,
 	CMD_MODE,
@@ -94,6 +95,7 @@ struct cmd_tab cmdtab[] = {
 	{"SYST", CMD_SYST},
 	{"QUIT", CMD_QUIT},
 	{"PASV", CMD_PASV},
+	{"EPSV", CMD_EPSV},
 	{"PORT", CMD_PORT},
 	{"TYPE", CMD_TYPE},
 	{"DELE", CMD_DELE},
@@ -479,11 +481,10 @@ int do_nlist(int dfd, char *iobuf)
 }
 
 /* Passive mode: Server listens for incoming data connection */
-int do_pasv(int *datafd) {
+int do_pasv(int *datafd, int epsv) {
 	int fd;
-	unsigned int i = 1, port = 0, len;
+	unsigned int i = 1, port = 0;
 	struct sockaddr_in pasv;
-	struct sockaddr_in local;
 	char *p, *a;
 	char str[100], *pasv_err = "425 Can't open passive connection.\r\n";
 
@@ -530,16 +531,28 @@ int do_pasv(int *datafd) {
 		return -1;
 	}
 
-	/* Get current local IP from control connection */
-	len = sizeof(local);
-	if (getsockname(controlfd, (struct sockaddr *)&local, &len) == 0)
-		pasv.sin_addr.s_addr = local.sin_addr.s_addr;
-	if (pasv_ip)
-		pasv.sin_addr.s_addr = in_aton(pasv_ip);
-	a = (char *) &pasv.sin_addr;
-	p = (char *) &pasv.sin_port;
-	sprintf(str, "227 Entering Passive Mode (%d,%d,%d,%d,%d,%d)\r\n", UC(a[0]),
-		UC(a[1]), UC(a[2]), UC(a[3]), UC(p[0]), UC(p[1]));
+	if (epsv) {
+		sprintf(str, "229 Entering Extended Passive Mode (|||%u|)\r\n",
+			(unsigned) ntohs(pasv.sin_port));
+	} else {
+		struct sockaddr_in local;
+		unsigned int len = sizeof(local);
+		if (getsockname(controlfd, (struct sockaddr *)&local, &len) == 0)
+			pasv.sin_addr.s_addr = local.sin_addr.s_addr;
+		if (pasv_ip)
+			pasv.sin_addr.s_addr = in_aton(pasv_ip);
+		else {
+			struct sockaddr_in peer;
+			len = sizeof(peer);
+			if (getpeername(controlfd, (struct sockaddr *)&peer, &len) == 0
+			    && peer.sin_addr.s_addr == htonl(0x0a000202))
+				pasv.sin_addr.s_addr = htonl(0x7f000001);
+		}
+		a = (char *) &pasv.sin_addr;
+		p = (char *) &pasv.sin_port;
+		sprintf(str, "227 Entering Passive Mode (%d,%d,%d,%d,%d,%d)\r\n", UC(a[0]),
+			UC(a[1]), UC(a[2]), UC(a[3]), UC(p[0]), UC(p[1]));
+	}
     	write(controlfd, str, strlen(str));
 	if (debug) printf("%s", str);
 	i = sizeof(pasv);
@@ -807,8 +820,20 @@ int main(int argc, char **argv) {
 						close(datafd);
 						datafd = -1;
 					}
-					if (do_pasv(&datafd) < 0) {
+					if (do_pasv(&datafd, 0) < 0) {
 						send_reply(502, "PASV: Cannot open server socket");
+						close(datafd);
+						datafd = -1;
+					}
+					break;
+
+				case CMD_EPSV: /* Enter Extended Passive mode (RFC 2428) */
+					if (datafd >= 0) { /* connection already open, close it! */
+						close(datafd);
+						datafd = -1;
+					}
+					if (do_pasv(&datafd, 1) < 0) {
+						send_reply(502, "EPSV: Cannot open server socket");
 						close(datafd);
 						datafd = -1;
 					}
