@@ -5,6 +5,7 @@
 
 #include <linuxmt/config.h>
 #include <linuxmt/types.h>
+#include <arch/ports.h>     /* struct isa_conf */
 
 #if defined(CONFIG_FARTEXT_KERNEL) && !defined(__STRICT_ANSI__)
 #define INITPROC __far __attribute__ ((far_section, noinline, section (".fartext.init")))
@@ -73,6 +74,7 @@ extern void INITPROC pcnet_drv_init(void);
 extern unsigned long INITPROC pci_cfg_read(unsigned int devfn_reg);
 extern void          INITPROC pci_cfg_write(unsigned int devfn_reg, unsigned int val);
 extern void INITPROC lp_init(void);
+extern struct isa_conf audio_conf[];     /* sb= and mad16= /bootopts routes */
 extern void INITPROC sb_dsp_init(void);
 extern int  INITPROC mad16_early_init(unsigned int port, int irq, int dma);
 extern void FARPROC mad16_restore_profile(void);

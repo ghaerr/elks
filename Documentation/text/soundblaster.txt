@@ -23,9 +23,14 @@ Defaults are SB_PORT 0x220, SB_IRQ 5 and SB_DMA 1 in arch/ports.h, which
 are the Creative factory settings.  /bootopts can override them without a
 rebuild:
 
-    sb=0x220,5,1        port, IRQ and DMA channel
-    sb=544,5,1          the port may also be given in decimal
+    sb=5,220,1          IRQ, port and DMA channel
     sb=off              skip the driver on a machine with no card
+    sb=on               keep the compiled-in route
+
+The argument order is irq,port,dma, the same as the ne0=, wd0= and 3c0=
+network options, which share the parser and the struct isa_conf that holds
+the result.  The port is read as hex, the IRQ and DMA channel as decimal.
+An audio card keeps its DMA channel in the ram field of that structure.
 
 The IRQ is claimed during boot rather than at open, so the sound card wins any
 contest for it.  IRQ 5 is also Com3, so selecting it means the serial driver
@@ -120,10 +125,10 @@ channels returns EINVAL.
 MAD16 boards
 ------------
 
-The MAD16 driver (audio_mad.c) adds bring-up for the OPTi 82C929 (MAD16 Pro) chipset, which
-answers SB DSP commands only once its control registers have been programmed
+The MAD16 driver (audio_mad.c) adds bring-up for the OPTi 82C929 (MAD16 Pro)
+chipset, which answers SB DSP commands only once its registers have been set
 to route the SB personality.  It is only attempted when /bootopts sets
-mad16=on, or mad16=port,irq,dma to route it somewhere other than the sb=
+mad16=on, or mad16=irq,port,dma to route it somewhere other than the sb=
 settings.  A real Sound Blaster does not need it, but a card with no jumpers
 will not respond at all without it.
 

@@ -12,16 +12,13 @@
 
 #ifndef __ASSEMBLER__
 
-/* /bootopts parms for each NIC */
-struct netif_parms {
-	int	irq;
-	int	port;
-	unsigned int ram;
-	unsigned int flags;
-};
+#include <arch/ports.h>	/* struct isa_conf */
+
+/* /bootopts parms for each NIC; struct isa_conf lives in arch/ports.h */
+#define netif_parms_t	struct isa_conf
 
 /* Should put this into the eths struct */
-extern struct netif_parms netif_parms[MAX_ETHS];
+extern struct isa_conf netif_parms[MAX_ETHS];
 
 struct eth {
     struct file_operations *ops;

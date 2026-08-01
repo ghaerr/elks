@@ -16,6 +16,11 @@
 
 #include <linuxmt/types.h>
 
+/* Enumeration for the audio_conf array in init/main.c */
+#define AUDIO_SB        0   /* Sound Blaster and compatibles, audio_sb.c */
+#define AUDIO_MAD       1   /* OPTi 82C929 MAD16 bring-up, audio_mad.c */
+#define MAX_AUDIO       2
+
 /*
  * An ELKS ioctl command is a 16-bit int, but the Linux OSS encoding puts its
  * direction bits and payload size above bit 15, where they cannot survive the

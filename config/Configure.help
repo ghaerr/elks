@@ -435,7 +435,7 @@ CONFIG_CHAR_DEV_DSP
   1.0 upwards will work at up to 20000 Hz.
 
   The compiled-in port, IRQ, DMA channel and buffer size are the SB_XXX
-  defines in arch/ports.h.  /bootopts sb=port,irq,dma overrides them
+  defines in arch/ports.h.  /bootopts sb=irq,port,dma overrides them
   without a rebuild, sb=off disables the driver on a machine with no
   card, and mad16= first programs an OPTi 82C929 (MAD16) jumperless
   chipset into Sound Blaster mode.

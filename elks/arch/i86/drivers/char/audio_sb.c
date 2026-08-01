@@ -27,7 +27,7 @@
  * has no such side effect.  Until then a wrong irq= shows up as a per-block
  * timeout rather than working silently.
  *
- * /bootopts sb=port,irq,dma overrides the compiled-in settings, and sb=off
+ * /bootopts sb=irq,port,dma overrides the compiled-in settings, and sb=off
  * skips the driver entirely.
  */
 
@@ -96,15 +96,8 @@
 #define LPT1_CONTROL    0x37A
 #define LPT1_CTRL_IDLE  0x0C        /* INIT + SELECT_IN, interrupt disabled */
 
-/* /bootopts sb=port,irq,dma, parsed in init/main.c; -1 means not given */
-extern int sb_port_opt;
-extern int sb_irq_opt;
-extern int sb_dma_opt;
+/* audio_conf[] holds the sb= and mad16= routes, see init/main.c */
 extern int dma_extwrite_opt;    /* /bootopts dmaxw=1: 8237 Extended Write */
-extern int mad16_opt;           /* /bootopts mad16=on|off|port,irq,dma */
-extern int mad16_port_opt;
-extern int mad16_irq_opt;
-extern int mad16_dma_opt;
 
 static unsigned int sb_base;
 static unsigned char sb_dma;
@@ -117,7 +110,7 @@ static unsigned char sb_opened;
 static unsigned int sb_rate = 8000;
 static unsigned char sb_timeconst;
 /*
- * PIO playback, selected with sb=port,irq,0 in /bootopts, for chipsets whose
+ * PIO playback, selected with sb=irq,port,0 in /bootopts, for chipsets whose
  * DMA request path is broken (mfmhd.c documents the same limitation for the
  * hard disk on DRQ3).  Every sample is handed to the DSP by the CPU, so the
  * write() call runs to completion with the processor fully occupied.
@@ -950,20 +943,14 @@ static addr_t INITPROC sb_alloc_bounce(void)
 
 void INITPROC sb_dsp_init(void)
 {
+    struct isa_conf *conf = &audio_conf[AUDIO_SB];
     addr_t phys;
 
-    sb_base = SB_PORT;
-    sb_irq_line = SB_IRQ;
-    sb_dma = SB_DMA;
-
-    if (sb_port_opt == 0)               /* sb=off */
+    if (conf->flags & ISA_OFF)          /* sb=off */
         return;
-    if (sb_port_opt > 0)
-        sb_base = (unsigned int)sb_port_opt;
-    if (sb_irq_opt >= 0)
-        sb_irq_line = (unsigned char)sb_irq_opt;
-    if (sb_dma_opt >= 0)
-        sb_dma = (unsigned char)sb_dma_opt;
+    sb_base = (unsigned int)conf->port;
+    sb_irq_line = (unsigned char)conf->irq;
+    sb_dma = (unsigned char)conf->ram;
     /*
      * Extended Write is a single global setting for the controller, not a
      * per-channel one, so writing it twice from two drivers is harmless.
@@ -972,7 +959,7 @@ void INITPROC sb_dsp_init(void)
         outb_p(DMA1_CMD_EXTWRITE, DMA1_CMD_REG);
         printk("sb: 8237 extended write enabled\n");
     }
-    /* sb=port,irq,0 selects PIO playback: no 8237, no completion interrupt */
+    /* sb=irq,port,0 selects PIO playback: no 8237, no completion interrupt */
     if (sb_dma == 0) {
         sb_pio_mode = 1;
         sb_dma = 1;                 /* keep the cached port maths harmless */
@@ -1006,11 +993,10 @@ void INITPROC sb_dsp_init(void)
     sb_dma_addr_cache(phys);
 
 #ifdef CONFIG_AUDIO_MAD
-    if (mad16_opt > 0) {
-        unsigned int port = (mad16_port_opt > 0)?
-            (unsigned int)mad16_port_opt: sb_base;
-        int irq = (mad16_irq_opt >= 0)? mad16_irq_opt: (int)sb_irq_line;
-        int dma = (mad16_dma_opt >= 0)? mad16_dma_opt: (int)sb_dma;
+    if (!(audio_conf[AUDIO_MAD].flags & ISA_OFF)) {
+        unsigned int port = (unsigned int)audio_conf[AUDIO_MAD].port;
+        int irq = audio_conf[AUDIO_MAD].irq;
+        int dma = (int)audio_conf[AUDIO_MAD].ram;
         int rc = mad16_early_init(port, irq, dma);
 
         /*

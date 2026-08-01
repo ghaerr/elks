@@ -30,6 +30,9 @@
  *   Change I/O port and driver IRQ number to match your hardware
  */
 
+#ifndef __ARCH_PORTS_H
+#define __ARCH_PORTS_H
+
 #ifdef CONFIG_ARCH_IBMPC
 /* timer, timer-8254.c*/
 #define TIMER_CMDS_PORT 0x43            /* command port */
@@ -153,8 +156,21 @@
 #define LANCE_IRQ       9
 #define LANCE_FLAGS     0x80
 
-/* Sound Blaster /dev/dsp, audio_sb.c: override with sb= in /bootopts,
- * OPTi MAD16 bring-up with mad16= */
+/* /bootopts parms for an ISA card: irq,port,ram,flags.  NICs use all four,
+ * audio cards carry the 8-bit DMA channel in ram and leave flags at 0. */
+#define ISA_OFF		0x8000	/* card disabled with "off" in /bootopts */
+
+#ifndef __ASSEMBLER__
+struct isa_conf {
+	int	irq;
+	int	port;
+	unsigned int ram;
+	unsigned int flags;
+};
+#endif
+
+/* Sound Blaster /dev/dsp, audio_sb.c: override with sb=irq,port,dma in
+ * /bootopts, OPTi MAD16 bring-up with mad16=irq,port,dma */
 #define SB_PORT         0x220
 #define SB_IRQ          5               /* use IRQ 7 with DMA 1 on an XT with a hard disk */
 #define SB_DMA          1               /* 8-bit DMA channel, 1 or 3 */
@@ -172,3 +188,5 @@
 
 /* direct floppy driver, directfd.c */
 #define FLOPPY_IRQ      6
+
+#endif
