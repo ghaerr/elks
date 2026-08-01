@@ -443,6 +443,21 @@ CONFIG_CHAR_DEV_DSP
   See Documentation/text/soundblaster.txt for the details, including why
   an XT-class machine with a hard disk must use IRQ 7 with DMA 1.
 
+8237 Extended Write strobe
+CONFIG_AUDIO_EXTWRITE
+  Select Extended Write on the 8237 DMA controller, which asserts the
+  write strobe a clock earlier and holds it longer.
+
+  Say Y only on a machine whose DMA timing is tighter than 8-bit cards
+  expect, the Amstrad PC1512 and PC1640 being the known cases.  Their
+  Late Write timing corrupts the bytes handed to the card, which sounds
+  like heavy distortion on otherwise clean playback.  Say N elsewhere:
+  there is no reason to alter a working controller's timing.
+
+  This is a controller-wide setting rather than a per-channel one, so
+  the MFM hard disk driver offers the same option and setting both is
+  harmless.
+
 Enable meta device driver
 CONFIG_DEV_META
   Include meta driver to provide support for userspace device drivers.

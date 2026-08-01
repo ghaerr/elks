@@ -92,6 +92,14 @@
 
 #define SB_TC_CLOCK     1000000UL   /* time constant reference clock */
 
+/*
+ * 8237 command register bit 5.  dma.h gains this define through the MFM
+ * driver's work; guard it so this driver builds either way.
+ */
+#ifndef DMA1_CMD_EXTWRITE
+#define DMA1_CMD_EXTWRITE 0x20
+#endif
+
 /* LPT1 shares IRQ 7 with the card; bit 4 of its control register is IRQ enable */
 #define LPT1_CONTROL    0x37A
 #define LPT1_CTRL_IDLE  0x0C        /* INIT + SELECT_IN, interrupt disabled */
@@ -955,6 +963,14 @@ void INITPROC dsp_init(void)
     sb_base = (unsigned int)conf->port;
     sb_irq_line = (unsigned char)conf->irq;
     sb_dma = (unsigned char)conf->ram;
+#ifdef CONFIG_AUDIO_EXTWRITE
+    /*
+     * A machine whose DMA timing is tighter than 8-bit cards expect drops
+     * bytes without the longer write strobe.  Controller-wide, so setting it
+     * from more than one driver is harmless.
+     */
+    outb_p(DMA1_CMD_EXTWRITE, DMA1_CMD_REG);
+#endif
     /* sb=irq,port,0 selects PIO playback: no 8237, no completion interrupt */
     if (sb_dma == 0) {
         sb_pio_mode = 1;
