@@ -324,6 +324,15 @@ static int INITPROC codec_init(unsigned int base, unsigned char *mc5_extra)
     if (tmp & 0x80)
         cs_compat = 1;
 
+    /*
+     * Program every register to an explicit value, then read each one back
+     * and re-write on mismatch: the codec silently ignores writes while its
+     * INIT or calibration state is active, so an unverified write may simply
+     * not have happened, leaving whatever state the chip powered up with or
+     * a previous run left behind.  Register 12 is skipped in the verify (its
+     * high bits identify the part, not store the write) and register 9's
+     * verify masks the read-only ACI bit.
+     */
     for (i = 0; i < 16; i++)
         codec_write(base, (unsigned char)i, init_values[i], CODEC_MCE);
     codec_write(base, 9, (unsigned char)(codec_read(base, 9, CODEC_MCE) | 0x04),
@@ -333,6 +342,33 @@ static int INITPROC codec_init(unsigned int base, unsigned char *mc5_extra)
             (unsigned char)(codec_read(base, 12, CODEC_MCE) | 0x40), CODEC_MCE);
         for (i = 16; i < 32; i++)
             codec_write(base, (unsigned char)i, init_values[i], CODEC_MCE);
+    }
+    {
+        unsigned int bad = 0;
+        unsigned char got;
+
+        for (i = 0; i < 16; i++) {
+            unsigned char want = init_values[i];
+            unsigned char mask = 0xFF;
+
+            if (i == 12)
+                continue;               /* ID bits, not storage */
+            if (i == 9) {
+                want |= 0x04;
+                mask = (unsigned char)~0x20;    /* ACI is read-only */
+            }
+            got = codec_read(base, (unsigned char)i, CODEC_MCE);
+            if ((got & mask) != (want & mask)) {
+                codec_write(base, (unsigned char)i, want, CODEC_MCE);
+                got = codec_read(base, (unsigned char)i, CODEC_MCE);
+                if ((got & mask) != (want & mask))
+                    bad++;
+            }
+        }
+        printk("mad16: codec i0=%x i2=%x i6=%x i13=%x stuck=%u\n",
+            codec_read(base, 0, CODEC_MCE), codec_read(base, 2, CODEC_MCE),
+            codec_read(base, 6, CODEC_MCE), codec_read(base, 13, CODEC_MCE),
+            bad);
     }
     outb_p(0, base + 2);
     codec_leave_mce(base);
