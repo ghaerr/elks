@@ -24,7 +24,7 @@
  *  4 - /dev/tty[1234]      /dev/df[01]            tty           direct floppy
  *  4 - /dev/ttyp[0123]                            pty slave
  *  4 - /dev/ttyS[0123]                            serial
- *  5 -                     /dev/cf[ab][1-7]                     direct ATA/CF/hd
+ *  5 - /dev/dsp            /dev/cf[ab][1-7]       sound blaster direct ATA/CF/hd
  *  6 - /dev/lp             /dev/rom               printer       rom filesystem
  *  7 -                     /dev/mfm[ab][1-7]                 XT MFM hard disk
  *  8 - /dev/tcpdev                                kernel <-> ktcp
@@ -40,7 +40,7 @@
 #define PTY_MASTER_MAJOR  2
                              /* 3 unused*/
 #define TTY_MAJOR         4
-                             /* 5 unused*/
+#define DSP_MAJOR         5  /* Sound Blaster /dev/dsp, sb_dsp.c */
 #define LP_MAJOR          6
                              /* 7 unused*/
 #define TCPDEV_MAJOR      8

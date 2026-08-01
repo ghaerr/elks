@@ -102,6 +102,8 @@ sys_utils/sercat                :sysutil                            :1440c
 sys_utils/console               :sysutil                :1200k
 #sys_utils/who                  :sysutil                :1200k
 sys_utils/beep                  :sysutil                :1200k
+sys_utils/audioplay             :sysutil                :1200k
+sys_utils/sbmix                 :sysutil                :1200k
 sys_utils/decomp                :sysutil         :360c              :1440k
 sys_utils/sysctl                :sysutil                :1200k
 sys_utils/dmesg                 :sysutil                :1232c      :1440k
@@ -202,6 +204,7 @@ inet/ftp                        :net
 inet/ftpd                       :net
 inet/httpd                      :net
 inet/netcat                     :net
+inet/audiorecv                  :net
 inet/netcat :::nc               :net
 inet/netstat                    :net
 inet/nslookup                   :net
