@@ -382,11 +382,11 @@ static int INITPROC sb_dma_unusable(addr_t phys)
 
 /* Caller holds interrupts off: the address flip-flop is shared chip state. */
 /*
- * The 8237 command register is write-only and shared: the BIOS disk driver
- * reprograms the controller for its own transfers and can clear Extended
- * Write at any moment after a one-shot set at init.  So the strobe is
- * re-asserted every time a transfer is armed, which is the only point it
- * actually matters.
+ * One write, at init, matching the configuration that measures clean.  On the
+ * PC1640 the "8237" is part of the Amstrad ASIC: rewriting its command
+ * register between transfers audibly distorts playback, and the machine that
+ * needs this strobe demonstrably keeps it across BIOS disk traffic, so there
+ * is nothing to re-assert.
  */
 static void FARPROC sb_extwrite_assert(void)
 {
@@ -406,7 +406,6 @@ static void FARPROC sb_dma_program(unsigned int off, unsigned int len)
     address.word = sb_bounce_dma_off + off;
     count.word = len - 1U;              /* the 8237 is loaded with count-1 */
 
-    sb_extwrite_assert();
     outb_p(sb_dma_mask | 4, DMA1_MASK_REG);       /* mask the channel */
     outb_p(0, DMA1_CLEAR_FF_REG);
     outb_p(DMA_MODE_WRITE | sb_dma, DMA1_MODE_REG);
@@ -544,7 +543,6 @@ static void FARPROC sb_dma_program_auto(void)
 
     count.word = SB_BUFFER - 1U;
 
-    sb_extwrite_assert();
     outb_p(sb_dma_mask | 4, DMA1_MASK_REG);       /* mask the channel */
     outb_p(0, DMA1_CLEAR_FF_REG);
     outb_p((DMA_MODE_WRITE | 0x10) | sb_dma, DMA1_MODE_REG);  /* +auto-init */
@@ -1289,6 +1287,7 @@ void INITPROC dsp_init(void)
         sb_extwrite_assert();
         printk("sb: 8237 extended write enabled\n");
     }
+    (void)0;
     /* sb=irq,port,0 selects PIO playback: no 8237, no completion interrupt */
     if (sb_dma == 0) {
         sb_pio_mode = 1;
