@@ -2,6 +2,6 @@
 #define _SYS_SOUNDCARD_H
 
 #include <features.h>
-#include __SYSINC__(soundcard.h)
+#include __SYSINC__(audio.h)
 
 #endif

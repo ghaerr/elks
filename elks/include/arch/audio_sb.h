@@ -1,0 +1,38 @@
+/*
+ * Sound Blaster card registers, DSP commands and mixer layout, used by the
+ * /dev/dsp driver (audio_sb.c).  Compiled-in port/IRQ/DMA defaults are the
+ * SB_XXX defines in arch/ports.h.
+ */
+
+#ifndef __ARCH_AUDIO_SB_H
+#define __ARCH_AUDIO_SB_H
+
+/* DSP register offsets from the card base address */
+#define SB_RESET        0x06        /* w  write 1 then 0 to reset the DSP */
+#define SB_READ_DATA    0x0A        /* r  DSP data */
+#define SB_WRITE_DATA   0x0C        /* rw bit 7 of read = write not ready */
+#define SB_READ_STATUS  0x0E        /* r  bit 7 = data available, acks IRQ */
+#define SB_MIXER_ADDR   0x04        /* w  mixer register select */
+#define SB_MIXER_DATA   0x05        /* rw mixer register value */
+
+/* DSP commands used by the driver */
+#define DSP_DIRECT_DAC  0x10        /* one sample straight to the DAC */
+#define DSP_SET_RATE    0x40        /* followed by the time constant */
+#define DSP_DMA_OUT_8   0x14        /* followed by length-1, single block */
+#define DSP_HALT_DMA    0xD0
+#define DSP_SPEAKER_ON  0xD1
+#define DSP_GET_VERSION 0xE1
+#define DSP_READY       0xAA        /* reset acknowledge byte */
+
+/* Mixer registers, SB Pro layout, kept by the SB16 for compatibility */
+#define SB_MIX_VOICE    0x04
+#define SB_MIX_MIC      0x0A
+#define SB_MIX_OUTFILT  0x0E        /* output mode: bit 1 stereo, bit 5 filter bypass */
+#define SB_MIX_MASTER   0x22
+#define SB_MIX_FM       0x26
+#define SB_MIX_CD       0x28
+#define SB_MIX_LINE     0x2E
+
+#define SB_FILT_OFF     0x20        /* set = SB Pro output filter bypassed */
+
+#endif

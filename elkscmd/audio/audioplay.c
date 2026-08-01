@@ -17,6 +17,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -91,7 +92,7 @@ int main(int argc, char **argv)
     int in = STDIN_FILENO;
     int dsp;
     int c, n, err = 0;
-    oss_int32_t val;
+    int32_t val;
 
     while ((c = getopt(argc, argv, "r:b:")) != -1) {
         switch (c) {
@@ -135,14 +136,14 @@ int main(int argc, char **argv)
 
     /* Does this driver offer 8-bit unsigned at all? */
     val = 0;
-    if (ioctl(dsp, SNDCTL_DSP_GETFMTS, &val) == 0 && !(val & AFMT_U8)) {
+    if (ioctl(dsp, SNDCTL_DSP_GETFMTS, &val) == 0 && !(val & DSP_FMT_U8)) {
         fprintf(stderr, "audioplay: no 8-bit unsigned PCM support\n");
         return 1;
     }
 
     /* Format first: it fixes the meaning of the rate and channel count. */
-    val = (oss_int32_t)AFMT_U8;
-    if (ioctl(dsp, SNDCTL_DSP_SETFMT, &val) < 0 || val != (oss_int32_t)AFMT_U8) {
+    val = (int32_t)DSP_FMT_U8;
+    if (ioctl(dsp, SNDCTL_DSP_SETFMT, &val) < 0 || val != (int32_t)DSP_FMT_U8) {
         perror("SNDCTL_DSP_SETFMT");
         return 1;
     }
@@ -152,12 +153,12 @@ int main(int argc, char **argv)
      * rate, so the driver reports back what it actually programmed; playing
      * anyway just shifts the pitch slightly, which beats refusing to play.
      */
-    val = (oss_int32_t)rate;
+    val = (int32_t)rate;
     if (ioctl(dsp, SNDCTL_DSP_SPEED, &val) < 0) {
         perror("SNDCTL_DSP_SPEED");
         return 1;
     }
-    if (val != (oss_int32_t)rate)
+    if (val != (int32_t)rate)
         fprintf(stderr, "audioplay: %ld Hz requested, %ld Hz selected\n",
             rate, (long)val);
 
@@ -170,7 +171,7 @@ int main(int argc, char **argv)
     /* Match the driver's block size if it is smaller than our buffer. */
     val = 0;
     if (ioctl(dsp, SNDCTL_DSP_GETBLKSIZE, &val) == 0 &&
-        val > 0 && val < (oss_int32_t)bufsize)
+        val > 0 && val < (int32_t)bufsize)
         bufsize = (int)val;
 
     for (;;) {

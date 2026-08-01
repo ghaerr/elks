@@ -52,10 +52,10 @@ int mfmhd_pio;                  /* /bootopts mfm= bit 1: PIO sector transfers */
 int mfmhd_trace;                /* /bootopts mfm= bit 2: driver request tracing */
 int mfm_opts;                   /* CONFIG_BLK_DEV_MFM mfm= options */
 int iga_opts;                   /* CONFIG_CONSOLE_AMSTRAD_IGA iga= options */
-int sb_port_opt = -1;           /* CONFIG_CHAR_DEV_DSP sb= options, 0 disables */
+int sb_port_opt = -1;           /* CONFIG_AUDIO_SB sb= options, 0 disables */
 int sb_irq_opt = -1;
 int sb_dma_opt = -1;
-int mad16_opt = -1;             /* CONFIG_SB_MAD16 mad16= options */
+int mad16_opt = -1;             /* CONFIG_AUDIO_MAD mad16= options */
 int mad16_port_opt = -1;
 int mad16_irq_opt = -1;
 int mad16_dma_opt = -1;

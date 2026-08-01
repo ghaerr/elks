@@ -12,10 +12,10 @@
  *  4   Com1    (/dev/ttyS0) CONFIG_CHAR_DEV_RS     Optional
  *  5*  Com3    (/dev/ttyS2) CONFIG_CHAR_DEV_RS     Optional
  *  5*  HW IDE hard drive    CONFIG_BLK_DEV_HD      Non-working directhd.c
- *  5*  Sound Blaster (/dev/dsp) CONFIG_CHAR_DEV_DSP Optional, avoid if a HD is fitted
+ *  5*  Sound Blaster (/dev/dsp) CONFIG_AUDIO_SB    Optional, avoid if a HD is fitted
  *  6   HW floppy drive      CONFIG_BLK_DEV_FD      Optional
  *  7   Unused (LPT, Com4)
- *  7*  Sound Blaster (/dev/dsp) CONFIG_CHAR_DEV_DSP Optional, also gets PIC spurious IRQs
+ *  7*  Sound Blaster (/dev/dsp) CONFIG_AUDIO_SB    Optional, also gets PIC spurious IRQs
  *  8   Unused (RTC)
  *  9*  3C509/EL3 (/dev/3c0) CONFIG_ETH_EL3         Optional
  * 10*  WD 80x3   (/dev/wd0) CONFIG_ETH_WD          Optional
@@ -152,6 +152,13 @@
 #define LANCE_PORT      0
 #define LANCE_IRQ       9
 #define LANCE_FLAGS     0x80
+
+/* Sound Blaster /dev/dsp, audio_sb.c: override with sb= in /bootopts,
+ * OPTi MAD16 bring-up with mad16= */
+#define SB_PORT         0x220
+#define SB_IRQ          5               /* use IRQ 7 with DMA 1 on an XT with a hard disk */
+#define SB_DMA          1               /* 8-bit DMA channel, 1 or 3 */
+#define SB_BUFSIZE      4096            /* one playback DMA block, two are buffered */
 
 /* bioshd.c*/
 #define FDC_DOR         0x3F2           /* floppy digital output register*/

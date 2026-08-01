@@ -1,7 +1,7 @@
 /*
- * sbmix - read and set Sound Blaster mixer levels
+ * audiomix - read and set Sound Blaster mixer levels
  *
- * usage: sbmix [-p port] [-m level] [-v level] [-r reg] [-s reg=val]
+ * usage: audiomix [-p port] [-m level] [-v level] [-r reg] [-s reg=val]
  *
  * The /dev/dsp driver has no mixer ioctl: it sets master and voice to full
  * scale once at init and treats level as purely a property of the samples.
@@ -272,7 +272,7 @@ static void codec_dump(void)
 
 static void usage(void)
 {
-    fprintf(stderr, "usage: sbmix [-p port] [-m pct] [-v pct] [-r reg]"
+    fprintf(stderr, "usage: audiomix [-p port] [-m pct] [-v pct] [-r reg]"
         " [-s reg=val] [-z]\n");
     fprintf(stderr, "       -m master level 0-100, -v voice (PCM) level 0-100\n");
     fprintf(stderr, "       -r dump one register, -s write one raw register\n");
@@ -307,7 +307,7 @@ int main(int argc, char **argv)
         usage();
 
     if (dsp_reset() < 0) {
-        fprintf(stderr, "sbmix: no card at 0x%x\n", base);
+        fprintf(stderr, "audiomix: no card at 0x%x\n", base);
         return 1;
     }
     if (dsp_write(DSP_GET_VERSION) == 0) {

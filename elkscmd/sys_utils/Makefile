@@ -30,8 +30,6 @@ PRGS = \
 	chmem \
 	test_unreal \
 	beep \
-	audioplay \
-	sbmix \
 	mouse \
 	sercat \
 	console \
@@ -147,8 +145,3 @@ install: $(PRGS)
 
 clean:
 	$(RM) *.o $(PRGS) $(HOSTPRGS)
-audioplay: audioplay.o $(TINYPRINTF)
-	$(LD) $(LDFLAGS) -o audioplay audioplay.o $(TINYPRINTF) $(LDLIBS)
-
-sbmix: sbmix.o $(TINYPRINTF)
-	$(LD) $(LDFLAGS) -o sbmix sbmix.o $(TINYPRINTF) $(LDLIBS)

@@ -33,6 +33,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -113,7 +114,7 @@ static int write_all(int fd, unsigned char *p, int len)
 static int dsp_open(long rate, int *bufsizep)
 {
     int dsp;
-    oss_int32_t val;
+    int32_t val;
 
     dsp = open("/dev/dsp", O_WRONLY);
     if (dsp < 0) {
@@ -123,15 +124,15 @@ static int dsp_open(long rate, int *bufsizep)
 
     /* Does this driver offer 8-bit unsigned at all? */
     val = 0;
-    if (ioctl(dsp, SNDCTL_DSP_GETFMTS, &val) == 0 && !(val & AFMT_U8)) {
+    if (ioctl(dsp, SNDCTL_DSP_GETFMTS, &val) == 0 && !(val & DSP_FMT_U8)) {
         fprintf(stderr, "audiorecv: no 8-bit unsigned PCM support\n");
         close(dsp);
         return -1;
     }
 
     /* Format first: it fixes the meaning of the rate and channel count. */
-    val = (oss_int32_t)AFMT_U8;
-    if (ioctl(dsp, SNDCTL_DSP_SETFMT, &val) < 0 || val != (oss_int32_t)AFMT_U8) {
+    val = (int32_t)DSP_FMT_U8;
+    if (ioctl(dsp, SNDCTL_DSP_SETFMT, &val) < 0 || val != (int32_t)DSP_FMT_U8) {
         perror("SNDCTL_DSP_SETFMT");
         close(dsp);
         return -1;
@@ -142,13 +143,13 @@ static int dsp_open(long rate, int *bufsizep)
      * rate, so the driver reports back what it actually programmed; playing
      * anyway just shifts the pitch slightly, which beats refusing to play.
      */
-    val = (oss_int32_t)rate;
+    val = (int32_t)rate;
     if (ioctl(dsp, SNDCTL_DSP_SPEED, &val) < 0) {
         perror("SNDCTL_DSP_SPEED");
         close(dsp);
         return -1;
     }
-    if (val != (oss_int32_t)rate)
+    if (val != (int32_t)rate)
         fprintf(stderr, "audiorecv: %ld Hz requested, %ld Hz selected\n",
             rate, (long)val);
 
@@ -162,7 +163,7 @@ static int dsp_open(long rate, int *bufsizep)
     /* Match the driver's block size if it is smaller than our buffer. */
     val = 0;
     if (ioctl(dsp, SNDCTL_DSP_GETBLKSIZE, &val) == 0 &&
-        val > 0 && val < (oss_int32_t)*bufsizep)
+        val > 0 && val < (int32_t)*bufsizep)
         *bufsizep = (int)val;
 
     return dsp;

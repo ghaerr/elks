@@ -1,11 +1,11 @@
 ELKS Sound Blaster /dev/dsp driver
 ==================================
 
-The CONFIG_CHAR_DEV_DSP driver plays digital audio on a Sound Blaster or
+The CONFIG_CHAR_DEV_DSP driver (audio_sb.c) plays digital audio on a Sound Blaster or
 compatible ISA card through /dev/dsp, using the OSS ioctl interface.  It is a
 playback-only driver: there is no recording path, no mixer ioctl, no MIDI and no
 sequencer.  Output level is set once at boot and can be changed from user space
-with sbmix(1); see "Output level" below.
+with audiomix(1); see "Output level" below.
 
 Only raw unsigned 8-bit mono PCM is accepted.  Sample rate conversion, WAV
 parsing and ADPCM decoding belong in user space.
@@ -19,7 +19,7 @@ Any card from a Sound Blaster 1.0 upwards therefore works, including the SB
 Pro and SB16 in their compatible mode.  16-bit DMA and the SB16 high-DMA path
 are not used.
 
-Defaults are CONFIG_SB_PORT 0x220, CONFIG_SB_IRQ 5 and CONFIG_SB_DMA 1, which
+Defaults are SB_PORT 0x220, SB_IRQ 5 and SB_DMA 1 in arch/ports.h, which
 are the Creative factory settings.  /bootopts can override them without a
 rebuild:
 
@@ -71,13 +71,13 @@ Buffering and the gap between blocks
 ------------------------------------
 
 The driver holds one DMA block in flight at a time.  write() copies up to
-CONFIG_SB_BUFSIZE bytes into a low-memory buffer, starts the transfer, and
+SB_BUFSIZE bytes (arch/ports.h, default 4096) into a low-memory buffer, starts the transfer, and
 returns once the previous block has drained, looping internally until the
 caller's whole buffer has been consumed.
 
 The DMA engine is therefore idle between blocks for the interrupt latency plus
 one buffer copy.  At the 4096-byte default that is a short gap roughly every
-CONFIG_SB_BUFSIZE/rate seconds, or about every half second at 8000 Hz.  Making
+SB_BUFSIZE/rate seconds, or about every half second at 8000 Hz.  Making
 the buffer smaller makes the gaps more frequent rather than removing them.
 Eliminating them needs auto-init DMA (DSP command 0x1C with 8237 mode 0x58)
 over a split buffer, which is a larger change than this driver.
@@ -120,7 +120,7 @@ channels returns EINVAL.
 MAD16 boards
 ------------
 
-CONFIG_SB_MAD16 adds bring-up for the OPTi 82C929 (MAD16 Pro) chipset, which
+The MAD16 driver (audio_mad.c) adds bring-up for the OPTi 82C929 (MAD16 Pro) chipset, which
 answers SB DSP commands only once its control registers have been programmed
 to route the SB personality.  It is only attempted when /bootopts sets
 mad16=on, or mad16=port,irq,dma to route it somewhere other than the sb=
@@ -163,17 +163,17 @@ are the opposite failure and look like a driver that runs silently, which is why
 both stages are always programmed rather than left alone.
 
 Boards differ in how much gain follows the mixer, so treat 0x44 as a starting
-point.  sbmix(1) reads the registers back and sets them live:
+point.  audiomix(1) reads the registers back and sets them live:
 
-    sbmix                   show the DSP version and decoded mixer levels
-    sbmix -m 30 -v 30       set master and voice, as a percentage of full scale
-    sbmix -s 0x22=0x44      write a raw register value
-    sbmix -r 0x0e           read one register
+    audiomix                   show the DSP version and decoded mixer levels
+    audiomix -m 30 -v 30       set master and voice, as a percentage of full scale
+    audiomix -s 0x22=0x44      write a raw register value
+    audiomix -r 0x0e           read one register
 
 It decodes levels according to the DSP version, since a DSP 3.xx card reads
 bits 7-5 and 3-1 as two 3-bit fields while a DSP 4.xx card reads bits 7-4 and
 3-0 as two 4-bit fields.  A DSP 1.xx or 2.xx card has no mixer at all and
-sbmix says so.  Run it while playback is idle: it resets the DSP to read the
+audiomix says so.  Run it while playback is idle: it resets the DSP to read the
 version, which would interrupt a transfer in progress.
 
 Playing audio

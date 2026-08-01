@@ -434,69 +434,14 @@ CONFIG_CHAR_DEV_DSP
   classic DSP 0x14 single-block command, so any card from a Sound Blaster
   1.0 upwards will work at up to 20000 Hz.
 
-  /bootopts sb=port,irq,dma overrides the settings below without a
-  rebuild, and sb=off disables the driver on a machine that has no card.
+  The compiled-in port, IRQ, DMA channel and buffer size are the SB_XXX
+  defines in arch/ports.h.  /bootopts sb=port,irq,dma overrides them
+  without a rebuild, sb=off disables the driver on a machine with no
+  card, and mad16= first programs an OPTi 82C929 (MAD16) jumperless
+  chipset into Sound Blaster mode.
 
-  On an XT-class machine with a hard disk the sound card must not use the
-  card's factory IRQ 5 or DMA 3, because the hard disk controller owns
-  both.  The Amstrad PC1640 technical reference assigns IRQ 5 to the hard
-  disk controller and DMA 3 to the external hard disk controller, leaving
-  DMA 1 spare for the expansion bus.  IRQ 7 is the parallel printer port,
-  which the ELKS printer driver never claims because it polls, so IRQ 7
-  with DMA 1 is the combination to jumper for on such a machine.  The
-  driver refuses DMA 3 and warns about IRQ 5 when built with the XT MFM
-  hard disk driver.
-
-Sound Blaster I/O port
-CONFIG_SB_PORT
-  Base I/O port of the card.  Sound Blasters are jumpered to 0x220 or
-  0x240; 0x210 through 0x260 are also possible on later cards.
-
-Sound Blaster IRQ
-CONFIG_SB_IRQ
-  Interrupt the card is jumpered to, normally 5 or 7 on an 8-bit card.
-  The IRQ is claimed during boot, so choosing 5 also stops the serial
-  driver opening Com3.  See the conflict note above before choosing 5 on
-  a machine with a hard disk.
-
-Sound Blaster DMA channel
-CONFIG_SB_DMA
-  8-bit DMA channel the card is jumpered to, either 1 or 3.  Channel 1 is
-  the Sound Blaster default and is the only safe answer on a machine with
-  an XT hard disk controller, which uses channel 3.
-
-Playback DMA buffer bytes
-CONFIG_SB_BUFSIZE
-  Size of the low-memory DMA buffer, and therefore the size of one
-  playback block.  The default of 4096 is 512ms of audio at 8000 Hz.
-
-  Because only one block plays at a time, this also sets how long it takes
-  for a program to stop playback, and how much data is copied between
-  blocks.  Smaller values make the gap between blocks more frequent but
-  shorter; they do not remove it.
-
-OPTi 82C929 (MAD16) early init
-CONFIG_SB_MAD16
-  Program an OPTi 82C929 (MAD16 Pro) chipset into Sound Blaster Pro mode
-  before probing for the DSP.  Say N for a real Sound Blaster, and Y for a
-  card with no jumpers that is configured only by software, which will not
-  answer at all until this has run.
-
-  It takes effect when /bootopts sets mad16=on, which routes the chip to
-  the same port, IRQ and DMA as the sb= line, or mad16=port,irq,dma to use
-  something else.
-
-  The chip's MC3 register can only express these resources, so this is the
-  whole set of routes available on a jumperless card:
-
-    port    0x220 or 0x240
-    IRQ     5 or 7
-    DMA     1 or 3
-
-  On a machine whose hard disk controller owns IRQ 5 and DMA 3, such as the
-  Amstrad PC1640, that leaves exactly one usable combination: IRQ 7 with
-  DMA 1.  Check it against any network card first, since an SMC Ultra takes
-  its interrupt from its own configuration.
+  See Documentation/text/soundblaster.txt for the details, including why
+  an XT-class machine with a hard disk must use IRQ 7 with DMA 1.
 
 Enable meta device driver
 CONFIG_DEV_META

@@ -9,7 +9,7 @@
  *
  * On an XT with a hard disk the card cannot keep its factory IRQ 5 and DMA 3:
  * the hard disk controller owns both, so jumper the card for IRQ 7 and DMA 1.
- * See Documentation/text/dsp-sb.txt.
+ * See Documentation/text/soundblaster.txt.
  *
  * One DMA block is in flight at a time and write() blocks until the previous
  * block has drained.  The bounce buffer holds two blocks so the next one is
@@ -33,7 +33,7 @@
 
 #include <linuxmt/config.h>
 
-#ifdef CONFIG_CHAR_DEV_DSP
+#ifdef CONFIG_AUDIO_SB
 
 #include <linuxmt/types.h>
 #include <linuxmt/major.h>
@@ -44,9 +44,10 @@
 #include <linuxmt/memory.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/string.h>
-#include <linuxmt/soundcard.h>
+#include <linuxmt/audio.h>
 #include <linuxmt/init.h>
 #include <arch/io.h>
+#include <arch/audio_sb.h>
 #include <arch/irq.h>
 #include <arch/dma.h>
 #include <arch/segment.h>
@@ -58,34 +59,6 @@
  * as flip-flop pairs, so one lost byte points DMA at the wrong memory.
  */
 
-/* DSP register offsets from the card base address */
-#define SB_RESET        0x06        /* w  write 1 then 0 to reset the DSP */
-#define SB_READ_DATA    0x0A        /* r  DSP data */
-#define SB_WRITE_DATA   0x0C        /* rw bit 7 of read = write not ready */
-#define SB_READ_STATUS  0x0E        /* r  bit 7 = data available, acks IRQ */
-#define SB_MIXER_ADDR   0x04        /* w  mixer register select */
-#define SB_MIXER_DATA   0x05        /* rw mixer register value */
-
-/* DSP commands used here */
-#define DSP_DIRECT_DAC  0x10        /* one sample straight to the DAC */
-#define DSP_SET_RATE    0x40        /* followed by the time constant */
-#define DSP_DMA_OUT_8   0x14        /* followed by length-1, single block */
-#define DSP_HALT_DMA    0xD0
-#define DSP_SPEAKER_ON  0xD1
-#define DSP_GET_VERSION 0xE1
-#define DSP_READY       0xAA        /* reset acknowledge byte */
-
-/* Mixer registers, SB Pro layout, kept by the SB16 for compatibility */
-#define SB_MIX_VOICE    0x04
-#define SB_MIX_MIC      0x0A
-#define SB_MIX_OUTFILT  0x0E        /* output mode: bit 1 stereo, bit 5 filter bypass */
-#define SB_MIX_MASTER   0x22
-#define SB_MIX_FM       0x26
-#define SB_MIX_CD       0x28
-#define SB_MIX_LINE     0x2E
-
-#define SB_FILT_OFF     0x20        /* set = SB Pro output filter bypassed */
-
 /*
  * Default playback levels, in percent, quantised by sb_mixer_lr_byte() to the
  * card's 3- or 4-bit level fields.  Master stays below full scale because the
@@ -93,7 +66,7 @@
  * material in the mixer; FM is muted because nothing here programs the OPL,
  * so it only contributes its idle noise floor.  Some cards do not implement
  * the don't-care bits of the packing, so never read-modify-write mixer
- * registers.  sbmix(1) changes levels at runtime.
+ * registers.  audiomix(1) changes levels at runtime.
  */
 #define SB_DEFAULT_MASTERVOL 85     /* 6/7 - full scale clips some cards */
 #define SB_DEFAULT_PLAYVOL   85     /* 6/7 */
@@ -105,7 +78,7 @@
  * while the current one is still playing, leaving only the 8237 and DSP
  * reprogramming between blocks.
  */
-#define SB_BOUNCE       CONFIG_SB_BUFSIZE
+#define SB_BOUNCE       SB_BUFSIZE
 #define SB_BUFFER       (2 * SB_BOUNCE)
 #define SB_MIN_RATE     4000U
 /* documented ceiling for DSP 0x14 without the high-speed commands */
@@ -171,7 +144,7 @@ static struct wait_queue sb_wait;
 
 /* GETERROR payload: 104 bytes, far too big for the 640-byte kernel stack */
 static struct audio_errinfo sb_errinfo;
-static oss_int32_t sb_play_underruns;
+static __s32 sb_play_underruns;
 
 /*
  * ceil(len * HZ / byte_rate) using the kernel's 32-bit divide helper rather
@@ -739,7 +712,7 @@ static int FARPROC sb_open_impl(struct inode *inode, struct file *file)
     if (sb_opened)
         return -EBUSY;
 
-#ifdef CONFIG_SB_MAD16
+#ifdef CONFIG_AUDIO_MAD
     /* something else may have moved the SB personality since we set it up */
     mad16_restore_profile();
 #endif
@@ -815,7 +788,7 @@ static int FARPROC sb_put_arg(char *arg, void *src, size_t len)
 static int FARPROC sb_ioctl_impl(struct inode *inode, struct file *file,
                                  int cmd, char *arg)
 {
-    oss_int32_t val;
+    __s32 val;
     unsigned int rate;
     int ret;
 
@@ -844,25 +817,25 @@ static int FARPROC sb_ioctl_impl(struct inode *inode, struct file *file,
         if (val > 0) {                  /* 0 means read the current rate */
             unsigned int ceiling = sb_pio_mode? SB_MAX_RATE_PIO: SB_MAX_RATE;
 
-            rate = (val > (oss_int32_t)ceiling)? ceiling:
-                   (val < (oss_int32_t)SB_MIN_RATE)? SB_MIN_RATE:
+            rate = (val > (__s32)ceiling)? ceiling:
+                   (val < (__s32)SB_MIN_RATE)? SB_MIN_RATE:
                    (unsigned int)val;
             sb_rate_cache(rate);
         }
-        val = (oss_int32_t)sb_actual_rate();
+        val = (__s32)sb_actual_rate();
         return sb_put_arg(arg, &val, sizeof(val));
 
     case SNDCTL_DSP_SETFMT:
         ret = sb_get_arg(arg, &val, sizeof(val));
         if (ret)
             return ret;
-        if (val != (oss_int32_t)AFMT_QUERY && val != (oss_int32_t)AFMT_U8)
+        if (val != (__s32)DSP_FMT_QUERY && val != (__s32)DSP_FMT_U8)
             return -EINVAL;
-        val = (oss_int32_t)AFMT_U8;
+        val = (__s32)DSP_FMT_U8;
         return sb_put_arg(arg, &val, sizeof(val));
 
     case SNDCTL_DSP_GETFMTS:
-        val = (oss_int32_t)AFMT_U8;
+        val = (__s32)DSP_FMT_U8;
         return sb_put_arg(arg, &val, sizeof(val));
 
     /*
@@ -893,7 +866,7 @@ static int FARPROC sb_ioctl_impl(struct inode *inode, struct file *file,
         return sb_put_arg(arg, &val, sizeof(val));
 
     case SNDCTL_DSP_GETBLKSIZE:
-        val = (oss_int32_t)SB_BOUNCE;
+        val = (__s32)SB_BOUNCE;
         return sb_put_arg(arg, &val, sizeof(val));
 
     case SNDCTL_DSP_GETERROR:
@@ -979,9 +952,9 @@ void INITPROC sb_dsp_init(void)
 {
     addr_t phys;
 
-    sb_base = CONFIG_SB_PORT;
-    sb_irq_line = CONFIG_SB_IRQ;
-    sb_dma = CONFIG_SB_DMA;
+    sb_base = SB_PORT;
+    sb_irq_line = SB_IRQ;
+    sb_dma = SB_DMA;
 
     if (sb_port_opt == 0)               /* sb=off */
         return;
@@ -1032,7 +1005,7 @@ void INITPROC sb_dsp_init(void)
     }
     sb_dma_addr_cache(phys);
 
-#ifdef CONFIG_SB_MAD16
+#ifdef CONFIG_AUDIO_MAD
     if (mad16_opt > 0) {
         unsigned int port = (mad16_port_opt > 0)?
             (unsigned int)mad16_port_opt: sb_base;
@@ -1096,4 +1069,4 @@ out_free:
     sb_bounce_seg = NULL;
 }
 
-#endif /* CONFIG_CHAR_DEV_DSP */
+#endif /* CONFIG_AUDIO_SB */

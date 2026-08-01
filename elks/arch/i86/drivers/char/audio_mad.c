@@ -20,7 +20,7 @@
 
 #include <linuxmt/config.h>
 
-#if defined(CONFIG_CHAR_DEV_DSP) && defined(CONFIG_SB_MAD16)
+#ifdef CONFIG_AUDIO_MAD
 
 #include <linuxmt/types.h>
 #include <linuxmt/errno.h>
@@ -369,4 +369,4 @@ int INITPROC mad16_early_init(unsigned int port, int irq, int dma)
     return 0;
 }
 
-#endif /* CONFIG_CHAR_DEV_DSP && CONFIG_SB_MAD16 */
+#endif /* CONFIG_AUDIO_MAD */
