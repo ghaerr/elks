@@ -871,7 +871,14 @@ int get_epsv_port(char *str, unsigned int *server_port) {
 		p--;
 	if (*p != '|')
 		return -1;
+	p--;			/* step off the closing delimiter */
+	while (p > str && *p != '|')
+		p--;
+	if (*p != '|')
+		return -1;
 	*server_port = atoi(p + 1);
+	if (*server_port == 0)
+		return -1;
 	return 1;
 }
 
@@ -1077,7 +1084,8 @@ int connect_cmd(char *ip, unsigned int server_port) {
 	if (in_connect(controlfd, (struct sockaddr *) &servaddr, sizeof(servaddr), 10) < 0) {
 		perror("ftp");
 		controlfd = -1;
-	}
+	} else
+		get_ip_port(controlfd, myip, &myport);	/* refresh: advertise conn local addr */
 	return controlfd;
 }
 
