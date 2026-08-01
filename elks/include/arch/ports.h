@@ -160,6 +160,7 @@
  * audio cards carry the 8-bit DMA channel in ram and the flags below. */
 #define ISA_OFF		0x8000	/* card disabled with "off" in /bootopts */
 #define ISA_EXTWRITE	0x0001	/* sb= flags bit 0: 8237 Extended Write strobe */
+#define ISA_AUTOINIT	0x0002	/* sb= flags bit 1: auto-init DMA on a MAD16 too */
 
 #ifndef __ASSEMBLER__
 struct isa_conf {

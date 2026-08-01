@@ -155,6 +155,7 @@ static struct wait_queue sb_wait;
  * writer has filled but the card has not finished; the interrupt frees one and
  * flags sb_underrun if the writer had none ready.
  */
+static unsigned char sb_mad16_route;     /* card is an OPTi MAD16 in SB mode */
 static unsigned char sb_ai_active;       /* continuous auto-init DMA running */
 static volatile unsigned char sb_queued; /* filled halves not yet drained (0..2) */
 static volatile unsigned char sb_underrun;
@@ -465,10 +466,20 @@ static void FARPROC sb_idle(void)
 
 static void sb_dsp_irq_ack(void);       /* drains the card's interrupt read path */
 
-/* Auto-init needs DSP 2.00; a real SB 1.x DSP has only the 0x14 single block. */
+/*
+ * Auto-init needs DSP 2.00, so a real SB 1.x keeps the single-block path.  So
+ * does a MAD16: measured on an 82C929A, its SB engine plays continuous
+ * auto-init badly where the same stream is clean single-block, which is the
+ * same per-block hand-holding its time constant already needs.  sb= flags
+ * bit 1 overrides for experiments on other compatibles.
+ */
 static int FARPROC sb_can_autoinit(void)
 {
-    return !sb_pio_mode && sb_dsp_ver_major >= 2;
+    if (sb_pio_mode || sb_dsp_ver_major < 2)
+        return 0;
+    if (sb_mad16_route && !(audio_conf[AUDIO_SB].flags & ISA_AUTOINIT))
+        return 0;
+    return 1;
 }
 
 /*
@@ -1240,8 +1251,10 @@ void INITPROC dsp_init(void)
          * Distinguish the two failures: a card with no jumpers depends on this
          * step, so "which of the two went wrong" is the whole diagnostic.
          */
-        if (rc == 0)
+        if (rc == 0) {
+            sb_mad16_route = 1;
             printk("sb: mad16 at 0x%x irq %d dma %d\n", port, irq, dma);
+        }
         else if (rc == -EINVAL)
             printk("sb: mad16 cannot route 0x%x irq %d dma %d, "
                    "allows port 0x220/0x240 irq 5/7 dma 1/3\n", port, irq, dma);
