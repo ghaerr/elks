@@ -74,10 +74,7 @@ extern void INITPROC pcnet_drv_init(void);
 extern unsigned long INITPROC pci_cfg_read(unsigned int devfn_reg);
 extern void          INITPROC pci_cfg_write(unsigned int devfn_reg, unsigned int val);
 extern void INITPROC lp_init(void);
-extern struct isa_conf audio_conf[];     /* sb= and mad16= /bootopts routes */
-extern void INITPROC audio_sb_init(void);
-extern int  INITPROC mad16_early_init(unsigned int port, int irq, int dma);
-extern void FARPROC mad16_restore_profile(void);
+extern void INITPROC dsp_init(void);
 extern void INITPROC mem_dev_init(void);
 extern void INITPROC meta_init(void);
 extern void INITPROC pty_init(void);

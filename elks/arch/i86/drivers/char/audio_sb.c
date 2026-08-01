@@ -96,8 +96,12 @@
 #define LPT1_CONTROL    0x37A
 #define LPT1_CTRL_IDLE  0x0C        /* INIT + SELECT_IN, interrupt disabled */
 
-/* audio_conf[] holds the sb= and mad16= routes, see init/main.c */
-extern int dma_extwrite_opt;    /* /bootopts dmaxw=1: 8237 Extended Write */
+/* audio_conf[] holds the sb= and mad16= routes, parsed in init/main.c */
+extern struct isa_conf audio_conf[];
+
+/* audio_mad.c, only linked when CONFIG_AUDIO_MAD is set */
+extern int  INITPROC mad16_early_init(unsigned int port, int irq, int dma);
+extern void FARPROC mad16_restore_profile(void);
 
 static unsigned int sb_base;
 static unsigned char sb_dma;
@@ -941,7 +945,7 @@ static addr_t INITPROC sb_alloc_bounce(void)
     return sb_bounce_seg? phys: 0;
 }
 
-void INITPROC audio_sb_init(void)
+void INITPROC dsp_init(void)
 {
     struct isa_conf *conf = &audio_conf[AUDIO_SB];
     addr_t phys;
@@ -951,14 +955,6 @@ void INITPROC audio_sb_init(void)
     sb_base = (unsigned int)conf->port;
     sb_irq_line = (unsigned char)conf->irq;
     sb_dma = (unsigned char)conf->ram;
-    /*
-     * Extended Write is a single global setting for the controller, not a
-     * per-channel one, so writing it twice from two drivers is harmless.
-     */
-    if (dma_extwrite_opt) {
-        outb_p(DMA1_CMD_EXTWRITE, DMA1_CMD_REG);
-        printk("sb: 8237 extended write enabled\n");
-    }
     /* sb=irq,port,0 selects PIO playback: no 8237, no completion interrupt */
     if (sb_dma == 0) {
         sb_pio_mode = 1;
