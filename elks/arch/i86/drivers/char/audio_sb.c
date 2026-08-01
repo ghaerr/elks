@@ -820,6 +820,15 @@ static void FARPROC sb_mixer_program(void)
                                                   SB_DEFAULT_PLAYVOL));
     sb_mixer_write(SB_MIX_FM, sb_mixer_lr_byte(SB_DEFAULT_FMVOL,
                                                SB_DEFAULT_FMVOL));
+    /*
+     * Every input the driver does not use is muted outright.  A DSP reset
+     * restores the card's own defaults for all of these, the readback path
+     * cannot confirm anything on this chip (reads OR in 0x11), and any
+     * input left at a default level is summed into the output as noise.
+     */
+    sb_mixer_write(SB_MIX_MIC, 0x00);
+    sb_mixer_write(SB_MIX_CD, 0x00);
+    sb_mixer_write(SB_MIX_LINE, 0x00);
     sb_set_output_mode();
 }
 
