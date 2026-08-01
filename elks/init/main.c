@@ -46,6 +46,7 @@ struct netif_parms netif_parms[MAX_ETHS] = {
     { ULTRA_IRQ, ULTRA_PORT, ULTRA_RAM, ULTRA_FLAGS },
     { LANCE_IRQ, LANCE_PORT, 0, LANCE_FLAGS },
 };
+int dma_extwrite_opt;           /* /bootopts dmaxw=1: 8237 Extended Write */
 int mfmhd_slow_profile;         /* /bootopts mfm= bit 0: slow controller timing */
 int mfmhd_pio;                  /* /bootopts mfm= bit 1: PIO sector transfers */
 int mfmhd_trace;                /* /bootopts mfm= bit 2: driver request tracing */
@@ -638,6 +639,16 @@ static int INITPROC parse_options(void)
         if (!strncmp(line,"init=",5)) {
             line += 5;
             init_command = argv_init[1] = line;
+            continue;
+        }
+        /*
+         * dmaxw=1 switches the 8237 to Extended Write.  Off by default: only
+         * machines whose DMA timing is tighter than 8-bit cards expect need
+         * it, notably the Amstrad PC1512/1640.  Harmless elsewhere, but there
+         * is no reason to alter a working controller's timing.
+         */
+        if (!strncmp(line,"dmaxw=",6)) {
+            dma_extwrite_opt = (int)simple_strtol(line+6, 0);
             continue;
         }
         if (!strncmp(line,"ne0=",4)) {
