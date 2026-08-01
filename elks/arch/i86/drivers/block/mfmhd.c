@@ -95,6 +95,11 @@
 #define MFM_CTL_PIO_POLLED      MFMHD_CTL_PIO_POLLED
 #define MFM_CTL_VALID_MASK      (MFM_CTL_DRQEN | MFM_CTL_IRQEN)
 
+/* IRQ 5 is the PC/XT fixed-disk interrupt, as used by the WD1002 and clones. */
+#ifndef MFMHD_IRQ
+# define MFMHD_IRQ              5
+#endif
+
 /* Command-status byte bits. */
 #define MFM_CSB_ERROR           0x02
 #define MFM_CSB_LUN             0x20
@@ -477,6 +482,43 @@ int mfmhd_pio;
  * before a freeze stays on screen.
  */
 int mfmhd_trace;
+/*
+ * mfm= bit 3 requests interrupt-driven command completion on IRQ 5, the XT
+ * fixed-disk line.  The controller has always been able to do this - bit 1 of
+ * the port+3 mask register (MFM_CTL_IRQEN) asserts IRQ on command completion -
+ * but the driver only ever wrote MFM_CTL_PIO_POLLED and span on the status
+ * port instead, which burns the CPU for the whole of every transfer.
+ *
+ * It is opt-in rather than default because this is the driver the system boots
+ * from: if the board does not actually drive the line, or the line is shared,
+ * an unbootable machine is the failure mode.  Booting without the bit restores
+ * the polled behaviour exactly.  The poll loop is retained underneath as a
+ * backstop, so a missing interrupt costs latency rather than a hang.
+ */
+int mfmhd_irq_mode;
+/*
+ * mfm= bit 4 sets the 8237's Extended Write mode (command register bit 5).
+ * The command register bit picks the write-strobe timing: 0 is Late Write,
+ * 1 is Extended Write, which asserts the strobe a clock earlier and so holds
+ * it for longer.  It exists for peripherals that cannot meet the short pulse.
+ *
+ * The Amstrad PC1512/1640 need it.  Their 8237 is clocked at 4MHz and takes a
+ * five-clock 1.25us bus cycle on channels 1-3 (PC1640 Technical Reference
+ * 1.5), where a real XT clocks the part near 2.39MHz for a four-clock cycle of
+ * about 1.68us - so the Amstrad completes each transfer roughly 25% faster
+ * than 8-bit cards were designed against, and the ROS firmware additionally
+ * initialises the controller to Late Write (1.5.2), the shorter of the two.
+ * The result is dropped or mistimed bytes: distorted audio on the sound card,
+ * and a hard disk controller that misses its handshake altogether and forces
+ * the driver back to PIO.
+ *
+ * Off by default: machines with standard timing have no reason to alter a
+ * working controller, and the setting is harmless where enabled unnecessarily.
+ */
+int mfmhd_extwrite;
+static struct wait_queue mfmhd_wait;
+static volatile unsigned char mfmhd_irq_seen;
+static unsigned char mfmhd_irq_armed;
 
 static jiff_t mfmhd_probe_deadline;     /* 0 once probing is over */
 
@@ -986,6 +1028,43 @@ mfmhd_dump_status(unsigned int port, const char *where, unsigned char status)
         (status & MFM_STAT_READY) != 0);
 }
 
+/*
+ * Completion interrupt.  The controller latches MFM_STAT_INTERRUPT in the
+ * status port; reading status is what the polled path already does, so the
+ * flag is simply recorded and the sleeper woken.  The PIC end-of-interrupt is
+ * issued by the irqit wrapper, so the PIC is not touched here.
+ */
+static void
+mfmhd_interrupt(int irq, struct pt_regs *regs)
+{
+    (void)irq;
+    (void)regs;
+    mfmhd_irq_seen = 1;
+    wake_up(&mfmhd_wait);
+}
+
+/*
+ * Wait for command completion.  With mfm= bit 3 the task sleeps until the
+ * controller's interrupt arrives, giving the CPU back for the duration of the
+ * transfer; the caller's own timeout still bounds the wait, and the polled
+ * loop below still runs afterwards to confirm the status bits, so an
+ * interrupt that never arrives degrades to the old behaviour rather than
+ * hanging.
+ */
+static void
+mfmhd_sleep_for_irq(jiff_t timeout)
+{
+    if (!mfmhd_irq_armed)
+        return;
+    prepare_to_wait_interruptible(&mfmhd_wait);
+    if (!mfmhd_irq_seen && !current->signal) {
+        current->timeout = jiffies() + timeout + 1;
+        do_wait();
+        current->timeout = 0;
+    }
+    finish_wait(&mfmhd_wait);
+}
+
 static int
 mfmhd_wait_status(unsigned int port, unsigned char flags, unsigned char mask,
     jiff_t timeout, const char *where)
@@ -1154,11 +1233,41 @@ mfmhd_data_out_burst(unsigned int port, unsigned char **pwrite,
 #define MFM_CMD_FAULT           (-1)    /* handshake fault: count + resync */
 #define MFM_CMD_NOSELECT        (-2)    /* never selected: quiet cleanup */
 
+/*
+ * A phase fault means the driver and the controller disagree about where they
+ * are in the command protocol, and the controller does not leave that state on
+ * its own: it sits with SELECT asserted (status 0xCB, drive light stuck on) and
+ * every later command fails, so a probe after one reports "no XT MFM drives
+ * found" on a perfectly good disk.  Worse, a fault part way through a write
+ * leaves the sector half written, which is how a file on this disk ends up
+ * truncated.
+ *
+ * Pulsing the reset port clears it - measured on a wedged WD1002A-WX1, status
+ * went from 0xCB straight back to 0xC0 - so recover here rather than leaving
+ * the board stuck for whatever runs next.  The command still fails and the
+ * caller still retries; this only ensures the retry meets a sane controller.
+ */
 static int
 mfmhd_phase_fault(unsigned int port, const char *where, unsigned char st)
 {
+    unsigned char after;
+    int i;
+
     mfmhd_dump_status(port, where, st);
     mfmhd_debug_set(40, -1, port, -1);
+
+    outb_p(1, port + MFM_HD_RESET);
+    for (i = 0; i < 1000; i++) {        /* the board needs a moment to settle */
+        after = STATUS(port);
+        if (!(after & MFM_STAT_SELECT))
+            break;
+    }
+    mfmhd_write_control(port, MFM_CTL_PIO_POLLED);
+    if (after & MFM_STAT_SELECT)
+        printk("mfmhd: controller still busy after reset, status=%02x\n", after);
+    else if (mfmhd_trace)
+        printk("mfmhd: controller reset after %s, status=%02x\n", where, after);
+
     return MFM_CMD_FAULT;
 }
 
@@ -1204,8 +1313,14 @@ mfmhd_cmd_raw(unsigned int port)
 
     /* Match Linux xd WD1002 select-then-control ordering. */
     outb_p(0, port + MFM_HD_SELECT);
-    mfmhd_write_control(port, dma_active ? MFM_CTL_DRQEN :
-        MFM_CTL_PIO_POLLED);
+    /*
+     * Clear the seen-flag before the controller can raise the line, or a
+     * stale interrupt from the previous command would satisfy this one's wait.
+     */
+    mfmhd_irq_seen = 0;
+    mfmhd_write_control(port,
+        (unsigned char)((dma_active ? MFM_CTL_DRQEN : MFM_CTL_PIO_POLLED) |
+                        (mfmhd_irq_armed ? MFM_CTL_IRQEN : 0)));
 
     if (mfmhd_trace)
         printk("mfmhd: cmd op=%02x dma=%d in=%u out=%u\n", op, dma_active,
@@ -1338,10 +1453,15 @@ done:
     if (dma_active)
         mfmhd_dma_stop();
 
+    /* Give the CPU up until the controller says it has finished. */
+    mfmhd_sleep_for_irq(mfmhd_select_ticks());
+
     if (mfmhd_wait_status(port, 0, MFM_STAT_SELECT, mfmhd_select_ticks(),
             "busy clear timeout"))
         return MFM_CMD_FAULT;
-    if (dma_active)
+    if (mfmhd_irq_armed)
+        mfmhd_write_control(port, MFM_CTL_PIO_POLLED);
+    else if (dma_active)
         mfmhd_write_control(port, MFM_CTL_PIO_POLLED);
 
     return (int)csb | (early_status ? MFM_CMD_EARLY_STATUS : 0);
@@ -2076,6 +2196,14 @@ struct gendisk * INITPROC mfmhd_init(void)
     mfmhd_slow_profile = mfm_opts & 1;  /* bit 0: slow controller timing */
     mfmhd_pio = (mfm_opts >> 1) & 1;    /* bit 1: PIO sector transfers */
     mfmhd_trace = (mfm_opts >> 2) & 1;  /* bit 2: driver request tracing */
+    mfmhd_irq_mode = (mfm_opts >> 3) & 1; /* bit 3: interrupt-driven completion */
+    mfmhd_extwrite = (mfm_opts >> 4) & 1; /* bit 4: 8237 Extended Write strobe */
+
+    /* Set once here, before any transfer is programmed. */
+    if (mfmhd_extwrite) {
+        outb_p(DMA1_CMD_EXTWRITE, DMA1_CMD_REG);
+        printk("mfmhd: 8237 extended write enabled\n");
+    }
 
     mfmhd_init_ports();
     mfmhd_debug_set(10, -1, MFMHD_PORT, 0);
@@ -2146,9 +2274,17 @@ struct gendisk * INITPROC mfmhd_init(void)
     /* The block layer scans partitions after this request path is live. */
     mfmhd_initialized = 1;
 
-    printk("mfmhd: found %d hard drive%c at port 0x%x, polled %s\n",
+    if (mfmhd_irq_mode) {
+        if (request_irq(MFMHD_IRQ, mfmhd_interrupt, INT_GENERIC))
+            printk("mfmhd: irq %d busy, staying polled\n", MFMHD_IRQ);
+        else
+            mfmhd_irq_armed = 1;
+    }
+
+    printk("mfmhd: found %d hard drive%c at port 0x%x, %s %s%s\n",
         hdcnt, hdcnt == 1 ? ' ' : 's', MFMHD_PORT,
-        mfmhd_pio ? "pio" : "dma=3");
+        mfmhd_irq_armed ? "irq 5" : "polled",
+        mfmhd_pio ? "pio" : "dma=3", mfmhd_extwrite ? " xw" : "");
     mfmhd_debug_set(91, -1, MFMHD_PORT, 0);
     return &mfmhd_gendisk;
 }
