@@ -52,6 +52,7 @@ enum {
 	CMD_QUIT,
 	CMD_REIN,
 	CMD_PORT,
+	CMD_EPRT,
 	CMD_PASV,
 	CMD_EPSV,
 	CMD_TYPE,
@@ -97,6 +98,7 @@ struct cmd_tab cmdtab[] = {
 	{"PASV", CMD_PASV},
 	{"EPSV", CMD_EPSV},
 	{"PORT", CMD_PORT},
+	{"EPRT", CMD_EPRT},
 	{"TYPE", CMD_TYPE},
 	{"DELE", CMD_DELE},
 	{"NLST", CMD_NLST},
@@ -194,6 +196,40 @@ int get_client_ip_port(char *str, char *client_ip, unsigned int *client_port) {
 	p5 = atoi(n[4]);
 	p6 = atoi(n[5]);
 	*client_port = (256 * p5) + p6;
+
+	return 1;
+}
+
+int get_eprt(char *str, char *client_ip, unsigned int *client_port, int *family) {
+	char *p, *e, d;
+	unsigned long port;
+
+	/* Sample EPRT CMD: 'EPRT |1|10.0.2.2|211|' */
+	if ((p = strchr(str, ' ')) == NULL)
+		return -1;
+	p++;
+	if (*p < 33 || *p > 126)
+		return -1;
+	d = *p++;
+	if (*p != '1' && *p != '2')
+		return -1;
+	*family = *p++ - '0';
+	if (*p != d)
+		return -1;
+	p++;
+	if ((e = strchr(p, d)) == NULL || e == p)
+		return -1;
+	*e = '\0';
+	strcpy(client_ip, p);
+	p = e + 1;
+	for (e = p; *e >= '0' && *e <= '9'; e++)
+		;
+	if (*e != d)
+		return -1;
+	port = atol(p);
+	if (port == 0 || port > 65535)
+		return -1;
+	*client_port = (unsigned int) port;
 
 	return 1;
 }
@@ -754,6 +790,7 @@ int main(int argc, char **argv) {
 		else {						    /* child process for accept */
 			int datafd = -1, code, quit = FALSE;
 			unsigned int client_port = 0;
+			int family = 0;
 			//char type = 'I';		/* treat everything as binary */
 			char client_ip[50], command[CMDBUFSIZ], namebuf[MAXPATHLEN];
 			char *str;
@@ -809,6 +846,27 @@ int main(int argc, char **argv) {
 						send_reply(425, "Can't open data connection");
 					} else 
 						send_reply(200, "PORT command successful");
+					break;
+
+				case CMD_EPRT: /* Extended active mode (RFC 2428) */
+					if (datafd >= 0) { /* connection already open, close it! */
+						close(datafd);
+						datafd = -1;
+					}
+					if (get_eprt(command, client_ip, &client_port, &family) < 0) {
+						send_reply(501, "Syntax error in EPRT command");
+						break;
+					}
+					if (family != 1) {
+						send_reply(522, "Network protocol not supported, use (1)");
+						break;
+					}
+					if ((datafd = do_active(client_ip, client_port, myport)) < 0) {
+						if (debug) printf("EPRT command failed.\n");
+						datafd = -1;
+						send_reply(425, "Can't open data connection");
+					} else
+						send_reply(200, "EPRT command successful");
 					break;
 
 				case CMD_PASV: /* Enter Passive mode */
