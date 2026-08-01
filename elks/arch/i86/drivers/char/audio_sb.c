@@ -350,6 +350,19 @@ static int INITPROC sb_dma_unusable(addr_t phys)
 }
 
 /* Caller holds interrupts off: the address flip-flop is shared chip state. */
+/*
+ * The 8237 command register is write-only and shared: the BIOS disk driver
+ * reprograms the controller for its own transfers and can clear Extended
+ * Write at any moment after a one-shot set at init.  So the strobe is
+ * re-asserted every time a transfer is armed, which is the only point it
+ * actually matters.
+ */
+static void FARPROC sb_extwrite_assert(void)
+{
+    if (audio_conf[AUDIO_SB].flags & ISA_EXTWRITE)
+        outb_p(DMA1_CMD_EXTWRITE, DMA1_CMD_REG);
+}
+
 static void FARPROC sb_dma_program(unsigned int off, unsigned int len)
 {
     union {
@@ -360,6 +373,7 @@ static void FARPROC sb_dma_program(unsigned int off, unsigned int len)
     address.word = sb_bounce_dma_off + off;
     count.word = len - 1U;              /* the 8237 is loaded with count-1 */
 
+    sb_extwrite_assert();
     outb_p(sb_dma_mask | 4, DMA1_MASK_REG);       /* mask the channel */
     outb_p(0, DMA1_CLEAR_FF_REG);
     outb_p(DMA_MODE_WRITE | sb_dma, DMA1_MODE_REG);
@@ -497,6 +511,7 @@ static void FARPROC sb_dma_program_auto(void)
 
     count.word = SB_BUFFER - 1U;
 
+    sb_extwrite_assert();
     outb_p(sb_dma_mask | 4, DMA1_MASK_REG);       /* mask the channel */
     outb_p(0, DMA1_CLEAR_FF_REG);
     outb_p((DMA_MODE_WRITE | 0x10) | sb_dma, DMA1_MODE_REG);  /* +auto-init */
@@ -1193,14 +1208,14 @@ void INITPROC dsp_init(void)
     sb_irq_line = (unsigned char)conf->irq;
     sb_dma = (unsigned char)conf->ram;
     /*
-     * sb=irq,port,dma,1 sets the 8237 Extended Write strobe for a machine
+     * sb=irq,port,dma,1 selects the 8237 Extended Write strobe for a machine
      * whose DMA timing is tighter than 8-bit cards expect (the Amstrad
-     * PC1512/1640).  It is a controller-wide bit, so a machine that also
-     * runs the MFM driver can set it there with mfm= bit 4 instead; setting
-     * it from both is harmless.
+     * PC1512/1640).  The strobe itself is re-asserted per transfer in
+     * sb_dma_program: the shared, write-only command register does not
+     * survive other users of the controller.
      */
     if (conf->flags & ISA_EXTWRITE) {
-        outb_p(DMA1_CMD_EXTWRITE, DMA1_CMD_REG);
+        sb_extwrite_assert();
         printk("sb: 8237 extended write enabled\n");
     }
     /* sb=irq,port,0 selects PIO playback: no 8237, no completion interrupt */
