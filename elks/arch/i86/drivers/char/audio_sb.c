@@ -990,9 +990,13 @@ void INITPROC dsp_init(void)
 
 #ifdef CONFIG_AUDIO_MAD
     if (!(audio_conf[AUDIO_MAD].flags & ISA_OFF)) {
-        unsigned int port = (unsigned int)audio_conf[AUDIO_MAD].port;
-        int irq = audio_conf[AUDIO_MAD].irq;
-        int dma = (int)audio_conf[AUDIO_MAD].ram;
+        /* mad16=on leaves the entry blank, meaning "wherever sb= points" */
+        unsigned int port = audio_conf[AUDIO_MAD].port?
+            (unsigned int)audio_conf[AUDIO_MAD].port: sb_base;
+        int irq = audio_conf[AUDIO_MAD].irq?
+            audio_conf[AUDIO_MAD].irq: (int)sb_irq_line;
+        int dma = audio_conf[AUDIO_MAD].ram?
+            (int)audio_conf[AUDIO_MAD].ram: (int)sb_dma;
         int rc = mad16_early_init(port, irq, dma);
 
         /*

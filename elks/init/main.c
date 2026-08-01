@@ -56,7 +56,7 @@ struct isa_conf audio_conf[MAX_AUDIO] = {
     /* NOTE:  The order must match the defines in linuxmt/audio.h:
      * AUDIO_SB, AUDIO_MAD.  ram holds the 8-bit DMA channel. */
     { SB_IRQ, SB_PORT, SB_DMA, 0 },
-    { SB_IRQ, SB_PORT, SB_DMA, ISA_OFF },
+    { 0, 0, 0, ISA_OFF },       /* mad16=on follows the sb= route */
 };
 
 /* internal non-driver globals */
