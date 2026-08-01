@@ -24,6 +24,7 @@
 #define DSP_DMA_EXIT_AI 0xDA        /* leave auto-init after the current block */
 #define DSP_HALT_DMA    0xD0
 #define DSP_SPEAKER_ON  0xD1
+#define DSP_SPEAKER_OFF 0xD3
 #define DSP_GET_VERSION 0xE1
 #define DSP_READY       0xAA        /* reset acknowledge byte */
 

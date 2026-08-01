@@ -515,6 +515,7 @@ static int FARPROC sb_ai_start(void)
         return -EIO;
     if (dsp_cmd(DSP_DMA_OUT_8AI) < 0)
         return -EIO;
+    (void)dsp_cmd(DSP_SPEAKER_ON);
     sb_ai_active = 1;
     return 0;
 }
@@ -538,6 +539,11 @@ static void FARPROC sb_ai_halt(void)
     if (was_active) {
         (void)dsp_cmd(DSP_HALT_DMA);        /* stop the transfer in flight */
         (void)dsp_cmd(DSP_DMA_EXIT_AI);     /* and leave auto-init mode */
+        /*
+         * Disconnect the DAC: halted, it holds its last sample as a DC
+         * offset on the output.  Restarts reconnect it in sb_ai_start.
+         */
+        (void)dsp_cmd(DSP_SPEAKER_OFF);
     }
     sb_dsp_irq_ack();
 }
@@ -625,6 +631,7 @@ static void FARPROC sb_ai_drain(void)
         current->timeout = 0;
         finish_wait(&sb_wait);
     }
+    fmemsetb((void *)0, sb_bounce_seg->base, 0x80, SB_BUFFER);
     sb_ai_halt();
 }
 
