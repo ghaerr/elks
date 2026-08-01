@@ -16,12 +16,6 @@
  *  6   HW floppy drive      CONFIG_BLK_DEV_FD      Optional
  *  7   Unused (LPT, Com4)
  *  7*  Sound Blaster (/dev/dsp) CONFIG_CHAR_DEV_DSP Optional, also gets PIC spurious IRQs
- *
- * On an XT the hard disk controller owns IRQ 5 and DMA 3, so a sound card has
- * to be jumpered away from both.  The Amstrad PC1640 technical reference gives
- * IRQ 5 to the hard disk controller, DMA 2 to the floppy controller, DMA 3 to
- * the external hard disk controller, and lists DMA 1 as spare for the expansion
- * bus, which is why the sound driver defaults to DMA 1.
  *  8   Unused (RTC)
  *  9*  3C509/EL3 (/dev/3c0) CONFIG_ETH_EL3         Optional
  * 10*  WD 80x3   (/dev/wd0) CONFIG_ETH_WD          Optional

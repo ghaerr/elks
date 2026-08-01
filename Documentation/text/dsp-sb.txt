@@ -71,13 +71,13 @@ Buffering and the gap between blocks
 ------------------------------------
 
 The driver holds one DMA block in flight at a time.  write() copies up to
-CONFIG_SB_BOUNCE bytes into a low-memory buffer, starts the transfer, and
+CONFIG_SB_BUFSIZE bytes into a low-memory buffer, starts the transfer, and
 returns once the previous block has drained, looping internally until the
 caller's whole buffer has been consumed.
 
 The DMA engine is therefore idle between blocks for the interrupt latency plus
 one buffer copy.  At the 4096-byte default that is a short gap roughly every
-CONFIG_SB_BOUNCE/rate seconds, or about every half second at 8000 Hz.  Making
+CONFIG_SB_BUFSIZE/rate seconds, or about every half second at 8000 Hz.  Making
 the buffer smaller makes the gaps more frequent rather than removing them.
 Eliminating them needs auto-init DMA (DSP command 0x1C with 8237 mode 0x58)
 over a split buffer, which is a larger change than this driver.

@@ -78,18 +78,10 @@
 /* DMA controller registers */
 #define DMA1_CMD_REG		0x08	/* command register (w) */
 /*
- * Command register bit 5 picks the write-strobe timing: 0 is Late Write, 1 is
- * Extended Write, which asserts the strobe a clock earlier and so holds it for
- * longer.  It exists for peripherals that cannot meet the short pulse.
- *
- * The Amstrad PC1512/1640 need it.  Their 8237 is clocked at 4MHz and takes a
- * five-clock 1.25us bus cycle on channels 1-3 (PC1640 Technical Reference
- * 1.5), where a real XT clocks the part near 2.39MHz for a four-clock cycle of
- * about 1.68us - so the Amstrad completes each transfer roughly 25% faster
- * than 8-bit cards were designed against, and the ROS firmware additionally
- * initialises the controller to Late Write (1.5.2), the shorter of the two.
- * The result is dropped or mistimed bytes: distorted audio on the sound card,
- * and a hard disk controller that misses its handshake altogether.
+ * Command register bit 5 selects Extended Write: the write strobe asserts a
+ * clock earlier and holds longer, for peripherals that miss a short pulse.
+ * Machines that clock the 8237 faster than standard (Amstrad PC1512/1640)
+ * need it or DMA peripherals drop bytes; selected with /bootopts dmaxw=1.
  */
 #define DMA1_CMD_EXTWRITE	0x20	/* extended write for slow peripherals */
 #define DMA1_STAT_REG		0x08	/* status register (r) */

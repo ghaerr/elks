@@ -73,13 +73,9 @@ extern void INITPROC pcnet_drv_init(void);
 extern unsigned long INITPROC pci_cfg_read(unsigned int devfn_reg);
 extern void          INITPROC pci_cfg_write(unsigned int devfn_reg, unsigned int val);
 extern void INITPROC lp_init(void);
-#ifdef CONFIG_CHAR_DEV_DSP
 extern void INITPROC sb_dsp_init(void);
-#ifdef CONFIG_SB_MAD16
-extern int  INITPROC mad16_early_init(unsigned int port,int irq,int dma);
+extern int  INITPROC mad16_early_init(unsigned int port, int irq, int dma);
 extern void FARPROC mad16_restore_profile(void);
-#endif
-#endif
 extern void INITPROC mem_dev_init(void);
 extern void INITPROC meta_init(void);
 extern void INITPROC pty_init(void);

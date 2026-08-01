@@ -31,19 +31,9 @@
 #include <arch/irq.h>
 
 /*
- * Every port access in this driver goes through the bus-recovery forms.  The
- * xt-elks driver that worked on this machine built with CONFIG_XT_SLOW_ISA_IO=y
- * and routed all 54 of its accesses through inb_p/outb_p (sb_dsp.c:46-52); that
- * symbol does not exist in this tree, and these two sound files are the only
- * drivers left using bare inb/outb - lp, kbd-scancode, serial-8250, mfmhd and
- * directfd all still use the _p forms.
- *
- * On an 8 MHz Amstrad this matters.  Back-to-back accesses with no recovery
- * cycle are dropped or mis-latched by slow ISA parts: the 8237 programming
- * sequence writes the address and count as flip-flop pairs, so one lost byte
- * points DMA at the wrong memory, and the OPTi password gate and the AD1848
- * index/data pairs have the same exposure.  An emulator does not model bus
- * recovery, which is why this reads clean in 86Box and breaks on real hardware.
+ * All port access goes through the inb_p/outb_p bus-recovery forms except
+ * where noted below: slow ISA parts drop back-to-back accesses, and the OPTi
+ * password gate and the codec index/data pairs are both exposed to that.
  */
 
 /*
@@ -89,17 +79,9 @@
 #define MC4_TIMEOUT     0x20
 #define MC4_SBVER_3     0x02
 /*
- * MC5 is the diagnostic register, and two of these bits were previously named
- * as though they were reserved.  They are not: bit 7 is AUTOVOL and bit 2 is the
- * Sound Blaster mixer enable.  The vendor driver makes the polarity explicit -
- * "if (getbit(mc5data,7) = 0) then cfg.autovol := 1; {low means active here}" -
- * so setting bit 7 DISABLES automatic volume.
- *
- * The datasheet gives a normal setting per codec: 0x2F for a CS4231/4248 and
- * 0x25 for an AD1848/1846, the difference being CFIX, the fix for Crystal part
- * synchronisation delays, which must be off for an AD1848.  SPACCESS stays clear
- * so the codec is not reachable while the chip is in Sound Blaster mode, which
- * is what the normal setting specifies.
+ * MC5 is the diagnostic register.  Bit 7 high DISABLES automatic volume.  The
+ * datasheet's normal setting is 0x2F for a CS4231/4248 and 0x25 for an
+ * AD1848/1846, the difference being CFIX, which must be off for an AD1848.
  */
 #define MC5_AUTOVOL_OFF 0x80        /* 1 = automatic volume disabled */
 #define MC5_MUST0_6     0x40
@@ -117,14 +99,10 @@
 
 #define MC4_DEFAULT     (MC4_ADPCM | MC4_TIMEOUT | MC4_SBVER_3)
 /*
- * SPACCESS is deliberately NOT set.  It was tried, to make the codec readable at
- * WSS_BASE+4 during Sound Blaster mode so the format the emulation programs
- * could be inspected; the card then stopped answering the DSP at 0x220
- * altogether.  On this part the codec window and the SB personality are
- * mutually exclusive, so the datasheet's normal setting is a requirement rather
- * than just a default.  0x25 is that setting for an AD1848.
+ * SPACCESS must stay clear: the codec window and the SB personality are
+ * mutually exclusive on this part, and setting it stops the DSP answering.
  */
-#define MC5_DEFAULT     (MC5_SHPASS | MC5_SBMIX | MC5_CDFTOEN)   /* 0x25 */
+#define MC5_DEFAULT     (MC5_SHPASS | MC5_SBMIX | MC5_CDFTOEN)   /* 0x25, AD1848 */
 #define MC6_DEFAULT     (MC6_WAVE | MC6_ATTN)
 
 #define CODEC_MCE       0x40        /* mode change enable in the index register */
@@ -390,7 +368,5 @@ int INITPROC mad16_early_init(unsigned int port, int irq, int dma)
     mad16_profile_valid = 1;
     return 0;
 }
-
-
 
 #endif /* CONFIG_CHAR_DEV_DSP && CONFIG_SB_MAD16 */

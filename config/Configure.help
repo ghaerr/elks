@@ -466,7 +466,7 @@ CONFIG_SB_DMA
   an XT hard disk controller, which uses channel 3.
 
 Playback DMA buffer bytes
-CONFIG_SB_BOUNCE
+CONFIG_SB_BUFSIZE
   Size of the low-memory DMA buffer, and therefore the size of one
   playback block.  The default of 4096 is 512ms of audio at 8000 Hz.
 

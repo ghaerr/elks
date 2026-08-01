@@ -60,7 +60,7 @@ mainmenu_option next_comment
 		hex  '  Sound Blaster I/O port'		CONFIG_SB_PORT		  0x220
 		int  '  Sound Blaster IRQ'		CONFIG_SB_IRQ		  5
 		int  '  Sound Blaster DMA channel (1 or 3)' CONFIG_SB_DMA	  1
-		int  '  Playback DMA buffer bytes'	CONFIG_SB_BOUNCE	  4096
+		int  '  Playback DMA buffer bytes'	CONFIG_SB_BUFSIZE	  4096
 		bool '  OPTi 82C929 (MAD16) early init'	CONFIG_SB_MAD16		  n
 	fi
 endmenu

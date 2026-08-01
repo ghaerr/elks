@@ -8,10 +8,8 @@
  * control and no MIDI.  Sample format conversion belongs in user space.
  *
  * On an XT with a hard disk the card cannot keep its factory IRQ 5 and DMA 3:
- * the hard disk controller owns both of those, so jumper the card for IRQ 7 and
- * DMA 1.  The Amstrad PC1640 is typical here, assigning IRQ 5 to the hard disk
- * controller, DMA 3 to the external hard disk controller, and leaving DMA 1
- * spare for the expansion bus.
+ * the hard disk controller owns both, so jumper the card for IRQ 7 and DMA 1.
+ * See Documentation/text/dsp-sb.txt.
  *
  * One DMA block is in flight at a time and write() blocks until the previous
  * block has drained.  The bounce buffer holds two blocks so the next one is
@@ -55,19 +53,9 @@
 #include <arch/divmod.h>
 
 /*
- * Every port access in this driver goes through the bus-recovery forms.  The
- * xt-elks driver that worked on this machine built with CONFIG_XT_SLOW_ISA_IO=y
- * and routed all 54 of its accesses through inb_p/outb_p (sb_dsp.c:46-52); that
- * symbol does not exist in this tree, and these two sound files are the only
- * drivers left using bare inb/outb - lp, kbd-scancode, serial-8250, mfmhd and
- * directfd all still use the _p forms.
- *
- * On an 8 MHz Amstrad this matters.  Back-to-back accesses with no recovery
- * cycle are dropped or mis-latched by slow ISA parts: the 8237 programming
- * sequence writes the address and count as flip-flop pairs, so one lost byte
- * points DMA at the wrong memory, and the OPTi password gate and the AD1848
- * index/data pairs have the same exposure.  An emulator does not model bus
- * recovery, which is why this reads clean in 86Box and breaks on real hardware.
+ * All port access goes through the inb_p/outb_p bus-recovery forms.  Slow ISA
+ * parts drop back-to-back accesses, and the 8237 address and count are written
+ * as flip-flop pairs, so one lost byte points DMA at the wrong memory.
  */
 
 /* DSP register offsets from the card base address */
@@ -90,105 +78,42 @@
 /* Mixer registers, SB Pro layout, kept by the SB16 for compatibility */
 #define SB_MIX_VOICE    0x04
 #define SB_MIX_MIC      0x0A
-#define SB_MIX_OUTFILT  0x0E        /* SB Pro output mode, not a level */
+#define SB_MIX_OUTFILT  0x0E        /* output mode: bit 1 stereo, bit 5 filter bypass */
 #define SB_MIX_MASTER   0x22
 #define SB_MIX_FM       0x26
 #define SB_MIX_CD       0x28
 #define SB_MIX_LINE     0x2E
 
-/*
- * SB_MIX_OUTFILT is where the SB Pro selects mono or stereo output; it is not
- * in the DSP command.  A card left in stereo mode takes two bytes per frame, so
- * a mono stream is consumed at twice the intended rate: it plays at double
- * speed with alternate samples going to opposite channels.  Linux does the
- * equivalent in sbpro_audio_prepare_for_output(), which calls
- * sb_mixer_set_stereo() on every playback rather than once at init.
- *
- * The filter bit polarity is the other way round from what the name suggests.
- * Linux's sb_mixer.h says so outright: "FILT_ON 0 - Yes, 0 to turn it on, 1 for
- * off".  Leaving it on is what an 8 kHz reconstruction wants.
- */
-#define SB_MONO_DAC     0x00
-#define SB_STEREO_DAC   0x02
-#define SB_FILT_OFF     0x20
-#define SB_OUTFILT_MONO (SB_MONO_DAC)   /* mono, output filter engaged */
+#define SB_FILT_OFF     0x20        /* set = SB Pro output filter bypassed */
 
 /*
- * Playback levels, as percentages, matching the xt-elks driver that worked on
- * this hardware (SB_DEFAULT_MASTERVOL/SB_DEFAULT_PLAYVOL, sb_dsp.c:63-64).
- * sb_mixer_lr_byte() packs them for whichever layout the card uses.
- *
- * The master and voice attenuators are in series ahead of the output amplifier,
- * so both at full scale asks for the loudest analog path the card can produce
- * and 8-bit material that already peaks near full scale clips in the mixer.
- * These two values are the ones that were in use when playback was known good;
- * do not treat them as a free parameter without listening.
- *
- * A DSP 3.xx card packs each level as two 3-bit fields at bits 7-5 and 3-1 -
- * only the SB16 uses 4-bit fields.  That also explains why this card looks like
- * it ORs 0x11 into every mixer read: bits 4 and 0 are the don't-care bits of the
- * 3-bit packing and are simply not implemented, so a read can never confirm
- * them.  Do not read-modify-write these registers.
- *
- * sbmix(1) sets them live, which is how to find the right value for a
- * particular board without rebuilding.
+ * Default playback levels, in percent, quantised by sb_mixer_lr_byte() to the
+ * card's 3- or 4-bit level fields.  Master stays below full scale because the
+ * master and voice attenuators are in series and full scale clips hot 8-bit
+ * material in the mixer; FM is muted because nothing here programs the OPL,
+ * so it only contributes its idle noise floor.  Some cards do not implement
+ * the don't-care bits of the packing, so never read-modify-write mixer
+ * registers.  sbmix(1) changes levels at runtime.
  */
-/*
- * These are percentages, quantised by sb_mixer_lr_byte to the eight steps a
- * 3-bit field has: (pct * 7 + 50) / 100.  100 lands on 7/7 and 85 on 6/7 - any
- * value from 93 to 100, and from 79 to 92 respectively, gives the same byte, so
- * these are mid-range choices rather than edge ones.
- */
-/*
- * Master deliberately stays off full scale.  7/7 drives this card's output
- * stage into audible clipping with hot PCM material - confirmed by dropping
- * the register live during playback, which cleaned the sound up immediately -
- * and 5/7 is the level every "plays perfectly" verdict on this hardware was
- * actually given at.  Any percentage from 65 to 78 packs to the same 5/7 byte.
- */
-#define SB_DEFAULT_MASTERVOL 85     /* 6/7 - full scale clips this card */
+#define SB_DEFAULT_MASTERVOL 85     /* 6/7 - full scale clips some cards */
 #define SB_DEFAULT_PLAYVOL   85     /* 6/7 */
-/*
- * The FM input is turned right down because nothing here drives the OPL3, so
- * all it contributes is its idle noise floor.
- *
- * This has to be done from the driver, not from sbmix(1).  sbmix resets the DSP
- * on every run, and this card restores its own mixer defaults afterwards, which
- * puts FM back to 60% - so a level written by sbmix is undone before the tool
- * has even finished.  Writing it here, in the open path where no reset follows,
- * is what makes it stick: 0x26 then reads 0x11, which is 0/7 plus the two
- * don't-care bits of the 3-bit packing.
- */
 #define SB_DEFAULT_FMVOL     0
 
 /*
  * SB_BOUNCE is one DMA block and is what SNDCTL_DSP_GETBLKSIZE reports.  Two
  * of them are claimed as a single buffer so the next block can be copied in
- * while the current one is still playing.
- *
- * DSP 0x14 is a single-shot command, so a transfer has to be restarted for
- * every block, and the copy used to happen after the previous block had
- * drained.  That put a 4 KB far memcpy inside the window when nothing was
- * playing, which is milliseconds on an 8 MHz machine and was plainly audible
- * as a gap once per block: twice a second at 8000 Hz, five times a second at
- * 20000 Hz.  Filling the idle half in advance leaves only the 8237 and DSP
+ * while the current one is still playing, leaving only the 8237 and DSP
  * reprogramming between blocks.
  */
-#define SB_BOUNCE       CONFIG_SB_BOUNCE
+#define SB_BOUNCE       CONFIG_SB_BUFSIZE
 #define SB_BUFFER       (2 * SB_BOUNCE)
 #define SB_MIN_RATE     4000U
-/*
- * 20 kHz is below half CD rate, divides the 1 MHz time-constant clock exactly
- * and is the documented ceiling for DSP 0x14 without the high-speed commands.
- */
+/* documented ceiling for DSP 0x14 without the high-speed commands */
 #define SB_MAX_RATE     20000U
 /*
- * PIO playback is not bound by that ceiling.  It never issues DSP 0x14: every
- * sample goes out through the direct DAC command with the 8253 setting the
- * pace, so the limit is how fast the CPU can hand bytes over, not what the DSP
- * will accept.  22050 leaves an 8 MHz 8086 about 45us per sample against
- * roughly 12us of port I/O, which is comfortable; the rate is still quantised
- * to whole PIT ticks, so the reported rate is what will actually be produced.
+ * PIO playback never issues DSP 0x14: each sample goes out through the direct
+ * DAC command with the 8253 setting the pace, so the limit is CPU speed, not
+ * what the DSP accepts.  The rate is quantised to whole PIT ticks.
  */
 #define SB_MAX_RATE_PIO 22050U
 
@@ -203,12 +128,10 @@ extern int sb_port_opt;
 extern int sb_irq_opt;
 extern int sb_dma_opt;
 extern int dma_extwrite_opt;    /* /bootopts dmaxw=1: 8237 Extended Write */
-#ifdef CONFIG_SB_MAD16
-extern int mad16_opt;
+extern int mad16_opt;           /* /bootopts mad16=on|off|port,irq,dma */
 extern int mad16_port_opt;
 extern int mad16_irq_opt;
 extern int mad16_dma_opt;
-#endif
 
 static unsigned int sb_base;
 static unsigned char sb_dma;
@@ -221,18 +144,10 @@ static unsigned char sb_opened;
 static unsigned int sb_rate = 8000;
 static unsigned char sb_timeconst;
 /*
- * PIO playback, selected with sb=port,irq,0 in /bootopts.
- *
- * The Amstrad PC1512/1640 chipset does not service DRQ the way a true XT does -
- * mfmhd.c documents the same limitation for the hard disk on DRQ3, and on this
- * machine the sound card's DMA channel is audibly broken: DMA playback is
- * distorted while the DSP's direct DAC command, which touches no 8237 at all,
- * is clean.  In PIO mode every sample is handed to the DSP by the CPU.
- *
- * The cost is real and unavoidable: the CPU can do nothing else while a block
- * plays, because an 8086 has no time to spare between samples at 8 kHz.  The
- * write() call therefore runs to completion with interrupts still enabled but
- * the processor fully occupied, which is exactly what the hardware demands.
+ * PIO playback, selected with sb=port,irq,0 in /bootopts, for chipsets whose
+ * DMA request path is broken (mfmhd.c documents the same limitation for the
+ * hard disk on DRQ3).  Every sample is handed to the DSP by the CPU, so the
+ * write() call runs to completion with the processor fully occupied.
  */
 static unsigned char sb_pio_mode;
 static unsigned int sb_full_play_ticks;  /* <= 103 by construction: fits 16 bits */
@@ -535,13 +450,10 @@ static int FARPROC sb_dsp_start(unsigned int len)
     unsigned int n = len - 1U;
 
     /*
-     * The time constant is resent before EVERY block.  A real SB DSP latches
-     * it across 0x14 transfers, and gating the resend behind a rate-change
-     * flag measured fine on 86Box's SB Pro - but per-block resend is the only
-     * behaviour ever validated on the real OPTi 82C929, and a distortion
-     * report that arrived alongside the gating (later traced mainly to the
-     * master level being at full scale) was reason enough to keep the proven
-     * sequence.  Two dsp_cmd handshakes per 4096-byte block is a small price.
+     * The time constant is resent before every block: a real SB DSP latches
+     * it across 0x14 transfers, but some compatibles (OPTi 82C929) have only
+     * been proven reliable with the per-block resend, and two dsp_cmd
+     * handshakes per block is a small price.
      */
     if (dsp_cmd(DSP_SET_RATE) < 0 || dsp_cmd(sb_timeconst) < 0)
         return -EIO;
@@ -610,21 +522,9 @@ static void FARPROC sb_halt(void)
 }
 
 /*
- * The mixer index and data ports need a real delay between them.  The OPTi
- * 82C929 reference driver writes the index, waits a millisecond through INT
- * 15h/86h, writes the data, then waits again (Knipperts, UNITS/SBPRO.PAS,
- * Mixer_Write); its companion SBFIX TSR spaces the same two writes two timer
- * ticks apart and says outright that "SB mixerchip needs a little delay".
- *
- * Issuing the two outb instructions back to back, which is what this driver did,
- * loses the write entirely on such a card.  That is why reads came back as
- * nonsense and why the output mode never changed: a mono stream was left playing
- * on a card still in stereo, which splits it across the channels and sounds like
- * one channel stuttering and the other badly aliased.
- *
- * inb from port 0x61 is the delay idiom already used for the DSP handshake; each
- * one is roughly a microsecond of ISA bus time.  Mixer writes only happen at
- * init and at open, so erring long here costs nothing.
+ * The mixer index and data ports need a real settling delay between them:
+ * back-to-back writes are lost entirely on some compatibles (OPTi 82C929).
+ * Mixer writes only happen at init and open, so erring long costs nothing.
  */
 #define SB_MIXER_DELAY  1200        /* ~3ms: each inb_p is a read plus a recovery write */
 
@@ -651,62 +551,26 @@ static int FARPROC sb_has_mixer(void)
 }
 
 /*
- * Select mono output with the filter engaged.  The SB Pro is the model that
- * keeps this in the mixer; a plain SB has no mixer, and the SB16 takes its
- * channel count from the DSP command instead, so restrict this to DSP 3.xx as
- * Linux does with its MDL_SBPRO test.
- *
- * Linux does a read-modify-write here.  We write the register outright because
- * this is a two-bit register whose other bits we would only be preserving by
- * luck: on a MAD16 the mixer does not read back faithfully, and honouring bits
- * read from it would just write garbage back.
+ * SB Pro output mode: mono only, with the ~3.2kHz output filter engaged at
+ * low rates and bypassed above 8kHz, where it would discard most of what the
+ * higher rate was for.  Only DSP 3.xx keeps this in the mixer: a plain SB has
+ * no mixer and the SB16 takes its channel count from the DSP command.  The
+ * register is written outright rather than read-modify-written because some
+ * compatibles (MAD16) do not read mixer registers back faithfully.
  */
-/*
- * Deliberately does nothing.  The xt-elks driver that worked on this hardware
- * never wrote mixer register 0x0E in any shipped build - its whole stereo path
- * sits inside #ifdef CONFIG_SB_STEREO and that symbol is "not set" in its
- * config, so the only mixer registers it ever touched were 0x22 and 0x04.
- * Writing 0x0E is therefore not required to get mono out of this card, and the
- * card is left in whatever output mode it powered up in, exactly as before.
- *
- * Kept as an empty function rather than deleted so the ioctl call sites still
- * document where a card that genuinely needs the write would want it.
- */
-/*
- * Mixer 0x0E bit 5 bypasses the SB Pro's output filter, a low pass around
- * 3.2kHz meant for low rate 8-bit playback.  Leaving it engaged above about
- * 8kHz throws away most of what the higher rate was for, so it is switched by
- * rate rather than left at the card's power-on default.  Bit 1 (stereo) stays
- * clear: this driver is mono only.
- */
-#define SB_MIX_OUTMODE  0x0E
-#define SB_OUT_FILT_OFF 0x20
-
 static void FARPROC sb_set_output_mode(void)
 {
     if (sb_has_mixer())
-        sb_mixer_write(SB_MIX_OUTMODE,
-            (unsigned char)((sb_rate > 8000U)? SB_OUT_FILT_OFF: 0x00));
-    return;
+        sb_mixer_write(SB_MIX_OUTFILT,
+            (unsigned char)((sb_rate > 8000U)? SB_FILT_OFF: 0x00));
 }
-
 
 /*
  * Cards can come out of reset with the voice or master level at zero, which
  * looks exactly like a driver that runs but produces no sound, so both are
- * always programmed rather than left at whatever reset gave us.
- *
- * The inputs are muted for the opposite reason.  This driver plays PCM and
- * nothing else, but the FM synthesiser, CD, line and microphone inputs are
- * summed into the same output, at whatever level the card powered up with -
- * 57% for FM on the board this was tested against.  Nothing initialises the FM
- * section, so that is somebody else's noise added to our output for no benefit.
- */
-/*
- * A DSP 3.xx card packs these levels as two 3-bit fields at bits 7-5 and 3-1,
- * not two 4-bit fields; only the SB16 uses 4 bits.  That is also why this card
- * appears to OR 0x11 into every read: bits 4 and 0 are the don't-care bits of
- * the 3-bit packing, so they simply do not exist in the register file.
+ * always programmed.  The FM input is muted: nothing initialises the FM
+ * section, and it is summed into the same output at whatever level the card
+ * powered up with.
  */
 static unsigned char FARPROC sb_mixer_lr_byte(unsigned int l, unsigned int r)
 {
@@ -781,16 +645,11 @@ static int FARPROC sb_block_complete(void)
 }
 
 /*
- * Wait for the block in flight.
- *
- * The deadline is only a backstop against a card whose interrupt never arrives,
- * so it is deliberately generous: twice the block's own play time plus two
- * seconds.  A real card clocks the transfer from its own sample clock and
- * finishes in exactly the play time, but an emulated one is driven by the host
- * audio stack, which can stall DMA for a large fraction of a second while it
- * buffers or resamples.  Half a second of slack was measured to be too little
- * there.  Erring long costs nothing: it only changes how quickly a mis-set
- * irq= reports failure, and playback itself always ends on the interrupt.
+ * Wait for the block in flight.  The deadline is only a backstop against a
+ * card whose interrupt never arrives and is deliberately generous: emulated
+ * cards are driven by the host audio stack and can stall DMA for a large
+ * fraction of a second.  Erring long only changes how quickly a mis-set irq=
+ * reports failure; playback itself always ends on the interrupt.
  */
 static int FARPROC sb_wait_complete(unsigned int len)
 {
@@ -1133,10 +992,8 @@ void INITPROC sb_dsp_init(void)
     if (sb_dma_opt >= 0)
         sb_dma = (unsigned char)sb_dma_opt;
     /*
-     * Same 8237 timing fix the disk needs.  Both drivers set it because either
-     * may be the first to initialise, and writing the command register twice
-     * with the same value is harmless - it is a single global setting for the
-     * controller, not a per-channel one.
+     * Extended Write is a single global setting for the controller, not a
+     * per-channel one, so writing it twice from two drivers is harmless.
      */
     if (dma_extwrite_opt) {
         outb_p(DMA1_CMD_EXTWRITE, DMA1_CMD_REG);
@@ -1203,14 +1060,11 @@ void INITPROC sb_dsp_init(void)
     }
     (void)sb_read_dsp_version();
     /*
-     * Stop the parallel port sharing our interrupt.  IRQ 7 is LPT1's line as
-     * well as the card's, and the printer port powers up with its interrupt
-     * enabled (control register 0x37A reads 0x3F on this machine).  A floating
-     * or strobed ACK then fires the sound ISR at random points in a transfer,
-     * which is audible as distortion; masking it measurably cleaned up DMA
-     * playback on the PC1640.  0x0C leaves INIT and SELECT_IN in their idle
-     * state with the interrupt bit clear.  ELKS' lp driver is polled and never
-     * requests IRQ 7, so nothing else wants it.
+     * IRQ 7 is LPT1's line as well as the card's, and the printer port powers
+     * up with its interrupt enabled; a floating or strobed ACK then fires the
+     * sound ISR at random points in a transfer, audible as distortion.  The
+     * lp driver polls and never requests IRQ 7, so idle LPT1's control
+     * register with the interrupt bit clear.
      */
     if (sb_irq_line == 7)
         outb_p(LPT1_CTRL_IDLE, LPT1_CONTROL);

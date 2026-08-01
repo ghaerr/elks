@@ -40,7 +40,7 @@
 #define PTY_MASTER_MAJOR  2
                              /* 3 unused*/
 #define TTY_MAJOR         4
-#define DSP_MAJOR         5  /* Sound Blaster /dev/dsp, sb_dsp.c */
+#define DSP_MAJOR         5  /* Sound Blaster /dev/dsp, dsp-sb.c */
 #define LP_MAJOR          6
                              /* 7 unused*/
 #define TCPDEV_MAJOR      8
