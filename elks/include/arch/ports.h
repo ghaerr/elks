@@ -157,8 +157,9 @@
 #define LANCE_FLAGS     0x80
 
 /* /bootopts parms for an ISA card: irq,port,ram,flags.  NICs use all four,
- * audio cards carry the 8-bit DMA channel in ram and leave flags at 0. */
+ * audio cards carry the 8-bit DMA channel in ram and the flags below. */
 #define ISA_OFF		0x8000	/* card disabled with "off" in /bootopts */
+#define ISA_EXTWRITE	0x0001	/* sb= flags bit 0: 8237 Extended Write strobe */
 
 #ifndef __ASSEMBLER__
 struct isa_conf {

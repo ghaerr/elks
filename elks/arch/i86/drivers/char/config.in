@@ -59,6 +59,5 @@ mainmenu_option next_comment
 	if [ "$CONFIG_CHAR_DEV_DSP" = "y" ]; then
 		define_bool CONFIG_AUDIO_SB y
 		define_bool CONFIG_AUDIO_MAD y
-		bool '  8237 Extended Write strobe'	CONFIG_AUDIO_EXTWRITE	  n
 	fi
 endmenu

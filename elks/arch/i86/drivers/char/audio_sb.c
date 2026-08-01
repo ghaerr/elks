@@ -963,14 +963,17 @@ void INITPROC dsp_init(void)
     sb_base = (unsigned int)conf->port;
     sb_irq_line = (unsigned char)conf->irq;
     sb_dma = (unsigned char)conf->ram;
-#ifdef CONFIG_AUDIO_EXTWRITE
     /*
-     * A machine whose DMA timing is tighter than 8-bit cards expect drops
-     * bytes without the longer write strobe.  Controller-wide, so setting it
-     * from more than one driver is harmless.
+     * sb=irq,port,dma,1 sets the 8237 Extended Write strobe for a machine
+     * whose DMA timing is tighter than 8-bit cards expect (the Amstrad
+     * PC1512/1640).  It is a controller-wide bit, so a machine that also
+     * runs the MFM driver can set it there with mfm= bit 4 instead; setting
+     * it from both is harmless.
      */
-    outb_p(DMA1_CMD_EXTWRITE, DMA1_CMD_REG);
-#endif
+    if (conf->flags & ISA_EXTWRITE) {
+        outb_p(DMA1_CMD_EXTWRITE, DMA1_CMD_REG);
+        printk("sb: 8237 extended write enabled\n");
+    }
     /* sb=irq,port,0 selects PIO playback: no 8237, no completion interrupt */
     if (sb_dma == 0) {
         sb_pio_mode = 1;

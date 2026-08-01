@@ -24,13 +24,23 @@ are the Creative factory settings.  /bootopts can override them without a
 rebuild:
 
     sb=5,220,1          IRQ, port and DMA channel
+    sb=5,220,1,1        as above, plus 8237 Extended Write (see below)
     sb=off              skip the driver on a machine with no card
     sb=on               keep the compiled-in route
 
-The argument order is irq,port,dma, the same as the ne0=, wd0= and 3c0=
-network options, which share the parser and the struct isa_conf that holds
-the result.  The port is read as hex, the IRQ and DMA channel as decimal.
-An audio card keeps its DMA channel in the ram field of that structure.
+The argument order is irq,port,dma,flags, the same as the ne0=, wd0= and
+3c0= network options, which share the parser and the struct isa_conf that
+holds the result.  The port is read as hex, the IRQ and DMA channel as
+decimal.  An audio card keeps its DMA channel in the ram field of that
+structure and its flags in the fourth field.
+
+The only flag is bit 0 (value 1), which sets the 8237 DMA controller's
+Extended Write strobe.  A machine whose DMA timing is tighter than 8-bit
+cards expect - the Amstrad PC1512 and PC1640 - drops bytes without it, and
+plays otherwise clean audio as heavy distortion.  Say sb=irq,port,dma,1 on
+such a machine and leave it off everywhere else.  It is a controller-wide
+bit, so a machine that also runs the XT MFM driver can set it there with
+mfm= bit 4 instead; setting it from both is harmless.
 
 The IRQ is claimed during boot rather than at open, so the sound card wins any
 contest for it.  IRQ 5 is also Com3, so selecting it means the serial driver
