@@ -54,9 +54,15 @@ bit mask: bit 0 (mfm=1) selects conservative controller deadlines and bit 1
 (mfm=2) moves sector payloads over programmed I/O instead of DMA channel 3;
 mfm=3 selects both.  PIO is required on machines whose chipset does not
 service DRQ3 like a true IBM XT (the Amstrad PC1512/PC1640 among them); the
-driver also switches itself to PIO after a failed DMA transfer.  The driver
-retries failed commands, recalibrates the affected unit, and falls back to
-single-sector transfers after repeated errors.
+driver also switches itself to PIO after a failed DMA transfer.  Bit 2
+(mfm=4) enables driver request tracing to the console.  Bit 3 (mfm=8)
+selects interrupt-driven command completion on IRQ 5, the XT fixed-disk
+line, instead of polling the status port for the whole transfer.  Bit 4
+(mfm=16) sets the 8237 DMA controller's Extended Write strobe, needed on
+machines such as the Amstrad PC1512/1640 whose DMA write pulse is shorter
+than 8-bit cards expect.  The driver retries failed commands, recalibrates
+the affected unit, and falls back to single-sector transfers after repeated
+errors.
 
 Maintenance ioctls, including format and long-sector commands, are optional
 and disabled by default.  Formatting destroys data and should be enabled only
