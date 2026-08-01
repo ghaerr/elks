@@ -795,10 +795,6 @@ int main(int argc, char **argv) {
 				switch (code) {
 
 				case CMD_PORT:
-					if (pasv_ip) {
-						send_reply(502, "Active mode not available, use passive mode");
-						break;
-					}
 					if (datafd >= 0) { /* connection already open, close it! */
 						close(datafd);
 						datafd = -1;
