@@ -55,14 +55,13 @@ static unsigned long get_ms(void)
 
 static int ping_via_ktcp(ipaddr_t target, char *hostname, int count, int interval, int s)
 {
-	unsigned char buf[2 + sizeof(struct icmp_echo_request_s)];
-	struct icmp_echo_reply_s reply;
 	int seq, sent, recv;
 	unsigned long rtt, min_rtt, max_rtt, total_rtt;
 	unsigned short id = getpid();
+	unsigned char buf[2 + sizeof(struct icmp_echo_request_s)];
+	struct icmp_echo_reply_s reply;
 
-	printf("PING %s (%s): 12 data bytes\n",
-	       hostname, in_ntoa(target));
+	printf("PING %s (%s): 12 data bytes\n", hostname, in_ntoa(target));
 
 	sent = 0;
 	recv = 0;
@@ -121,8 +120,8 @@ static int ping_via_ktcp(ipaddr_t target, char *hostname, int count, int interva
 					if (rtt < min_rtt) min_rtt = rtt;
 					if (rtt > max_rtt) max_rtt = rtt;
 					total_rtt += rtt;
-				printf("12 bytes from %s: icmp_seq=%d ttl=%d time=%lu ms\n",
-				       in_ntoa(target), seq, reply.ttl, rtt);
+					printf("12 bytes from %s: icmp_seq=%d ttl=%d time=%lu ms\n",
+						in_ntoa(target), seq, reply.ttl, rtt);
 				} else {
 					printf("Request timeout for icmp_seq %d\n", seq);
 				}
@@ -164,35 +163,27 @@ static int ping_via_ktcp(ipaddr_t target, char *hostname, int count, int interva
 
 static void usage(void)
 {
-	printf("Usage: ping [-c count] [-I local_ip] [-i interval] host\n");
+	printf("Usage: ping [-c count] [-i interval] host\n");
 	exit(1);
 }
 
 int main(int argc, char **argv)
 {
-	ipaddr_t local_ip = 0, target_ip;
+	ipaddr_t target_ip;
 	int count = -1;
 	int interval = DEFAULT_INTERVAL;
-	int ch;
+	int s, ch;
+	struct sockaddr_in local, rem;
 
 	signal(SIGINT, sigint);
 
-	{
-		char *hostname = getenv("HOSTNAME");
-		if (hostname)
-			local_ip = in_gethostbyname(hostname);
-	}
-
-	while ((ch = getopt(argc, argv, "c:i:I:")) != -1) {
+	while ((ch = getopt(argc, argv, "c:i:")) != -1) {
 		switch (ch) {
 		case 'c':
 			count = atoi(optarg);
 			break;
 		case 'i':
 			interval = atoi(optarg) * 1000;
-			break;
-		case 'I':
-			local_ip = in_gethostbyname(optarg);
 			break;
 		default:
 			usage();
@@ -201,37 +192,32 @@ int main(int argc, char **argv)
 	if (optind >= argc)
 		usage();
 
+	s = socket(AF_INET, SOCK_STREAM, 0);
+	if (s < 0) {
+		perror("ping");
+		return 1;
+	}
+	local.sin_family = AF_INET;
+	local.sin_port = 0;
+	local.sin_addr.s_addr = 0;
+	if (bind(s, (struct sockaddr *)&local, sizeof(local)) < 0) {
+		perror("bind");
+		close(s);
+		return 1;
+	}
+	rem.sin_family = AF_INET;
+	rem.sin_addr.s_addr = 0;
+	rem.sin_port = htons(NETCONF_PORT);
+	if (connect(s, (struct sockaddr *)&rem, sizeof(rem)) < 0) {
+		fprintf(stderr, "ping: ktcp not running\n");
+		close(s);
+		return 1;
+	}
 	target_ip = in_gethostbyname(argv[optind]);
 	if (target_ip == 0) {
 		fprintf(stderr, "ping: unknown host %s\n", argv[optind]);
+		close(s);
 		return 1;
 	}
-	if (local_ip == 0)
-		local_ip = in_gethostbyname("10.0.2.15");
-
-	{
-		struct sockaddr_in local, rem;
-		int s = socket(AF_INET, SOCK_STREAM, 0);
-		if (s < 0) {
-			perror("socket");
-			return 1;
-		}
-		local.sin_family = AF_INET;
-		local.sin_port = 0;
-		local.sin_addr.s_addr = 0;
-		if (bind(s, (struct sockaddr *)&local, sizeof(local)) < 0) {
-			perror("bind");
-			close(s);
-			return 1;
-		}
-		rem.sin_family = AF_INET;
-		rem.sin_addr.s_addr = 0;
-		rem.sin_port = htons(NETCONF_PORT);
-		if (connect(s, (struct sockaddr *)&rem, sizeof(rem)) < 0) {
-			fprintf(stderr, "ping: ktcp not running\n");
-			close(s);
-			return 1;
-		}
-		return ping_via_ktcp(target_ip, argv[optind], count, interval, s);
-	}
+	return ping_via_ktcp(target_ip, argv[optind], count, interval, s);
 }
