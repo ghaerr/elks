@@ -73,6 +73,10 @@ extern void INITPROC pcnet_drv_init(void);
 extern unsigned long INITPROC pci_cfg_read(unsigned int devfn_reg);
 extern void          INITPROC pci_cfg_write(unsigned int devfn_reg, unsigned int val);
 extern void INITPROC lp_init(void);
+#ifdef CONFIG_CHAR_DEV_DSP_AD1848
+extern void INITPROC ad1848_dsp_init(void);
+extern int  INITPROC mad16_wss_init(unsigned int wss_base, int irq, int dma);
+#endif
 #ifdef CONFIG_CHAR_DEV_DSP
 extern void INITPROC sb_dsp_init(void);
 #ifdef CONFIG_SB_MAD16

@@ -20,7 +20,8 @@
 
 #include <linuxmt/config.h>
 
-#if defined(CONFIG_CHAR_DEV_DSP) && defined(CONFIG_SB_MAD16)
+#if (defined(CONFIG_CHAR_DEV_DSP) && defined(CONFIG_SB_MAD16)) || \
+    defined(CONFIG_CHAR_DEV_DSP_AD1848)
 
 #include <linuxmt/types.h>
 #include <linuxmt/errno.h>
@@ -392,5 +393,81 @@ int INITPROC mad16_early_init(unsigned int port, int irq, int dma)
 }
 
 
+#ifdef CONFIG_CHAR_DEV_DSP_AD1848
+/*
+ * Windows Sound mode bring-up for the native AD1848 driver.
+ *
+ * Two things are not where you would look for them.  The mode is MC1 bit 7,
+ * and MC1[5:4] picks the codec window; but the IRQ and DMA are not in the MC
+ * registers at all - MC3's fields are documented "for Sound Blaster Mode" -
+ * they live in a write-only configuration register at the WSS base itself.
+ * Reads of that address return the Version register instead, so the routing
+ * cannot be verified by reading it back.
+ *
+ * Bit 7 of the byte written there is not ours to choose: the vendor tool reads
+ * the address and mirrors the Version register's bit 7 into the configuration
+ * byte (OPTI929.PAS, SetupWSSPort).  On this board the address reads 0x84, so
+ * the bit is set.
+ *
+ * SHPASS is cleared: the 82C929 shadows the codec registers and SHPASS write
+ * protects those shadows, so leaving it set means codec writes go nowhere.
+ */
+#define WSS_CFG_IRQ7    0x08        /* WSIRQ 001 in bits 5:3 */
+#define WSS_CFG_IRQ9    0x10
+#define WSS_CFG_IRQ10   0x18
+#define WSS_CFG_IRQ11   0x20
+#define WSS_CFG_DRQ0    0x01        /* WSDRQ in bits 2:0 */
+#define WSS_CFG_DRQ1    0x02
+#define WSS_CFG_DRQ3    0x03
+
+int INITPROC mad16_wss_init(unsigned int wss_base, int irq, int dma)
+{
+    unsigned char mc1, cfg;
+
+    if (!mad16_detect())
+        return -ENODEV;
+
+    switch (wss_base) {                 /* MC1[5:4] selects the window */
+    case 0x530: mc1 = 0x00; break;
+    case 0xE80: mc1 = 0x10; break;
+    case 0xF40: mc1 = 0x20; break;
+    case 0x604: mc1 = 0x30; break;
+    default:    return -EINVAL;
+    }
+    switch (irq) {
+    case 7:  cfg = WSS_CFG_IRQ7;  break;
+    case 9:  cfg = WSS_CFG_IRQ9;  break;
+    case 10: cfg = WSS_CFG_IRQ10; break;
+    case 11: cfg = WSS_CFG_IRQ11; break;
+    default: return -EINVAL;            /* notably not 5 */
+    }
+    switch (dma) {
+    case 0: cfg |= WSS_CFG_DRQ0; break;
+    case 1: cfg |= WSS_CFG_DRQ1; break;
+    case 3: cfg |= WSS_CFG_DRQ3; break;
+    default: return -EINVAL;
+    }
+
+    mc_write(MC1, (unsigned char)(mc1 | 0x80));     /* 0x80 = WSS mode */
+    mc_write(MC2, MC2_DEFAULT);
+    /*
+     * SB IRQ and DRQ disabled (0xF0), GP timer kept.  A bare 0x02 here leaves
+     * the Sound Blaster personality enabled and parked at its power-on route,
+     * IRQ 7 / DMA 1 - the very lines the codec is about to be given - so the
+     * SB side contends for every DRQ/DACK handshake the codec attempts.
+     */
+    mc_write(MC3, (unsigned char)(MC3_SB_OFF | MC3_GP_TIMER));
+    mc_write(MC4, MC4_DEFAULT);
+    mc_write(MC5, (unsigned char)((MC5_DEFAULT & ~MC5_SHPASS) | MC5_AUTOVOL_OFF));
+    mc_write(MC6, MC6_DEFAULT);
+
+    if (inb_p(wss_base) & 0x80)
+        cfg |= 0x80;
+    outb_p(cfg, wss_base);              /* write-only routing register */
+
+    printk("mad16: wss 0x%x irq %d dma %d cfg %02x\n", wss_base, irq, dma, cfg);
+    return 0;
+}
+#endif /* CONFIG_CHAR_DEV_DSP_AD1848 */
 
 #endif /* CONFIG_CHAR_DEV_DSP && CONFIG_SB_MAD16 */

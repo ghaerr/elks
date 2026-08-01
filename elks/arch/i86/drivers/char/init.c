@@ -19,6 +19,9 @@ void INITPROC chr_dev_init(void)
 #ifdef CONFIG_CHAR_DEV_DSP
     sb_dsp_init();
 #endif
+#ifdef CONFIG_CHAR_DEV_DSP_AD1848
+    ad1848_dsp_init();
+#endif
 
 #ifdef CONFIG_INET
     tcpdev_init();

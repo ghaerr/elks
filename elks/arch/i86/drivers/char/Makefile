@@ -135,6 +135,12 @@ ifdef CONFIG_AUDIO
   OBJS += audio-8254.o
 endif
 
+# Native AD1848 driver: alternative to the Sound Blaster one, never both.
+ifdef CONFIG_CHAR_DEV_DSP_AD1848
+  OBJS += dsp-ad1848.o
+  OBJS += dsp-mad16.o
+endif
+
 ifdef CONFIG_CHAR_DEV_DSP
   OBJS += dsp-sb.o
   ifdef CONFIG_SB_MAD16

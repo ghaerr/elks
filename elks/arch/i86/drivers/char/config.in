@@ -45,16 +45,32 @@ mainmenu_option next_comment
 	bool 'Parallel device driver'		CONFIG_CHAR_DEV_LP	  y
 	#bool 'CGA text mode videobuffer'	CONFIG_CHAR_DEV_CGATEXT	  n
 	bool 'Memory character devices'		CONFIG_CHAR_DEV_MEM	  y
-	#if [ "$CONFIG_CHAR_DEV_MEM" = "y" ]; then
-		#bool '  Port read'	CONFIG_CHAR_DEV_MEM_PORT_READ	n
-		#bool '  Port write'	CONFIG_CHAR_DEV_MEM_PORT_WRITE	n
-	#fi
+	if [ "$CONFIG_CHAR_DEV_MEM" = "y" ]; then
+		bool '  /dev/port read'	 CONFIG_CHAR_DEV_MEM_PORT_READ	n
+		bool '  /dev/port write' CONFIG_CHAR_DEV_MEM_PORT_WRITE	n
+	fi
 
 	bool 'Pseudo tty device driver'		CONFIG_PSEUDO_TTY	  y
+
 	if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
 		bool 'Sound Blaster /dev/dsp driver'	CONFIG_CHAR_DEV_DSP	  n
 	else
 		define_bool CONFIG_CHAR_DEV_DSP n
+	fi
+	# Native AD1848 (Windows Sound System) driver.  Alternative to the Sound
+	# Blaster driver, not an addition: both claim /dev/dsp, and on an 82C929
+	# the SB personality and the codec window are alternative routings of the
+	# same part selected by MC1 bit 7.
+	if [ "$CONFIG_CHAR_DEV_DSP" = "n" ]; then
+		bool 'AD1848/WSS /dev/dsp driver (OPTi 82C929 native)' CONFIG_CHAR_DEV_DSP_AD1848 n
+	else
+		define_bool CONFIG_CHAR_DEV_DSP_AD1848 n
+	fi
+	if [ "$CONFIG_CHAR_DEV_DSP_AD1848" = "y" ]; then
+		hex  '  WSS I/O base'		CONFIG_AD1848_WSS_BASE	0x530
+		int  '  WSS IRQ (7, 9, 10 or 11)' CONFIG_AD1848_IRQ	7
+		int  '  WSS DMA channel'	CONFIG_AD1848_DMA	1
+		int  '  Playback buffer bytes'	CONFIG_SB_BOUNCE	4096
 	fi
 	if [ "$CONFIG_CHAR_DEV_DSP" = "y" ]; then
 		hex  '  Sound Blaster I/O port'		CONFIG_SB_PORT		  0x220
