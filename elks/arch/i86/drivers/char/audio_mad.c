@@ -281,9 +281,22 @@ static void INITPROC codec_leave_mce(unsigned int base)
  */
 static int INITPROC codec_init(unsigned int base, unsigned char *mc5_extra)
 {
+    /*
+     * Linux ad1848.c uses this table too, but is only safe with it because
+     * ad1848_mixer_reset() immediately reprograms every gain and mute.  This
+     * driver has no mixer path to the codec, and the SB profile written
+     * afterwards locks the codec shadows, so whatever is set here is the
+     * card's analog state forever.  So: ADC source line at 0 dB with the
+     * mic boost off (I0/I1), every aux input muted (I2-I5, bit 7 is the
+     * mute), and the ADC-to-DAC digital mix off (I13) - the vendor's SB
+     * setup writes no codec registers at all and relies on these same
+     * quiet defaults.  I0/I1 at 0xa8 plus I13 at 0x01 put the open mic
+     * input, amplified about 32 dB, straight into the DAC: heard as loud
+     * static under all playback, scaling with bus and disk activity.
+     */
     static const unsigned char init_values[32] = {
-        0xa8, 0xa8, 0x08, 0x08, 0x08, 0x08, 0x00, 0x00,
-        0x00, 0x0c, 0x02, 0x00, 0x8a, 0x01, 0x00, 0x00,
+        0x00, 0x00, 0x88, 0x88, 0x88, 0x88, 0x00, 0x00,
+        0x00, 0x0c, 0x02, 0x00, 0x8a, 0x00, 0x00, 0x00,
         0x80, 0x00, 0x10, 0x10, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
     };
