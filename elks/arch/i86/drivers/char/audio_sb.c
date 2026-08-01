@@ -941,7 +941,7 @@ static addr_t INITPROC sb_alloc_bounce(void)
     return sb_bounce_seg? phys: 0;
 }
 
-void INITPROC sb_dsp_init(void)
+void INITPROC audio_sb_init(void)
 {
     struct isa_conf *conf = &audio_conf[AUDIO_SB];
     addr_t phys;
