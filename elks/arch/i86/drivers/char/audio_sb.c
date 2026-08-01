@@ -141,11 +141,23 @@ static unsigned int sb_bounce_dma_off;   /* A15..A0 of the buffer */
 static unsigned char sb_bounce_dma_page; /* A23..A16 of the buffer */
 static unsigned char sb_fill;            /* half to copy into next, 0 or 1 */
 
-static unsigned char sb_active;          /* a block is playing */
+static unsigned char sb_active;          /* a single-block transfer is playing */
 static unsigned int sb_active_len;
 static jiff_t sb_active_min_done;        /* earliest believable completion */
 static volatile unsigned char sb_dma_done;
 static struct wait_queue sb_wait;
+
+/*
+ * Auto-init (gapless) playback state, used on a DSP 2.00+ card instead of the
+ * single-block path.  The 8237 runs continuously over the whole two-half
+ * buffer and the DSP interrupts after each half, so nothing is reprogrammed
+ * between halves and there is no inter-block gap.  sb_queued counts halves the
+ * writer has filled but the card has not finished; the interrupt frees one and
+ * flags sb_underrun if the writer had none ready.
+ */
+static unsigned char sb_ai_active;       /* continuous auto-init DMA running */
+static volatile unsigned char sb_queued; /* filled halves not yet drained (0..2) */
+static volatile unsigned char sb_underrun;
 
 /* GETERROR payload: 104 bytes, far too big for the 640-byte kernel stack */
 static struct audio_errinfo sb_errinfo;
@@ -451,6 +463,171 @@ static void FARPROC sb_idle(void)
     sb_active_min_done = 0;
 }
 
+static void sb_dsp_irq_ack(void);       /* drains the card's interrupt read path */
+
+/* Auto-init needs DSP 2.00; a real SB 1.x DSP has only the 0x14 single block. */
+static int FARPROC sb_can_autoinit(void)
+{
+    return !sb_pio_mode && sb_dsp_ver_major >= 2;
+}
+
+/*
+ * Program the 8237 once over the whole two-half buffer with the auto-init bit
+ * set, so at terminal count it reloads base and count itself and wraps back to
+ * the start without the CPU touching it.  The DSP block-size command then makes
+ * the card interrupt at each half boundary.
+ */
+static void FARPROC sb_dma_program_auto(void)
+{
+    union {
+        unsigned int word;
+        unsigned char byte[2];
+    } count;
+
+    count.word = SB_BUFFER - 1U;
+
+    outb_p(sb_dma_mask | 4, DMA1_MASK_REG);       /* mask the channel */
+    outb_p(0, DMA1_CLEAR_FF_REG);
+    outb_p((DMA_MODE_WRITE | 0x10) | sb_dma, DMA1_MODE_REG);  /* +auto-init */
+    outb_p((unsigned char)(sb_bounce_dma_off & 0xFF), sb_dma_addr_port);
+    outb_p((unsigned char)(sb_bounce_dma_off >> 8), sb_dma_addr_port);
+    outb_p(sb_bounce_dma_page, sb_dma_page_reg);
+    outb_p(count.byte[0], sb_dma_count_port);
+    outb_p(count.byte[1], sb_dma_count_port);
+    outb_p(sb_dma_mask, DMA1_MASK_REG);           /* unmask, transfer armed */
+}
+
+/*
+ * Start continuous playback: arm the 8237, tell the DSP the half size, then
+ * kick off the 8-bit auto-init output.  From here the card runs on its own and
+ * only interrupts at each half; sb_ai_queue refills behind the play point.
+ */
+static int FARPROC sb_ai_start(void)
+{
+    unsigned int blk = SB_BOUNCE - 1U;
+
+    sb_dma_program_auto();
+    if (dsp_cmd(DSP_SET_RATE) < 0 || dsp_cmd(sb_timeconst) < 0)
+        return -EIO;
+    if (dsp_cmd(DSP_DMA_BLKSIZE) < 0 ||
+        dsp_cmd((unsigned char)(blk & 0xFF)) < 0 ||
+        dsp_cmd((unsigned char)(blk >> 8)) < 0)
+        return -EIO;
+    if (dsp_cmd(DSP_DMA_OUT_8AI) < 0)
+        return -EIO;
+    sb_ai_active = 1;
+    return 0;
+}
+
+/* Stop continuous playback and return to the idle, nothing-queued state. */
+static void FARPROC sb_ai_halt(void)
+{
+    unsigned int flags;
+    unsigned char was_active = sb_ai_active;
+
+    /* Mask the channel first so DRQ stops before the DSP is touched. */
+    save_flags(flags);
+    clr_irq();
+    sb_dma_stop();
+    sb_ai_active = 0;
+    sb_queued = 0;
+    sb_underrun = 0;
+    sb_fill = 0;
+    restore_flags(flags);
+
+    if (was_active) {
+        (void)dsp_cmd(DSP_HALT_DMA);        /* stop the transfer in flight */
+        (void)dsp_cmd(DSP_DMA_EXIT_AI);     /* and leave auto-init mode */
+    }
+    sb_dsp_irq_ack();
+}
+
+/*
+ * Copy one chunk into the free half and, on the first chunk, start the card.
+ * Blocks while both halves are still queued, waking on the per-half interrupt.
+ * A stalled source shows up as sb_underrun: the buffer was pre-filled with
+ * silence, so the card played silence rather than a click, and playback is
+ * resynced from a clean stop.
+ */
+static int FARPROC sb_ai_queue(char *buf, unsigned int len)
+{
+    unsigned int off, flags;
+
+    if (len == 0)
+        return 0;
+    if (len > SB_BOUNCE)
+        return -EINVAL;
+    if (verify_area(VERIFY_READ, buf, len) != 0)
+        return -EFAULT;
+
+    for (;;) {
+        prepare_to_wait_interruptible(&sb_wait);
+        if (sb_underrun) {                  /* fell behind: restart clean */
+            finish_wait(&sb_wait);
+            sb_ai_halt();
+            sb_play_underruns++;
+            break;
+        }
+        if (sb_queued < 2) {
+            finish_wait(&sb_wait);
+            break;
+        }
+        if (current->signal) {
+            finish_wait(&sb_wait);
+            return -EINTR;
+        }
+        current->timeout = jiffies() + sb_full_play_ticks * 2 + (2 * HZ) + 1;
+        do_wait();
+        current->timeout = 0;
+        finish_wait(&sb_wait);
+    }
+
+    off = sb_fill? SB_BOUNCE: 0;
+    fmemcpyb((void *)off, sb_bounce_seg->base, buf, current->t_regs.ds, len);
+    if (len < SB_BOUNCE)                     /* pad the tail with silence */
+        fmemsetb((void *)(off + len), sb_bounce_seg->base, 0x80,
+                 SB_BOUNCE - len);
+
+    save_flags(flags);
+    clr_irq();
+    sb_queued++;
+    sb_fill ^= 1;
+    restore_flags(flags);
+
+    if (!sb_ai_active) {
+        int ret = sb_ai_start();
+        if (ret < 0) {
+            sb_ai_halt();
+            sb_play_underruns++;
+            return ret;
+        }
+    }
+    return (int)len;
+}
+
+/* Wait for both queued halves to finish, so close/SYNC do not clip the tail. */
+static void FARPROC sb_ai_drain(void)
+{
+    jiff_t deadline = jiffies() + sb_full_play_ticks * 4 + (2 * HZ) + 1;
+
+    while (sb_ai_active && sb_queued > 0 && !sb_underrun) {
+        prepare_to_wait_interruptible(&sb_wait);
+        if (!sb_ai_active || sb_queued == 0 || sb_underrun || current->signal) {
+            finish_wait(&sb_wait);
+            break;
+        }
+        if (time_after(jiffies(), deadline)) {
+            finish_wait(&sb_wait);
+            break;
+        }
+        current->timeout = deadline + 1;
+        do_wait();
+        current->timeout = 0;
+        finish_wait(&sb_wait);
+    }
+    sb_ai_halt();
+}
+
 static int FARPROC sb_start(unsigned int off, unsigned int len)
 {
     unsigned int flags;
@@ -491,6 +668,10 @@ static void FARPROC sb_halt(void)
 {
     unsigned int flags;
 
+    if (sb_ai_active) {
+        sb_ai_halt();
+        return;
+    }
     (void)dsp_cmd(DSP_HALT_DMA);
     save_flags(flags);
     clr_irq();
@@ -609,6 +790,14 @@ static void sb_interrupt(int irq, struct pt_regs *regs)
 {
 
     sb_dsp_irq_ack();
+    if (sb_ai_active) {                 /* a half finished under auto-init */
+        if (sb_queued > 0)
+            sb_queued--;
+        else
+            sb_underrun = 1;            /* writer had nothing ready */
+        wake_up(&sb_wait);
+        return;
+    }
     if (!sb_active)
         return;
     sb_dma_done = 1;
@@ -687,6 +876,9 @@ static int FARPROC sb_queue_chunk(char *buf, unsigned int len)
     unsigned int off;
     int ret;
 
+    if (sb_can_autoinit())         /* gapless path on a DSP 2.00+ card */
+        return sb_ai_queue(buf, len);
+
     if (len > SB_BOUNCE)            /* would overrun one half of the buffer */
         return -EINVAL;
     if (verify_area(VERIFY_READ, buf, len) != 0)
@@ -727,6 +919,15 @@ static int FARPROC sb_open_impl(struct inode *inode, struct file *file)
     sb_fill = 0;
     sb_rate_cache(sb_rate);
     sb_idle();
+    sb_ai_active = 0;
+    sb_queued = 0;
+    sb_underrun = 0;
+    /*
+     * Pre-fill the whole buffer with unsigned-8 silence so that if the writer
+     * ever falls behind under auto-init the card replays silence, not a click
+     * or whatever last passed through.
+     */
+    fmemsetb((void *)0, sb_bounce_seg->base, 0x80, SB_BUFFER);
     sb_opened = 1;
     return 0;
 }
@@ -734,9 +935,13 @@ static int FARPROC sb_open_impl(struct inode *inode, struct file *file)
 static void FARPROC sb_release_impl(struct inode *inode, struct file *file)
 {
 
-    if (sb_active)
-        (void)sb_wait_complete(sb_active_len);
-    sb_halt();
+    if (sb_ai_active)
+        sb_ai_drain();          /* let queued halves finish, then stop */
+    else {
+        if (sb_active)
+            (void)sb_wait_complete(sb_active_len);
+        sb_halt();
+    }
     sb_opened = 0;
 }
 
@@ -804,6 +1009,10 @@ static int FARPROC sb_ioctl_impl(struct inode *inode, struct file *file,
         return 0;
 
     case SNDCTL_DSP_SYNC:
+        if (sb_ai_active) {
+            sb_ai_drain();
+            return 0;
+        }
         if (sb_active) {
             ret = sb_wait_complete(sb_active_len);
             if (ret < 0)
@@ -825,6 +1034,8 @@ static int FARPROC sb_ioctl_impl(struct inode *inode, struct file *file,
             rate = (val > (__s32)ceiling)? ceiling:
                    (val < (__s32)SB_MIN_RATE)? SB_MIN_RATE:
                    (unsigned int)val;
+            if (rate != sb_rate && sb_ai_active)
+                sb_ai_halt();           /* restart at the new rate on next write */
             sb_rate_cache(rate);
         }
         val = (__s32)sb_actual_rate();

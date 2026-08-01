@@ -19,6 +19,9 @@
 #define DSP_DIRECT_DAC  0x10        /* one sample straight to the DAC */
 #define DSP_SET_RATE    0x40        /* followed by the time constant */
 #define DSP_DMA_OUT_8   0x14        /* followed by length-1, single block */
+#define DSP_DMA_BLKSIZE 0x48        /* followed by block-1, auto-init IRQ size */
+#define DSP_DMA_OUT_8AI 0x1C        /* 8-bit auto-init output, needs DSP 2.00+ */
+#define DSP_DMA_EXIT_AI 0xDA        /* leave auto-init after the current block */
 #define DSP_HALT_DMA    0xD0
 #define DSP_SPEAKER_ON  0xD1
 #define DSP_GET_VERSION 0xE1
