@@ -466,7 +466,6 @@ static unsigned char mfmhd_control_shadow;
 static int mfmhd_quiet_probe;
 static char *mfmhd_bounce;
 extern int mfm_opts;        /* /bootopts mfm= options */
-extern int dma_extwrite_opt; /* /bootopts dmaxw=1: 8237 Extended Write */
 int mfmhd_slow_profile;     /* mfm= bit 0 selects slow timing */
 /*
  * mfm= bit 1 moves sector payloads over programmed I/O instead of
@@ -497,6 +496,26 @@ int mfmhd_trace;
  * backstop, so a missing interrupt costs latency rather than a hang.
  */
 int mfmhd_irq_mode;
+/*
+ * mfm= bit 4 sets the 8237's Extended Write mode (command register bit 5).
+ * The command register bit picks the write-strobe timing: 0 is Late Write,
+ * 1 is Extended Write, which asserts the strobe a clock earlier and so holds
+ * it for longer.  It exists for peripherals that cannot meet the short pulse.
+ *
+ * The Amstrad PC1512/1640 need it.  Their 8237 is clocked at 4MHz and takes a
+ * five-clock 1.25us bus cycle on channels 1-3 (PC1640 Technical Reference
+ * 1.5), where a real XT clocks the part near 2.39MHz for a four-clock cycle of
+ * about 1.68us - so the Amstrad completes each transfer roughly 25% faster
+ * than 8-bit cards were designed against, and the ROS firmware additionally
+ * initialises the controller to Late Write (1.5.2), the shorter of the two.
+ * The result is dropped or mistimed bytes: distorted audio on the sound card,
+ * and a hard disk controller that misses its handshake altogether and forces
+ * the driver back to PIO.
+ *
+ * Off by default: machines with standard timing have no reason to alter a
+ * working controller, and the setting is harmless where enabled unnecessarily.
+ */
+int mfmhd_extwrite;
 static struct wait_queue mfmhd_wait;
 static volatile unsigned char mfmhd_irq_seen;
 static unsigned char mfmhd_irq_armed;
@@ -2178,16 +2197,10 @@ struct gendisk * INITPROC mfmhd_init(void)
     mfmhd_pio = (mfm_opts >> 1) & 1;    /* bit 1: PIO sector transfers */
     mfmhd_trace = (mfm_opts >> 2) & 1;  /* bit 2: driver request tracing */
     mfmhd_irq_mode = (mfm_opts >> 3) & 1; /* bit 3: interrupt-driven completion */
+    mfmhd_extwrite = (mfm_opts >> 4) & 1; /* bit 4: 8237 Extended Write strobe */
 
-    /*
-     * dmaxw=1 lengthens the 8237's write strobe.  On the Amstrad PC1512/1640
-     * the controller is clocked at 4MHz for a 1.25us bus cycle on channels
-     * 1-3 and the ROS leaves it in Late Write, which is faster than 8-bit
-     * cards were built for; this board then misses its DMA handshake and the
-     * driver falls back to PIO.  Setting Extended Write here, once, before any
-     * transfer is programmed, gives the card the longer pulse it needs.
-     */
-    if (dma_extwrite_opt) {
+    /* Set once here, before any transfer is programmed. */
+    if (mfmhd_extwrite) {
         outb_p(DMA1_CMD_EXTWRITE, DMA1_CMD_REG);
         printk("mfmhd: 8237 extended write enabled\n");
     }
@@ -2268,10 +2281,10 @@ struct gendisk * INITPROC mfmhd_init(void)
             mfmhd_irq_armed = 1;
     }
 
-    printk("mfmhd: found %d hard drive%c at port 0x%x, %s %s, dmaxw=%d\n",
+    printk("mfmhd: found %d hard drive%c at port 0x%x, %s %s%s\n",
         hdcnt, hdcnt == 1 ? ' ' : 's', MFMHD_PORT,
         mfmhd_irq_armed ? "irq 5" : "polled",
-        mfmhd_pio ? "pio" : "dma=3", dma_extwrite_opt);
+        mfmhd_pio ? "pio" : "dma=3", mfmhd_extwrite ? " xw" : "");
     mfmhd_debug_set(91, -1, MFMHD_PORT, 0);
     return &mfmhd_gendisk;
 }
