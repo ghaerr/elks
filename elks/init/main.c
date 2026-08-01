@@ -47,11 +47,23 @@ struct netif_parms netif_parms[MAX_ETHS] = {
     { LANCE_IRQ, LANCE_PORT, 0, LANCE_FLAGS },
 };
 int dma_extwrite_opt;           /* /bootopts dmaxw=1: 8237 Extended Write */
+int lpt_irq_opt = 1;            /* /bootopts lptirq=0: mask LPT1's IRQ 7 */
 int mfmhd_slow_profile;         /* /bootopts mfm= bit 0: slow controller timing */
 int mfmhd_pio;                  /* /bootopts mfm= bit 1: PIO sector transfers */
 int mfmhd_trace;                /* /bootopts mfm= bit 2: driver request tracing */
 int mfm_opts;                   /* CONFIG_BLK_DEV_MFM mfm= options */
 int iga_opts;                   /* CONFIG_CONSOLE_AMSTRAD_IGA iga= options */
+#ifdef CONFIG_CHAR_DEV_DSP
+int sb_port_opt = -1;           /* /bootopts sb=port,irq,dma; 0 disables driver */
+int sb_irq_opt = -1;
+int sb_dma_opt = -1;
+#ifdef CONFIG_SB_MAD16
+int mad16_opt = -1;             /* /bootopts mad16=on|off|port,irq,dma */
+int mad16_port_opt = -1;
+int mad16_irq_opt = -1;
+int mad16_dma_opt = -1;
+#endif
+#endif
 
 /* internal non-driver globals */
 seg_t kernel_cs, kernel_ds;     /* always segment values even in PM */
@@ -228,6 +240,16 @@ static void INITPROC early_kernel_init(void)
     init_command = argv_init[1];    /* default startup task 1 */
     hasopts = parse_options();      /* parse options found in /bootops */
 #endif
+
+    /*
+     * Machine bring-up, not a driver's business: whoever ends up sharing IRQ 7
+     * should not have to discover the printer port sitting on it, and the mask
+     * has to be in place before any driver requests the line.  0x0C leaves INIT
+     * and SELECT_IN in their idle state with the interrupt bit clear.  ELKS' lp
+     * driver is polled and never requests IRQ 7.
+     */
+    if (!lpt_irq_opt)
+        outb_p(0x0C, 0x37A);        /* LPT1 control: interrupt disabled */
 
     /* create near heap at end of kernel bss */
     heap_init();                    /* init near memory allocator */
@@ -501,6 +523,47 @@ static void INITPROC comirq(char *line)
 #endif
 }
 
+#ifdef CONFIG_CHAR_DEV_DSP
+/* sb=port,irq,dma with port in hex or decimal, or sb=off to skip the driver */
+static void INITPROC parse_sb(char *line)
+{
+    char *p;
+
+    if (!strncmp(line, "off", 3) || !strncmp(line, "no", 2)) {
+        sb_port_opt = 0;
+        return;
+    }
+    sb_port_opt = (int)simple_strtol(line, 0);
+    if ((p = strchr(line, ','))) {
+        sb_irq_opt = (int)simple_strtol(p+1, 10);
+        if ((p = strchr(p+1, ',')))
+            sb_dma_opt = (int)simple_strtol(p+1, 10);
+    }
+}
+
+#ifdef CONFIG_SB_MAD16
+/* mad16=on to program the OPTi chip with the sb= route, or mad16=port,irq,dma */
+static void INITPROC parse_mad16(char *line)
+{
+    char *p;
+
+    if (!strncmp(line, "off", 3) || !strncmp(line, "no", 2)) {
+        mad16_opt = 0;
+        return;
+    }
+    mad16_opt = 1;
+    if (!strncmp(line, "on", 2))
+        return;
+    mad16_port_opt = (int)simple_strtol(line, 0);
+    if ((p = strchr(line, ','))) {
+        mad16_irq_opt = (int)simple_strtol(p+1, 10);
+        if ((p = strchr(p+1, ',')))
+            mad16_dma_opt = (int)simple_strtol(p+1, 10);
+    }
+}
+#endif
+#endif
+
 static void INITPROC parse_nic(char *line, struct netif_parms *parms)
 {
     char *p;
@@ -651,6 +714,19 @@ static int INITPROC parse_options(void)
             dma_extwrite_opt = (int)simple_strtol(line+6, 0);
             continue;
         }
+        /*
+         * lptirq=0 stops the parallel port asserting IRQ 7 at all.  The line is
+         * shared with expansion cards that have no other choice of interrupt -
+         * an AD1848 in Windows Sound mode can only be told 7, 9, 10 or 11, and
+         * on an XT class machine with one 8259 only 7 exists - while LPT1 powers
+         * up with its interrupt enabled (0x37A reads 0x3F on the PC1640).  A
+         * floating or strobed ACK then fires the card's handler at random.  Left
+         * on by default; nothing else should disturb a working printer port.
+         */
+        if (!strncmp(line,"lptirq=",7)) {
+            lpt_irq_opt = (int)simple_strtol(line+7, 0);
+            continue;
+        }
         if (!strncmp(line,"ne0=",4)) {
             parse_nic(line+4, &netif_parms[ETH_NE2K]);
             continue;
@@ -705,6 +781,18 @@ static int INITPROC parse_options(void)
             iga_opts = (int)simple_strtol(line+4, 10);
             continue;
         }
+#ifdef CONFIG_CHAR_DEV_DSP
+        if (!strncmp(line,"sb=",3)) {
+            parse_sb(line+3);
+            continue;
+        }
+#ifdef CONFIG_SB_MAD16
+        if (!strncmp(line,"mad16=",6)) {
+            parse_mad16(line+6);
+            continue;
+        }
+#endif
+#endif
         if (!strncmp(line,"heap=",5)) {
 #ifndef CONFIG_286_PMODE
             heapsize = (unsigned int)simple_strtol(line+5, 10);

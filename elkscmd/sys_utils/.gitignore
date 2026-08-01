@@ -25,3 +25,5 @@ sysctl
 umount
 test_unreal
 who
+audioplay
+sbmix
