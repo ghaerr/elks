@@ -38,6 +38,7 @@ int main(int argc, char **argv)
     struct passwd *pwent;
     uid_t target_uid;
     int maxtasks;
+    int found;
 
     if (argc > 2) {
         errmsg("Usage: logout [username]\n");
@@ -75,6 +76,7 @@ int main(int argc, char **argv)
     }
 
     /* find login shell: process where uid matches and pid == pgrp */
+    found = 0;
     for (j = 0; j < maxtasks; j++) {
         if (memread(fd, off + j * sizeof(struct task_struct), ds,
                 &task_table, sizeof(task_table)) != sizeof(task_table))
@@ -85,9 +87,14 @@ int main(int argc, char **argv)
             continue;
         if (task_table.uid == target_uid && task_table.pid == task_table.pgrp) {
             kill(-task_table.pgrp, SIGHUP);
+            found = 1;
         }
     }
 
     close(fd);
+    if (!found) {
+        errmsg("logout: user not logged in\n");
+        return 1;
+    }
     return 0;
 }
