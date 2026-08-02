@@ -27,8 +27,10 @@
 #include <linuxmt/kernel.h>
 #include <linuxmt/init.h>
 #include <linuxmt/string.h>
+#include <linuxmt/audio.h>
 #include <arch/io.h>
 #include <arch/irq.h>
+#include <arch/audio_sb.h>
 
 /*
  * All port access goes through the inb_p/outb_p bus-recovery forms except
@@ -196,28 +198,17 @@ void FARPROC mad16_restore_profile(void)
 }
 
 /*
- * Read a codec register through the SPACCESS window without touching MCE.
- * Diagnostic only: shows what format the codec is really in while the SB
- * personality owns it, which no other path can observe.
- */
-static unsigned char FARPROC snoop_read(unsigned char reg)
-{
-    outb_p(reg, CODEC_BASE);
-    return inb_p(CODEC_BASE + 1);
-}
-
-/*
  * The SB engine rewrites the codec's format register when it programs a
  * rate, and it selects mu-law.  Called after every rate command: put the
  * format bits back to 8-bit unsigned linear, keeping the clock bits the
- * engine just chose.  Returns the value seen, for the caller's counters.
+ * engine just chose.
  */
-unsigned char FARPROC mad16_codec_fix_fmt(void)
+void FARPROC mad16_codec_fix_fmt(void)
 {
     unsigned char v;
 
     if (!mad16_profile_valid)
-        return 0;
+        return;
     mc_write(MC5, (unsigned char)(mad16_mc[4] | MC5_SPACCESS));
     outb_p(8, CODEC_BASE);
     v = inb_p(CODEC_BASE + 1);
@@ -232,21 +223,6 @@ unsigned char FARPROC mad16_codec_fix_fmt(void)
         outb_p(8, CODEC_BASE);
     }
     mc_write(MC5, mad16_mc[4]);
-    return v;
-}
-
-void FARPROC mad16_codec_snoop(const char *tag)
-{
-    unsigned char i0, i8, i13;
-
-    if (!mad16_profile_valid)
-        return;
-    mc_write(MC5, (unsigned char)(mad16_mc[4] | MC5_SPACCESS));
-    i0 = snoop_read(0);
-    i8 = snoop_read(8);
-    i13 = snoop_read(13);
-    mc_write(MC5, mad16_mc[4]);
-    printk("mad16: %s codec i0=%x i8=%x i13=%x\n", tag, i0, i8, i13);
 }
 
 /*

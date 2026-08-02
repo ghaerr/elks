@@ -85,6 +85,11 @@
 #define SB_MAX_RATE     20000U
 #define SB_TC_CLOCK     1000000UL   /* time constant reference clock */
 
+/* Set to 1 for a per-session diagnostics line on the console at close. */
+#ifndef SB_DEBUG
+#define SB_DEBUG 0
+#endif
+
 /*
  * 8237 command register bit 5.  dma.h gains this define through the MFM
  * driver's work; guard it so this driver builds either way.
@@ -97,14 +102,6 @@
 #define LPT1_CONTROL    0x37A
 #define LPT1_CTRL_IDLE  0x0C        /* INIT + SELECT_IN, interrupt disabled */
 
-/* audio_conf[] holds the sb= and mad16= routes, parsed in init/main.c */
-extern struct isa_conf audio_conf[];
-
-/* audio_mad.c, only linked when CONFIG_AUDIO_MAD is set */
-extern int  INITPROC mad16_early_init(unsigned int port, int irq, int dma);
-extern void FARPROC mad16_restore_profile(void);
-extern void FARPROC mad16_codec_snoop(const char *tag);
-extern unsigned char FARPROC mad16_codec_fix_fmt(void);
 
 static unsigned int sb_base;
 static unsigned char sb_dma;
@@ -178,6 +175,11 @@ static volatile unsigned char sb_underrun;
 
 /* GETERROR payload: 104 bytes, far too big for the 640-byte kernel stack */
 static struct audio_errinfo sb_errinfo;
+/* the counters are reported in the filler words, so they must fit there */
+struct sbst_fits_filler {
+    char ok[(SBST_COUNT <= sizeof(sb_errinfo.filler) /
+                           sizeof(sb_errinfo.filler[0]))? 1: -1];
+};
 static __s32 sb_play_underruns;
 
 /*
@@ -423,8 +425,14 @@ static int FARPROC sb_dsp_start(unsigned int len)
     if (dsp_cmd(DSP_SET_RATE) < 0 || dsp_cmd(sb_timeconst) < 0)
         return -EIO;
 #ifdef CONFIG_AUDIO_MAD
+    /*
+     * The 929's SB engine rewrites the codec format register to mu-law
+     * whenever it maps a rate, and the rate is resent for every block
+     * (the OPTi has only proven reliable that way) - so the format has
+     * to be repaired just as often.
+     */
     if (sb_mad16_route)
-        (void)mad16_codec_fix_fmt();
+        mad16_codec_fix_fmt();
 #endif
     if (dsp_cmd(DSP_DMA_OUT_8) < 0 ||
         dsp_cmd((unsigned char)(n & 0xFF)) < 0 ||
@@ -448,14 +456,13 @@ static void sb_dsp_irq_ack(void);       /* drains the card's interrupt read path
  * Auto-init needs DSP 2.00, so a real SB 1.x keeps the single-block path.  So
  * does a MAD16: measured on an 82C929A, its SB engine plays continuous
  * auto-init badly where the same stream is clean single-block, which is the
- * same per-block hand-holding its time constant already needs.  sb= flags
- * bit 1 overrides for experiments on other compatibles.
+ * same per-block hand-holding its time constant already needs.
  */
 static int FARPROC sb_can_autoinit(void)
 {
     if (sb_dsp_ver_major < 2)
         return 0;
-    if (sb_mad16_route && !(audio_conf[AUDIO_SB].flags & ISA_AUTOINIT))
+    if (sb_mad16_route)
         return 0;
     return 1;
 }
@@ -939,6 +946,7 @@ static int FARPROC sb_open_impl(struct inode *inode, struct file *file)
      * or whatever last passed through.
      */
     fmemsetb((void *)0, sb_bounce_seg->base, 0x80, SB_BUFFER);
+    memset(sb_stat, 0, sizeof(sb_stat));
     sb_stat[SBST_OPEN]++;
     sb_stat[SBST_MODE] = (unsigned int)((sb_mad16_route? 2: 0) |
         (sb_can_autoinit()? 4: 0));
@@ -956,15 +964,14 @@ static void FARPROC sb_release_impl(struct inode *inode, struct file *file)
             (void)sb_wait_complete(sb_active_len);
         sb_halt();
     }
+#if SB_DEBUG
     /*
      * One line per session, from close - the playback path never prints.
      * Everything a bad-sounding run needs to be diagnosed after the fact:
      * transfer and interrupt counts, the failure counters, the route mode
-     * and the rate the DSP was really programmed with.
+     * and the rate the DSP was really programmed with.  The same counters
+     * are always available through SNDCTL_DSP_GETERROR's filler words.
      */
-#ifdef CONFIG_AUDIO_MAD
-    mad16_codec_snoop("close");
-#endif
     printk("sb: close w%u b%u ai%u irq%u sp%u cto%u wto%u xw%u ur%u mx%u "
            "r%u tc%u m%x\n",
         sb_stat[SBST_WRITE], sb_stat[SBST_BLOCK], sb_stat[SBST_AISTART],
@@ -972,6 +979,7 @@ static void FARPROC sb_release_impl(struct inode *inode, struct file *file)
         sb_stat[SBST_WAITTO], sb_stat[SBST_XWASSERT], sb_stat[SBST_AIUNDER],
         sb_stat[SBST_MAXWAIT], sb_stat[SBST_RATE], sb_stat[SBST_TCONST],
         sb_stat[SBST_MODE]);
+#endif
     sb_opened = 0;
 }
 
@@ -1215,15 +1223,14 @@ void INITPROC dsp_init(void)
     /*
      * sb=irq,port,dma,1 selects the 8237 Extended Write strobe for a machine
      * whose DMA timing is tighter than 8-bit cards expect (the Amstrad
-     * PC1512/1640).  The strobe itself is re-asserted per transfer in
-     * sb_dma_program: the shared, write-only command register does not
-     * survive other users of the controller.
+     * PC1512/1640).  Written once, here: the machine that needs it keeps it
+     * across BIOS disk traffic, and rewriting the Amstrad ASIC's command
+     * register between transfers audibly disturbs playback.
      */
     if (conf->flags & ISA_EXTWRITE) {
         sb_extwrite_assert();
         printk("sb: 8237 extended write enabled\n");
     }
-    (void)0;
     if (sb_dma != 1 && sb_dma != 3) {
         printk("sb: dma %d not 1 or 3\n", sb_dma);
         return;

@@ -39,4 +39,14 @@
 
 #define SB_FILT_OFF     0x20        /* set = SB Pro output filter bypassed */
 
+#ifndef __ASSEMBLER__
+/* sb= and mad16= routes, parsed in init/main.c; indices in linuxmt/audio.h */
+extern struct isa_conf audio_conf[];
+
+/* audio_mad.c, only linked when CONFIG_AUDIO_MAD is set */
+extern int  INITPROC mad16_early_init(unsigned int port, int irq, int dma);
+extern void FARPROC mad16_restore_profile(void);
+extern void FARPROC mad16_codec_fix_fmt(void);
+#endif
+
 #endif

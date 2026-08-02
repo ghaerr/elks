@@ -59,8 +59,10 @@
 /*
  * Returned by SNDCTL_DSP_GETERROR.  play_underruns counts DMA blocks whose
  * completion deadline passed, which is the only way a program can tell that
- * audio broke up rather than played cleanly.  The remaining fields are kept
- * at their OSS names and reported as zero.
+ * audio broke up rather than played cleanly.  The other named fields are
+ * kept at their OSS names and reported as zero; the filler words carry the
+ * driver's per-session event counters, in the order of the sb_stat enum in
+ * audio_sb.c, so a player can dump them without any extra ioctl.
  */
 struct audio_errinfo {
     __s32       play_underruns;
