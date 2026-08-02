@@ -16,7 +16,6 @@
 #define SB_MIXER_DATA   0x05        /* rw mixer register value */
 
 /* DSP commands used by the driver */
-#define DSP_DIRECT_DAC  0x10        /* one sample straight to the DAC */
 #define DSP_SET_RATE    0x40        /* followed by the time constant */
 #define DSP_DMA_OUT_8   0x14        /* followed by length-1, single block */
 #define DSP_DMA_BLKSIZE 0x48        /* followed by block-1, auto-init IRQ size */

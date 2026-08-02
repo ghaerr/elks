@@ -198,11 +198,24 @@ void FARPROC mad16_restore_profile(void)
 }
 
 /*
- * The SB engine rewrites the codec's format register when it programs a
- * rate, and it selects mu-law.  Called after every rate command: put the
- * format bits back to 8-bit unsigned linear, keeping the clock bits the
- * engine just chose.
+ * Hold the codec in 8-bit unsigned linear PCM.
+ *
+ * The SB engine rewrites the codec's data format register whenever it maps
+ * a sample rate, and it selects mu-law - which folds a linear waveform at
+ * the 0x80 sign boundary, so a 440Hz tone comes out at 880Hz.  This is
+ * called after every rate command to put the format back.
+ *
+ * Only the two companding bits are touched.  Widening the mask to the
+ * whole format field costs playback outright: the stereo bit next to it
+ * reads back set, so the condition below fires on every block, and
+ * asserting MCE on a codec that is already streaming stalls the transfer
+ * in progress - the block never completes and the writer blocks in the
+ * driver for good.  The write is therefore made only when the readback
+ * shows a companded format, which after the first repair of a stream is
+ * almost never.
  */
+#define CODEC_FMT_MASK  0x60    /* the companding format bits of I8 */
+
 void FARPROC mad16_codec_fix_fmt(void)
 {
     unsigned char v;
@@ -212,18 +225,17 @@ void FARPROC mad16_codec_fix_fmt(void)
     mc_write(MC5, (unsigned char)(mad16_mc[4] | MC5_SPACCESS));
     outb_p(8, CODEC_BASE);
     v = inb_p(CODEC_BASE + 1);
-    if (v & 0x60) {
-        /*
-         * Format writes are honoured only under MCE, so assert it on the
-         * index access; ACAL is kept off in the codec setup, so leaving
-         * MCE again does not trigger a recalibration mute mid-stream.
-         */
+    if (v & CODEC_FMT_MASK) {
+        /* MCE on the index access: the codec ignores format writes
+         * without it.  ACAL is off in the codec setup, so leaving MCE
+         * again does not start a recalibration that would mute us. */
         outb_p(0x48, CODEC_BASE);
-        outb_p((unsigned char)(v & ~0x60), CODEC_BASE + 1);
+        outb_p((unsigned char)(v & ~CODEC_FMT_MASK), CODEC_BASE + 1);
         outb_p(8, CODEC_BASE);
     }
     mc_write(MC5, mad16_mc[4]);
 }
+
 
 /*
  * Present if MC1 reads differently through the password gate than without it,
