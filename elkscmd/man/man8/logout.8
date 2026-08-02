@@ -1,0 +1,63 @@
+.TH LOGOUT 8
+.SH NAME
+logout \- end a user session
+.SH SYNOPSIS
+.B logout
+[
+.I username
+]
+.SH DESCRIPTION
+.B logout
+ends a login session by sending SIGHUP to the login shell's process group.
+.PP
+Without arguments,
+.B logout
+sends SIGHUP to the current process group, terminating the shell, its
+foreground and background jobs, and the
+.B logout
+process itself.  It is the equivalent of logging off the current terminal.
+.PP
+With
+.I username
+.IR ,
+which requires root privileges,
+.B logout
+finds the named user's login shell (the process whose user id matches and
+whose process id equals its process group id) and sends SIGHUP to that
+process group.  This logs the user off from another session, for example to
+clear a stuck or abandoned login.
+.PP
+Processes that have detached from their session by calling
+.BR setsid ()
+are not affected, so daemons such as
+.BR ftpd (8)
+or
+.BR httpd (8)
+survive a logout.
+.SH OPTIONS
+.TP 15
+.I username
+Log the named user off.  Only root may do this.  If the user is not
+currently logged in, an error message is printed and a non-zero status is
+returned.
+.SH EXIT STATUS
+.TP
+.I 0
+The session was ended successfully.
+.TP
+.I 1
+An error occurred: usage error, insufficient privilege, unknown user, the
+user is not logged in, or the kernel task table could not be read.
+.SH FILES
+.PD 0
+.TP
+.B /dev/kmem
+Kernel memory, read to locate login shells.
+.TP
+.B /etc/passwd
+User database, consulted to resolve the user name to a user id.
+.PD
+.SH "SEE ALSO"
+.BR login (8),
+.BR getty (8),
+.BR init (8).
