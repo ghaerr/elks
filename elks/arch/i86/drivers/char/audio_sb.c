@@ -68,9 +68,8 @@
  * the don't-care bits of the packing, so never read-modify-write mixer
  * registers.  audiomix(1) changes levels at runtime.
  */
-#define SB_DEFAULT_MASTERVOL 80     /* below full scale - the output stage
-                                       measurably folds when driven hard */
-#define SB_DEFAULT_PLAYVOL   60
+#define SB_DEFAULT_MASTERVOL 85     /* 6/7 - full scale clips some cards */
+#define SB_DEFAULT_PLAYVOL   85     /* 6/7 */
 #define SB_DEFAULT_FMVOL     0
 
 /*
@@ -419,12 +418,13 @@ static void FARPROC sb_dma_program(unsigned int off, unsigned int len)
 }
 
 /*
- * Measured on a PT-200 whose codec DAC has a broken midpoint: tones that
- * cross 0x80 fold (second harmonic above the fundamental), tones confined
- * to either half play three times cleaner.  With sb= flags bit 2 set,
- * every sample is halved and biased into 128..255, so playback simply
- * never touches the broken transition - at the price of one bit of
- * dynamic range.  One shift and one OR per byte; a 4096-byte block costs
+ * Measured on a PT-200 whose codec DAC is partly broken: tones crossing
+ * 0x80 fold hard (second harmonic above the fundamental), and the range
+ * above roughly 0xC0 has collapsed output.  The window that converts
+ * cleanly is about 0x82..0xBF.  With sb= flags bit 2 set, every sample
+ * is quartered and biased into 128..191, keeping playback inside that
+ * window at the price of two bits of dynamic range; the mixer makes up
+ * the level.  Two shifts and an OR per byte; a 4096-byte block costs
  * about a millisecond on a 4.77 MHz 8086, well inside the half-second
  * the block takes to play.
  */
@@ -437,7 +437,7 @@ static void FARPROC sb_halfrange(unsigned int off, unsigned int len)
     for (i = 0; i < len; i++) {
         unsigned char v = peekb((word_t)(off + i), sb_bounce_seg->base);
         pokeb((word_t)(off + i), sb_bounce_seg->base,
-              (unsigned char)((v >> 1) | 0x80));
+              (unsigned char)((v >> 2) | 0x80));
     }
 }
 
