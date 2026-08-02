@@ -55,7 +55,7 @@
 #define MIN_RATE        4000L       /* driver limits */
 #define MAX_RATE        22050L      /* PIO playback ceiling */
 #define MIN_BUFSIZE     64
-#define MAX_BUFSIZE     16384       /* == the driver's default DMA block */
+#define MAX_BUFSIZE     4096        /* == the driver's default DMA block */
 
 static unsigned char buf[MAX_BUFSIZE];
 /*

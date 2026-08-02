@@ -111,6 +111,16 @@ achievable rates are quantised.  SNDCTL_DSP_SPEED is read-write and reports
 the rate actually programmed, which the caller should re-read.  4000, 8000 and
 20000 Hz are exact; 11025 Hz is not.
 
+A card behind an OPTi 82C929 quantises again on top of that: the chip maps a
+Sound Blaster rate onto what the codec's two crystals can produce, so a
+request for 20000 Hz was measured playing at about 18900.  8000 and 16000 Hz
+come out exact, which is what makes them the useful rates there.
+
+A larger SB_BUFSIZE was measured to help a machine that cannot quite keep a
+high rate fed - it halved the dropouts of an 11025 Hz network stream - but
+the buffer is claimed in low memory and doubled for the two halves, so 4096
+stays the default rather than spending 32K below 1M on every machine.
+
 Supported ioctls
 ----------------
 
