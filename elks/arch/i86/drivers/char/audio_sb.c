@@ -68,8 +68,14 @@
  * the don't-care bits of the packing, so never read-modify-write mixer
  * registers.  audiomix(1) changes levels at runtime.
  */
-#define SB_DEFAULT_MASTERVOL 85     /* 6/7 - full scale clips some cards */
-#define SB_DEFAULT_PLAYVOL   85     /* 6/7 */
+/*
+ * 71% is 5 of the 7 steps the SB Pro mixer offers, and 11 of 15 on an
+ * SB16.  Master and voice attenuate in series, so leaving both a couple
+ * of steps below full scale keeps hot 8-bit material out of the clipping
+ * the top of the range brings on some cards.
+ */
+#define SB_DEFAULT_MASTERVOL 71     /* 5/7 */
+#define SB_DEFAULT_PLAYVOL   71     /* 5/7 */
 #define SB_DEFAULT_FMVOL     0
 
 /*
