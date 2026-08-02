@@ -55,7 +55,7 @@
 #define MIN_RATE        4000L       /* driver limits */
 #define MAX_RATE        22050L      /* PIO playback ceiling */
 #define MIN_BUFSIZE     64
-#define MAX_BUFSIZE     4096        /* == the driver's default DMA block */
+#define MAX_BUFSIZE     16384       /* == the driver's default DMA block */
 
 static unsigned char buf[MAX_BUFSIZE];
 /*
@@ -153,45 +153,53 @@ static int adpcm_ref = 128;     /* running predictor */
 static int adpcm_state;         /* index into the tables above */
 static int adpcm_primed;        /* the reference sample has been read */
 
-/* Expand n packed bytes from src into dst, returning the samples written. */
+/*
+ * Expand n packed bytes from src into dst, returning the samples written.
+ * The reference test is hoisted out of the loop and both buffers are walked
+ * with pointers: at 16000 samples a second an 8086 has about 300 cycles per
+ * sample for everything the program does, so a per-byte branch and an index
+ * multiply are not free.
+ */
 static int adpcm_expand(unsigned char *dst, unsigned char *src, int n)
 {
-    int i, out = 0;
+    unsigned char *out = dst;
+    unsigned char *end = src + n;
+    const signed char *delta = adpcm_delta;
+    const unsigned char *next = adpcm_next;
     int ref = adpcm_ref;
     int base = adpcm_state << 4;
 
-    for (i = 0; i < n; i++) {
-        unsigned char b = src[i];
+    if (!adpcm_primed && src < end) {   /* first byte of a stream is the ref */
+        adpcm_primed = 1;
+        ref = *src;
+        base = 0;
+        *out++ = *src++;
+    }
+    while (src < end) {
+        unsigned char b = *src++;
         int k;
 
-        if (!adpcm_primed) {            /* first byte is the reference */
-            adpcm_primed = 1;
-            ref = b;
-            base = 0;
-            dst[out++] = b;
-            continue;
-        }
         k = base + (b >> 4);
-        ref += adpcm_delta[k];
+        ref += delta[k];
         if (ref < 0)
             ref = 0;
         else if (ref > 255)
             ref = 255;
-        dst[out++] = (unsigned char)ref;
-        base = adpcm_next[k] << 4;
+        *out++ = (unsigned char)ref;
+        base = next[k] << 4;
 
         k = base + (b & 0x0F);
-        ref += adpcm_delta[k];
+        ref += delta[k];
         if (ref < 0)
             ref = 0;
         else if (ref > 255)
             ref = 255;
-        dst[out++] = (unsigned char)ref;
-        base = adpcm_next[k] << 4;
+        *out++ = (unsigned char)ref;
+        base = next[k] << 4;
     }
     adpcm_ref = ref;
     adpcm_state = base >> 4;
-    return out;
+    return (int)(out - dst);
 }
 
 /*

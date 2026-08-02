@@ -175,7 +175,7 @@ struct isa_conf {
 #define SB_PORT         0x220
 #define SB_IRQ          5               /* use IRQ 7 with DMA 1 on an XT with a hard disk */
 #define SB_DMA          1               /* 8-bit DMA channel, 1 or 3 */
-#define SB_BUFSIZE      4096            /* one playback DMA block, two are buffered */
+#define SB_BUFSIZE      16384           /* one playback DMA block, two are buffered */
 
 /* bioshd.c*/
 #define FDC_DOR         0x3F2           /* floppy digital output register*/
