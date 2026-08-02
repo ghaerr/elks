@@ -1348,6 +1348,16 @@ void INITPROC dsp_init(void)
         if (rc == 0) {
             sb_mad16_route = 1;
             printk("sb: mad16 at 0x%x irq %d dma %d\n", port, irq, dma);
+            /*
+             * The 82C929 has no DAC of its own: playback data is pulled by
+             * the codec at its crystal-paced rate, so the direct-DAC command
+             * PIO playback depends on has nothing to convert it.  Refuse
+             * loudly rather than run a mode that plays silence.
+             */
+            if (sb_pio_mode) {
+                printk("sb: mad16 has no direct dac, pio unavailable\n");
+                return;
+            }
         }
         else if (rc == -EINVAL)
             printk("sb: mad16 cannot route 0x%x irq %d dma %d, "
