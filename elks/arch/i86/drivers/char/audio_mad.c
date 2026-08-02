@@ -196,6 +196,60 @@ void FARPROC mad16_restore_profile(void)
 }
 
 /*
+ * Read a codec register through the SPACCESS window without touching MCE.
+ * Diagnostic only: shows what format the codec is really in while the SB
+ * personality owns it, which no other path can observe.
+ */
+static unsigned char FARPROC snoop_read(unsigned char reg)
+{
+    outb_p(reg, CODEC_BASE);
+    return inb_p(CODEC_BASE + 1);
+}
+
+/*
+ * The SB engine rewrites the codec's format register when it programs a
+ * rate, and it selects mu-law.  Called after every rate command: put the
+ * format bits back to 8-bit unsigned linear, keeping the clock bits the
+ * engine just chose.  Returns the value seen, for the caller's counters.
+ */
+unsigned char FARPROC mad16_codec_fix_fmt(void)
+{
+    unsigned char v;
+
+    if (!mad16_profile_valid)
+        return 0;
+    mc_write(MC5, (unsigned char)(mad16_mc[4] | MC5_SPACCESS));
+    outb_p(8, CODEC_BASE);
+    v = inb_p(CODEC_BASE + 1);
+    if (v & 0x60) {
+        /*
+         * Format writes are honoured only under MCE, so assert it on the
+         * index access; ACAL is kept off in the codec setup, so leaving
+         * MCE again does not trigger a recalibration mute mid-stream.
+         */
+        outb_p(0x48, CODEC_BASE);
+        outb_p((unsigned char)(v & ~0x60), CODEC_BASE + 1);
+        outb_p(8, CODEC_BASE);
+    }
+    mc_write(MC5, mad16_mc[4]);
+    return v;
+}
+
+void FARPROC mad16_codec_snoop(const char *tag)
+{
+    unsigned char i0, i8, i13;
+
+    if (!mad16_profile_valid)
+        return;
+    mc_write(MC5, (unsigned char)(mad16_mc[4] | MC5_SPACCESS));
+    i0 = snoop_read(0);
+    i8 = snoop_read(8);
+    i13 = snoop_read(13);
+    mc_write(MC5, mad16_mc[4]);
+    printk("mad16: %s codec i0=%x i8=%x i13=%x\n", tag, i0, i8, i13);
+}
+
+/*
  * Present if MC1 reads differently through the password gate than without it,
  * and if a toggled bit reads back through the gate.
  */
@@ -336,7 +390,7 @@ static int INITPROC codec_init(unsigned int base, unsigned char *mc5_extra)
      */
     static const unsigned char init_values[32] = {
         0x00, 0x00, 0x88, 0x88, 0x88, 0x88, 0x00, 0x00,
-        0x00, 0x0c, 0x02, 0x00, 0x8a, 0x00, 0x00, 0x00,
+        0x00, 0x04, 0x02, 0x00, 0x8a, 0x00, 0x00, 0x00,
         0x80, 0x00, 0x10, 0x10, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
     };

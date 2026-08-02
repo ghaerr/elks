@@ -34,8 +34,9 @@ holds the result.  The port is read as hex, the IRQ and DMA channel as
 decimal.  An audio card keeps its DMA channel in the ram field of that
 structure and its flags in the fourth field.
 
-The only flag is bit 0 (value 1), which sets the 8237 DMA controller's
-Extended Write strobe.  A machine whose DMA timing is tighter than 8-bit
+Flag bit 0 (value 1) sets the 8237 DMA controller's Extended Write
+strobe; bit 1 (value 2) allows auto-init DMA on a MAD16 route, for
+experiments only.  A machine whose DMA timing is tighter than 8-bit
 cards expect - the Amstrad PC1512 and PC1640 - drops bytes without it, and
 plays otherwise clean audio as heavy distortion.  Say sb=irq,port,dma,1 on
 such a machine and leave it off everywhere else.  It is a controller-wide

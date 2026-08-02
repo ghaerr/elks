@@ -103,6 +103,8 @@ extern struct isa_conf audio_conf[];
 /* audio_mad.c, only linked when CONFIG_AUDIO_MAD is set */
 extern int  INITPROC mad16_early_init(unsigned int port, int irq, int dma);
 extern void FARPROC mad16_restore_profile(void);
+extern void FARPROC mad16_codec_snoop(const char *tag);
+extern unsigned char FARPROC mad16_codec_fix_fmt(void);
 
 static unsigned int sb_base;
 static unsigned char sb_dma;
@@ -403,30 +405,6 @@ static void FARPROC sb_dma_program(unsigned int off, unsigned int len)
     outb_p(sb_dma_mask, DMA1_MASK_REG);           /* unmask, transfer armed */
 }
 
-/*
- * Measured on a PT-200 whose codec DAC is partly broken: tones crossing
- * 0x80 fold hard (second harmonic above the fundamental), and the range
- * above roughly 0xC0 has collapsed output.  The window that converts
- * cleanly is about 0x82..0xBF.  With sb= flags bit 2 set, every sample
- * is quartered and biased into 128..191, keeping playback inside that
- * window at the price of two bits of dynamic range; the mixer makes up
- * the level.  Two shifts and an OR per byte; a 4096-byte block costs
- * about a millisecond on a 4.77 MHz 8086, well inside the half-second
- * the block takes to play.
- */
-static void FARPROC sb_halfrange(unsigned int off, unsigned int len)
-{
-    unsigned int i;
-
-    if (!(audio_conf[AUDIO_SB].flags & ISA_HALFRANGE))
-        return;
-    for (i = 0; i < len; i++) {
-        unsigned char v = peekb((word_t)(off + i), sb_bounce_seg->base);
-        pokeb((word_t)(off + i), sb_bounce_seg->base,
-              (unsigned char)((v >> 2) | 0x80));
-    }
-}
-
 static void FARPROC sb_dma_stop(void)
 {
     outb_p(sb_dma_mask | 4, DMA1_MASK_REG);
@@ -444,6 +422,10 @@ static int FARPROC sb_dsp_start(unsigned int len)
      */
     if (dsp_cmd(DSP_SET_RATE) < 0 || dsp_cmd(sb_timeconst) < 0)
         return -EIO;
+#ifdef CONFIG_AUDIO_MAD
+    if (sb_mad16_route)
+        (void)mad16_codec_fix_fmt();
+#endif
     if (dsp_cmd(DSP_DMA_OUT_8) < 0 ||
         dsp_cmd((unsigned char)(n & 0xFF)) < 0 ||
         dsp_cmd((unsigned char)(n >> 8)) < 0)
@@ -600,7 +582,6 @@ static int FARPROC sb_ai_queue(char *buf, unsigned int len)
 
     off = sb_fill? SB_BOUNCE: 0;
     fmemcpyb((void *)off, sb_bounce_seg->base, buf, current->t_regs.ds, len);
-    sb_halfrange((unsigned int)off, len);
     if (len < SB_BOUNCE)                     /* pad the tail with silence */
         fmemsetb((void *)(off + len), sb_bounce_seg->base, 0x80,
                  SB_BOUNCE - len);
@@ -916,7 +897,6 @@ static int FARPROC sb_queue_chunk(char *buf, unsigned int len)
 
     off = sb_fill? SB_BOUNCE: 0;
     fmemcpyb((void *)off, sb_bounce_seg->base, buf, current->t_regs.ds, len);
-    sb_halfrange((unsigned int)off, len);
 
     if (sb_active) {
         ret = sb_wait_complete(sb_active_len);
@@ -982,6 +962,9 @@ static void FARPROC sb_release_impl(struct inode *inode, struct file *file)
      * transfer and interrupt counts, the failure counters, the route mode
      * and the rate the DSP was really programmed with.
      */
+#ifdef CONFIG_AUDIO_MAD
+    mad16_codec_snoop("close");
+#endif
     printk("sb: close w%u b%u ai%u irq%u sp%u cto%u wto%u xw%u ur%u mx%u "
            "r%u tc%u m%x\n",
         sb_stat[SBST_WRITE], sb_stat[SBST_BLOCK], sb_stat[SBST_AISTART],
