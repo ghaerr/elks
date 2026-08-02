@@ -22,6 +22,11 @@
 
 #ifdef CONFIG_AUDIO_MAD
 
+/* Set to 1 for codec readback reporting at boot. */
+#ifndef MAD16_DEBUG
+#define MAD16_DEBUG 0
+#endif
+
 #include <linuxmt/types.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/kernel.h>
@@ -425,6 +430,7 @@ static int INITPROC codec_init(unsigned int base, unsigned char *mc5_extra)
         for (i = 16; i < 32; i++)
             codec_write(base, (unsigned char)i, init_values[i], CODEC_MCE);
     }
+#if MAD16_DEBUG
     {
         unsigned int bad = 0;
         unsigned char got;
@@ -452,6 +458,7 @@ static int INITPROC codec_init(unsigned int base, unsigned char *mc5_extra)
             codec_read(base, 6, CODEC_MCE), codec_read(base, 13, CODEC_MCE),
             bad);
     }
+#endif
     outb_p(0, base + 2);
     codec_leave_mce(base);
 

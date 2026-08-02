@@ -11,13 +11,14 @@
  * the hard disk controller owns both, so jumper the card for IRQ 7 and DMA 1.
  * See Documentation/text/soundblaster.txt.
  *
- * One DMA block is in flight at a time and write() blocks until the previous
- * block has drained.  The bounce buffer holds two blocks so the next one is
- * copied in while the current one plays, which keeps the copy out of the window
- * when the DMA engine is stopped; what is left there is the interrupt latency
- * plus reprogramming the 8237 and the DSP.  Closing that remainder as well needs
- * auto-init DMA (DSP 0x1C with 8237 mode 0x58) over a circular buffer, which
- * also requires DSP 2.00 and so would drop Sound Blaster 1.0.
+ * A DSP 2.00 or later card plays through auto-init DMA (DSP 0x1C with 8237
+ * mode 0x58) over the two-block buffer as a circular one, so nothing is
+ * reprogrammed between blocks and playback is gapless.  A Sound Blaster 1.x,
+ * which has only the single-block command, and a card reached through an OPTi
+ * MAD16, whose engine does not raise the per-block interrupt auto-init needs,
+ * fall back to one block in flight at a time: write() then blocks until the
+ * previous block has drained, and the gap between blocks is the interrupt
+ * latency plus reprogramming the 8237 and the DSP.
  *
  * Completion is detected from the card's interrupt.  The 8237 status register
  * is deliberately never read: reading it clears the terminal-count latch for
@@ -165,7 +166,6 @@ enum {
     SBST_SPURIOUS,      /* interrupts with no transfer active           */
     SBST_CMDTO,         /* DSP command timeouts                         */
     SBST_WAITTO,        /* block-completion deadline timeouts           */
-    SBST_XWASSERT,      /* 8237 Extended Write assertions               */
     SBST_AIHALT,        /* auto-init halts                              */
     SBST_DRAIN,         /* drains (SYNC/close)                          */
     SBST_AIUNDER,       /* auto-init underrun restarts                  */
@@ -386,10 +386,8 @@ static int INITPROC sb_dma_unusable(addr_t phys)
  */
 static void FARPROC sb_extwrite_assert(void)
 {
-    if (audio_conf[AUDIO_SB].flags & ISA_EXTWRITE) {
-        sb_stat[SBST_XWASSERT]++;
+    if (audio_conf[AUDIO_SB].flags & ISA_EXTWRITE)
         outb_p(DMA1_CMD_EXTWRITE, DMA1_CMD_REG);
-    }
 }
 
 static void FARPROC sb_dma_program(unsigned int off, unsigned int len)
@@ -978,11 +976,11 @@ static void FARPROC sb_release_impl(struct inode *inode, struct file *file)
      * and the rate the DSP was really programmed with.  The same counters
      * are always available through SNDCTL_DSP_GETERROR's filler words.
      */
-    printk("sb: close w%u b%u ai%u irq%u sp%u cto%u wto%u xw%u ur%u mx%u "
+    printk("sb: close w%u b%u ai%u irq%u sp%u cto%u wto%u ur%u mx%u "
            "r%u tc%u m%x\n",
         sb_stat[SBST_WRITE], sb_stat[SBST_BLOCK], sb_stat[SBST_AISTART],
         sb_stat[SBST_IRQ], sb_stat[SBST_SPURIOUS], sb_stat[SBST_CMDTO],
-        sb_stat[SBST_WAITTO], sb_stat[SBST_XWASSERT], sb_stat[SBST_AIUNDER],
+        sb_stat[SBST_WAITTO], sb_stat[SBST_AIUNDER],
         sb_stat[SBST_MAXWAIT], sb_stat[SBST_RATE], sb_stat[SBST_TCONST],
         sb_stat[SBST_MODE]);
 #endif

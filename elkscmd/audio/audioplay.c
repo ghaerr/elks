@@ -27,7 +27,7 @@
 
 #define DEFAULT_RATE    8000L
 #define MIN_RATE        4000L       /* driver limits */
-#define MAX_RATE        22050L      /* PIO playback ceiling */
+#define MAX_RATE        20000L      /* the driver's ceiling, SB_MAX_RATE */
 #define MIN_BUFSIZE     64
 #define MAX_BUFSIZE     4096        /* == the driver's default DMA block */
 

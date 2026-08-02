@@ -85,20 +85,25 @@ costs spurious handler entries.
 Buffering and the gap between blocks
 ------------------------------------
 
-The driver holds one DMA block in flight at a time.  write() copies up to
-SB_BUFSIZE bytes (arch/ports.h, default 4096) into a low-memory buffer, starts the transfer, and
-returns once the previous block has drained, looping internally until the
-caller's whole buffer has been consumed.
+write() copies up to SB_BUFSIZE bytes (arch/ports.h, default 4096) into a
+low-memory buffer of two such blocks, looping internally until the caller's
+whole buffer has been consumed.
 
-The DMA engine is therefore idle between blocks for the interrupt latency plus
-one buffer copy.  At the 4096-byte default that is a short gap roughly every
-SB_BUFSIZE/rate seconds, or about every half second at 8000 Hz.  Making
-the buffer smaller makes the gaps more frequent rather than removing them.
-Eliminating them needs auto-init DMA (DSP command 0x1C with 8237 mode 0x58)
-over a split buffer, which is a larger change than this driver.
+A DSP 2.00 or later card runs that buffer as a circular one under auto-init
+DMA (command 0x1C with 8237 mode 0x58): the card interrupts at each half and
+nothing is reprogrammed between them, so playback is gapless.
 
-The same single-block design sets the latency: SNDCTL_DSP_SYNC and an
-interrupted write take up to one block to take effect.
+Two cases fall back to a single block in flight, where write() returns only
+once the previous block has drained: a Sound Blaster 1.x, which has only the
+0x14 single-block command, and a card reached through an OPTi MAD16, whose
+engine does not raise the per-block interrupt auto-init depends on - it was
+measured hanging playback outright.  In that mode the DMA engine is idle
+between blocks for the interrupt latency plus one buffer copy, a short gap
+every SB_BUFSIZE/rate seconds, about every half second at 8000 Hz.  A smaller
+buffer makes the gaps more frequent rather than removing them.
+
+The fallback also sets the latency there: SNDCTL_DSP_SYNC and an interrupted
+write take up to one block to take effect.
 
 Sample rates
 ------------
@@ -174,10 +179,10 @@ so check it against the network card before relying on it.
 Output level
 ------------
 
-The driver programs the master and voice levels once during boot and never
-touches them again, so anything set afterwards stays set.  Both go to 2 of 7 on
-an SB Pro, which is 4 of 15 on an SB16: one register value, 0x44, lands on
-roughly the same fraction of full scale in both mixer layouts.
+The driver programs the master and voice levels at every open, so a DSP reset
+in between cannot leave them wherever the card's own defaults put them.  Both
+go to 5 of 7 on an SB Pro, register value 0xBB, which is 11 of 15 on an SB16:
+the same fraction of full scale in either mixer layout.
 
 Full scale would be the obvious choice for a driver with no volume ioctl, and it
 is wrong.  The voice and master attenuators are in series ahead of the output
@@ -231,6 +236,15 @@ was told to produce.  From the host:
 
     sox in.wav -t raw -r 8000 -c 1 -b 8 -e unsigned - | nc elks 4950
     ffmpeg -i in.wav -f u8 -ar 8000 -ac 1 - | nc elks 4950
+
+With -4 the stream on the wire is Creative 4-bit ADPCM, which audiorecv
+expands before writing it to the card - two samples a byte, high nibble
+first, the first byte of a stream being the reference sample, with the step
+tables the DOSBox and 86Box decoders use.  It halves what the network has to
+carry for a given rate, which is what makes 11025 Hz reachable over a link
+that cannot hold 11025 bytes a second.  The card's own ADPCM playback
+commands are not used: an OPTi 82C929 does not decode Creative's encoding,
+measured as a 440Hz tone coming back at 794Hz.
 
 The port defaults to 4950 and is set with -p.  Add audiorecv to netstart= in
 /etc/net.cfg to have /bin/net start it as a daemon; the command line is already

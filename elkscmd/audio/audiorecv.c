@@ -53,7 +53,7 @@
 #define DEF_PORT        4950
 #define DEFAULT_RATE    8000L
 #define MIN_RATE        4000L       /* driver limits */
-#define MAX_RATE        22050L      /* PIO playback ceiling */
+#define MAX_RATE        20000L      /* the driver's ceiling, SB_MAX_RATE */
 #define MIN_BUFSIZE     64
 #define MAX_BUFSIZE     4096        /* == the driver's default DMA block */
 
@@ -69,7 +69,8 @@ static audio_errinfo einfo;         /* 104 bytes: keep off the small stack */
 
 static void usage(void)
 {
-    fprintf(stderr, "usage: audiorecv [-d] [-p port] [-r rate] [-b bytes]\n");
+    fprintf(stderr, "usage: audiorecv [-d] [-p port] [-r rate] [-b bytes] [-4]\n");
+    fprintf(stderr, "  -4  the stream is Creative 4-bit ADPCM, expanded here\n");
     fprintf(stderr, "       -d serves streams forever in the background,"
         " otherwise one stream is played\n");
     fprintf(stderr, "       raw unsigned 8-bit mono PCM, %ld-%ld Hz,"
