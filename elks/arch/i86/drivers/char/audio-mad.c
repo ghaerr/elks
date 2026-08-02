@@ -18,15 +18,12 @@
  * the internal FIFO to keep DRQ asserted, which looks like a dead DMA channel.
  */
 
-#include <linuxmt/config.h>
-
-#ifdef CONFIG_AUDIO_MAD
-
 /* Set to 1 for codec readback reporting at boot. */
 #ifndef MAD16_DEBUG
 #define MAD16_DEBUG 0
 #endif
 
+#include <linuxmt/config.h>
 #include <linuxmt/types.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/kernel.h>
@@ -35,7 +32,7 @@
 #include <linuxmt/audio.h>
 #include <arch/io.h>
 #include <arch/irq.h>
-#include <arch/audio_sb.h>
+#include <arch/audio-sb.h>
 
 /*
  * All port access goes through the inb_p/outb_p bus-recovery forms except
@@ -103,7 +100,7 @@
  * - FMAP must stay 0.  In Single mode every SB rate is quantised to what
  *   the 16.9344 MHz crystal can produce, and the common telephone-quality
  *   rates cannot be: 8000 and 16000 Hz exist only on the 24.576 MHz
- *   crystal.  Normal mode is what makes "audioplay -r 8000" land on
+ *   crystal.  Normal mode is what makes "play -r 8000" land on
  *   exactly 8000 Hz.
  *
  * These four IRQs and three DRQs are the entire route space of a
@@ -506,5 +503,3 @@ int INITPROC mad16_early_init(unsigned int port, int irq, int dma)
     mad16_profile_valid = 1;
     return 0;
 }
-
-#endif /* CONFIG_AUDIO_MAD */

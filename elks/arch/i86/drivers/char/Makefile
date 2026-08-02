@@ -136,11 +136,11 @@ ifdef CONFIG_AUDIO
 endif
 
 ifdef CONFIG_AUDIO_SB
-  OBJS += audio_sb.o
+  OBJS += audio-sb.o
 endif
 
 ifdef CONFIG_AUDIO_MAD
-  OBJS += audio_mad.o
+  OBJS += audio-mad.o
 endif
 
 ifdef CONFIG_ARCH_IBMPC

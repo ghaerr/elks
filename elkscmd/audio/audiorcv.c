@@ -1,7 +1,7 @@
 /*
- * audiorecv - play raw unsigned 8-bit mono PCM arriving over TCP on /dev/dsp
+ * audiorcv - play raw unsigned 8-bit mono PCM arriving over TCP on /dev/dsp
  *
- * usage: audiorecv [-d] [-p port] [-r rate] [-b bytes] [-4]
+ * usage: audiorcv [-d] [-p port] [-r rate] [-b bytes] [-4]
  *
  * -4 expects Creative 4-bit ADPCM on the wire and expands it here, which
  * halves what the network has to carry for a given sample rate.  The card
@@ -15,15 +15,15 @@
  * must match what the sender was told to produce.  Only raw unsigned 8-bit
  * mono PCM is understood, because that is all the driver accepts.
  *
- *   ELKS:  audiorecv -r 8000
+ *   ELKS:  audiorcv -r 8000
  *   host:  sox in.wav -t raw -r 8000 -c 1 -b 8 -e unsigned - | nc elks 4950
  *          ffmpeg -i in.wav -f u8 -ar 8000 -ac 1 - | nc elks 4950
  *
  * Without -d one stream is played and the exit status says whether it played
- * cleanly, so it can be scripted like audioplay.  With -d the process detaches
+ * cleanly, so it can be scripted like play.  With -d the process detaches
  * and serves streams one after another forever, logging to the console.
  *
- * /dev/dsp is opened per stream rather than held open, so audioplay can still
+ * /dev/dsp is opened per stream rather than held open, so play can still
  * use the card while the daemon sits idle.  It is a single-opener device, which
  * is also why connections are served one at a time in this process instead of
  * being forked off: a second opener would only get EBUSY.
@@ -69,7 +69,7 @@ static audio_errinfo einfo;         /* 104 bytes: keep off the small stack */
 
 static void usage(void)
 {
-    fprintf(stderr, "usage: audiorecv [-d] [-p port] [-r rate] [-b bytes] [-4]\n");
+    fprintf(stderr, "usage: audiorcv [-d] [-p port] [-r rate] [-b bytes] [-4]\n");
     fprintf(stderr, "  -4  the stream is Creative 4-bit ADPCM, expanded here\n");
     fprintf(stderr, "       -d serves streams forever in the background,"
         " otherwise one stream is played\n");
@@ -222,7 +222,7 @@ static int dsp_open(long rate, int *bufsizep)
     /* Does this driver offer 8-bit unsigned at all? */
     val = 0;
     if (ioctl(dsp, SNDCTL_DSP_GETFMTS, &val) == 0 && !(val & DSP_FMT_U8)) {
-        fprintf(stderr, "audiorecv: no 8-bit unsigned PCM support\n");
+        fprintf(stderr, "audiorcv: no 8-bit unsigned PCM support\n");
         close(dsp);
         return -1;
     }
@@ -247,7 +247,7 @@ static int dsp_open(long rate, int *bufsizep)
         return -1;
     }
     if (val != (int32_t)rate)
-        fprintf(stderr, "audiorecv: %ld Hz requested, %ld Hz selected\n",
+        fprintf(stderr, "audiorcv: %ld Hz requested, %ld Hz selected\n",
             rate, (long)val);
 
     val = 1;
@@ -284,7 +284,7 @@ static int play_stream(int conn, long rate, int bufsize)
         /* a packed read expands to twice its size, so read half a block */
         n = read_full(conn, buf, adpcm? bufsize / 2: bufsize);
         if (n < 0) {
-            perror("audiorecv: read");
+            perror("audiorcv: read");
             err = 1;
             break;
         }
@@ -304,7 +304,7 @@ static int play_stream(int conn, long rate, int bufsize)
         perror("SNDCTL_DSP_SYNC");
 
     if (ioctl(dsp, SNDCTL_DSP_GETERROR, &einfo) == 0 && einfo.play_underruns) {
-        fprintf(stderr, "audiorecv: %ld underruns\n",
+        fprintf(stderr, "audiorcv: %ld underruns\n",
             (long)einfo.play_underruns);
         err = 1;
     }
@@ -320,7 +320,7 @@ static void daemonize(void)
     int pid;
 
     if ((pid = fork()) == -1) {
-        fprintf(stderr, "audiorecv: no more processes\n");
+        fprintf(stderr, "audiorcv: no more processes\n");
         exit(1);
     }
     if (pid)
@@ -353,7 +353,7 @@ int main(int argc, char **argv)
         case 'p':
             port = atol(optarg);        /* atoi would wrap above 32767 */
             if (port < 1 || port > 65535) {
-                fprintf(stderr, "audiorecv: port must be 1-65535\n");
+                fprintf(stderr, "audiorcv: port must be 1-65535\n");
                 return 1;
             }
             break;
@@ -363,7 +363,7 @@ int main(int argc, char **argv)
         case 'r':
             rate = atol(optarg);
             if (rate < MIN_RATE || rate > MAX_RATE) {
-                fprintf(stderr, "audiorecv: rate must be %ld-%ld\n",
+                fprintf(stderr, "audiorcv: rate must be %ld-%ld\n",
                     MIN_RATE, MAX_RATE);
                 return 1;
             }
@@ -372,7 +372,7 @@ int main(int argc, char **argv)
             /* parse wide: atoi wraps at 16 bits and can land back in range */
             long b = atol(optarg);
             if (b < MIN_BUFSIZE || b > MAX_BUFSIZE) {
-                fprintf(stderr, "audiorecv: buffer must be %d-%d bytes\n",
+                fprintf(stderr, "audiorcv: buffer must be %d-%d bytes\n",
                     MIN_BUFSIZE, MAX_BUFSIZE);
                 return 1;
             }
@@ -387,7 +387,7 @@ int main(int argc, char **argv)
         usage();
 
     if ((listen_sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        fprintf(stderr, "audiorecv: network is down\n");
+        fprintf(stderr, "audiorcv: network is down\n");
         return 1;
     }
 
@@ -406,13 +406,13 @@ int main(int argc, char **argv)
     localadr.sin_port = htons((unsigned short)port);
     localadr.sin_addr.s_addr = INADDR_ANY;
     if (bind(listen_sock, (struct sockaddr *)&localadr, sizeof(localadr)) < 0) {
-        fprintf(stderr, "audiorecv: bind error (may already be running)\n");
+        fprintf(stderr, "audiorcv: bind error (may already be running)\n");
         return 1;
     }
 
     /* one stream plays at a time, so there is nothing to gain from a queue */
     if (listen(listen_sock, 1) < 0) {
-        perror("audiorecv: listen");
+        perror("audiorcv: listen");
         return 1;
     }
 

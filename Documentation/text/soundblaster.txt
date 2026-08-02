@@ -1,7 +1,7 @@
 ELKS Sound Blaster /dev/dsp driver
 ==================================
 
-The CONFIG_CHAR_DEV_DSP driver (audio_sb.c) plays digital audio on a Sound Blaster or
+The CONFIG_CHAR_DEV_DSP driver (audio-sb.c) plays digital audio on a Sound Blaster or
 compatible ISA card through /dev/dsp, using the OSS ioctl interface.  It is a
 playback-only driver: there is no recording path, no mixer ioctl, no MIDI and no
 sequencer.  Output level is set once at boot and can be changed from user space
@@ -150,7 +150,7 @@ channels returns EINVAL.
 MAD16 boards
 ------------
 
-The MAD16 driver (audio_mad.c) adds bring-up for the OPTi 82C929 (MAD16 Pro)
+The MAD16 driver (audio-mad.c) adds bring-up for the OPTi 82C929 (MAD16 Pro)
 chipset, which answers SB DSP commands only once its registers have been set
 to route the SB personality.  It is only attempted when /bootopts sets
 mad16=on, or mad16=irq,port,dma to route it somewhere other than the sb=
@@ -209,27 +209,27 @@ version, which would interrupt a transfer in progress.
 Playing audio
 -------------
 
-The audioplay command writes raw unsigned 8-bit PCM to /dev/dsp:
+The play command writes raw unsigned 8-bit PCM to /dev/dsp:
 
-    audioplay -r 8000 tone.raw
-    cat tone.raw | audioplay
+    play -r 8000 tone.raw
+    cat tone.raw | play
 
 Convert material on the host first, for example:
 
     sox in.wav -t raw -r 8000 -c 1 -b 8 -e unsigned out.raw
     ffmpeg -i in.wav -f u8 -ar 8000 -ac 1 out.raw
 
-audioplay exits non-zero if the driver reported any underruns, so it can be
+play exits non-zero if the driver reported any underruns, so it can be
 used as a pass/fail check.
 
 Playing audio over the network
 ------------------------------
 
-The audiorecv command listens on a TCP port and writes what arrives to
+The audiorcv command listens on a TCP port and writes what arrives to
 /dev/dsp, which avoids copying a file over first:
 
-    audiorecv -r 8000                       one stream, then exit
-    audiorecv -d -r 8000                    detach, serve streams forever
+    audiorcv -r 8000                       one stream, then exit
+    audiorcv -d -r 8000                    detach, serve streams forever
 
 Nothing on the wire describes the audio, so -r has to match what the sender
 was told to produce.  From the host:
@@ -237,7 +237,7 @@ was told to produce.  From the host:
     sox in.wav -t raw -r 8000 -c 1 -b 8 -e unsigned - | nc elks 4950
     ffmpeg -i in.wav -f u8 -ar 8000 -ac 1 - | nc elks 4950
 
-With -4 the stream on the wire is Creative 4-bit ADPCM, which audiorecv
+With -4 the stream on the wire is Creative 4-bit ADPCM, which audiorcv
 expands before writing it to the card - two samples a byte, high nibble
 first, the first byte of a stream being the reference sample, with the step
 tables the DOSBox and 86Box decoders use.  It halves what the network has to
@@ -246,7 +246,7 @@ that cannot hold 11025 bytes a second.  The card's own ADPCM playback
 commands are not used: an OPTi 82C929 does not decode Creative's encoding,
 measured as a 440Hz tone coming back at 794Hz.
 
-The port defaults to 4950 and is set with -p.  Add audiorecv to netstart= in
+The port defaults to 4950 and is set with -p.  Add audiorcv to netstart= in
 /etc/net.cfg to have /bin/net start it as a daemon; the command line is already
 there, commented out.
 
@@ -256,8 +256,8 @@ Ethernet manages this easily.  SLIP at 19200 baud carries around 1900 bytes per
 second and cannot feed even the 4000 Hz minimum, so a serial link needs 40000
 baud or better.  TCP flow control does the throttling, so a link that is too
 slow breaks the audio up rather than corrupting it, and the underrun count
-audiorecv prints at the end of each stream says how badly.
+audiorcv prints at the end of each stream says how badly.
 
-/dev/dsp is opened per stream, not held open, so audioplay still works while
+/dev/dsp is opened per stream, not held open, so play still works while
 the daemon is idle.  Streams are served one at a time because the device has a
 single opener.

@@ -88,7 +88,7 @@ CONSOLE="-serial stdio"
 # HOSTFWD="-net user,hostfwd=tcp:127.0.0.1:8080-10.0.2.15:80"
 
 # Simultaneous telnet, http and ftp forwarding
-# Port 4950 is the audiorecv default, so a host audio sender can reach it
+# Port 4950 is the audiorcv default, so a host audio sender can reach it
 FWD="\
 hostfwd=tcp:127.0.0.1:8080-10.0.2.15:80,\
 hostfwd=tcp:127.0.0.1:2323-10.0.2.15:23,\

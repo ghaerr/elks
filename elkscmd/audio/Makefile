@@ -4,20 +4,20 @@ include $(BASEDIR)/Makefile-rules
 
 ###############################################################################
 
-PRGS = audioplay audiomix audiorecv
+PRGS = play audiomix audiorcv
 
 all: $(PRGS)
 
 install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
-audioplay: audioplay.o $(TINYPRINTF)
+play: play.o $(TINYPRINTF)
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 audiomix: audiomix.o $(TINYPRINTF)
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
-audiorecv: audiorecv.o $(TINYPRINTF)
+audiorcv: audiorcv.o $(TINYPRINTF)
 	$(LD) $(LDFLAGS) -maout-heap=256 -maout-stack=1024 -o $@ $^ $(LDLIBS)
 
 clean:

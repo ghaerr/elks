@@ -17,8 +17,8 @@
 #include <linuxmt/types.h>
 
 /* Enumeration for the audio_conf array in init/main.c */
-#define AUDIO_SB        0   /* Sound Blaster and compatibles, audio_sb.c */
-#define AUDIO_MAD       1   /* OPTi 82C929 MAD16 bring-up, audio_mad.c */
+#define AUDIO_SB        0   /* Sound Blaster and compatibles, audio-sb.c */
+#define AUDIO_MAD       1   /* OPTi 82C929 MAD16 bring-up, audio-mad.c */
 #define MAX_AUDIO       2
 
 /*
@@ -62,7 +62,7 @@
  * audio broke up rather than played cleanly.  The other named fields are
  * kept at their OSS names and reported as zero; the filler words carry the
  * driver's per-session event counters, in the order of the sb_stat enum in
- * audio_sb.c, so a player can dump them without any extra ioctl.
+ * audio-sb.c, so a player can dump them without any extra ioctl.
  */
 struct audio_errinfo {
     __s32       play_underruns;

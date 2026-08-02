@@ -1,7 +1,7 @@
 /*
- * audioplay - play raw unsigned 8-bit mono PCM on /dev/dsp
+ * play - play raw unsigned 8-bit mono PCM on /dev/dsp
  *
- * usage: audioplay [-r rate] [-b bytes] [file]
+ * usage: play [-r rate] [-b bytes] [file]
  *
  * Writes are sized to the driver's DMA block (SNDCTL_DSP_GETBLKSIZE, 4096
  * bytes by default).  The driver keeps one block in flight and write() returns
@@ -36,7 +36,7 @@ static audio_errinfo einfo;         /* 104 bytes: keep off the small stack */
 
 static void usage(void)
 {
-    fprintf(stderr, "usage: audioplay [-r rate] [-b bytes] [file]\n");
+    fprintf(stderr, "usage: play [-r rate] [-b bytes] [file]\n");
     fprintf(stderr, "       raw unsigned 8-bit mono PCM, %ld-%ld Hz,"
         " default %ld\n", MIN_RATE, MAX_RATE, DEFAULT_RATE);
     exit(1);
@@ -99,7 +99,7 @@ int main(int argc, char **argv)
         case 'r':
             rate = atol(optarg);        /* atoi would wrap above 32767 */
             if (rate < MIN_RATE || rate > MAX_RATE) {
-                fprintf(stderr, "audioplay: rate must be %ld-%ld\n",
+                fprintf(stderr, "play: rate must be %ld-%ld\n",
                     MIN_RATE, MAX_RATE);
                 return 1;
             }
@@ -108,7 +108,7 @@ int main(int argc, char **argv)
             /* parse wide: atoi wraps at 16 bits and can land back in range */
             long b = atol(optarg);
             if (b < MIN_BUFSIZE || b > MAX_BUFSIZE) {
-                fprintf(stderr, "audioplay: buffer must be %d-%d bytes\n",
+                fprintf(stderr, "play: buffer must be %d-%d bytes\n",
                     MIN_BUFSIZE, MAX_BUFSIZE);
                 return 1;
             }
@@ -137,7 +137,7 @@ int main(int argc, char **argv)
     /* Does this driver offer 8-bit unsigned at all? */
     val = 0;
     if (ioctl(dsp, SNDCTL_DSP_GETFMTS, &val) == 0 && !(val & DSP_FMT_U8)) {
-        fprintf(stderr, "audioplay: no 8-bit unsigned PCM support\n");
+        fprintf(stderr, "play: no 8-bit unsigned PCM support\n");
         return 1;
     }
 
@@ -159,7 +159,7 @@ int main(int argc, char **argv)
         return 1;
     }
     if (val != (int32_t)rate)
-        fprintf(stderr, "audioplay: %ld Hz requested, %ld Hz selected\n",
+        fprintf(stderr, "play: %ld Hz requested, %ld Hz selected\n",
             rate, (long)val);
 
     val = 1;
@@ -195,7 +195,7 @@ int main(int argc, char **argv)
         perror("SNDCTL_DSP_SYNC");
 
     if (ioctl(dsp, SNDCTL_DSP_GETERROR, &einfo) == 0 && einfo.play_underruns) {
-        fprintf(stderr, "audioplay: %ld underruns\n",
+        fprintf(stderr, "play: %ld underruns\n",
             (long)einfo.play_underruns);
         err = 1;
     }

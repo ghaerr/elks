@@ -33,9 +33,6 @@
  */
 
 #include <linuxmt/config.h>
-
-#ifdef CONFIG_AUDIO_SB
-
 #include <linuxmt/types.h>
 #include <linuxmt/major.h>
 #include <linuxmt/fs.h>
@@ -48,7 +45,7 @@
 #include <linuxmt/audio.h>
 #include <linuxmt/init.h>
 #include <arch/io.h>
-#include <arch/audio_sb.h>
+#include <arch/audio-sb.h>
 #include <arch/irq.h>
 #include <arch/dma.h>
 #include <arch/segment.h>
@@ -386,7 +383,7 @@ static int INITPROC sb_dma_unusable(addr_t phys)
  */
 static void FARPROC sb_extwrite_assert(void)
 {
-    if (audio_conf[AUDIO_SB].flags & ISA_EXTWRITE)
+    if (audio_conf[AUDIO_SB].flags & ISAF_EXTWRITE)
         outb_p(DMA1_CMD_EXTWRITE, DMA1_CMD_REG);
 }
 
@@ -1231,7 +1228,7 @@ void INITPROC dsp_init(void)
      * across BIOS disk traffic, and rewriting the Amstrad ASIC's command
      * register between transfers audibly disturbs playback.
      */
-    if (conf->flags & ISA_EXTWRITE) {
+    if (conf->flags & ISAF_EXTWRITE) {
         sb_extwrite_assert();
         printk("sb: 8237 extended write enabled\n");
     }
@@ -1330,5 +1327,3 @@ out_free:
     seg_put(sb_bounce_seg);
     sb_bounce_seg = NULL;
 }
-
-#endif /* CONFIG_AUDIO_SB */

@@ -157,9 +157,10 @@
 #define LANCE_FLAGS     0x80
 
 /* /bootopts parms for an ISA card: irq,port,ram,flags.  NICs use all four,
- * audio cards carry the 8-bit DMA channel in ram and the flags below. */
+ * audio cards carry the 8-bit DMA channel in ram, and any driver private
+ * flags are defined by the driver itself.
+ */
 #define ISA_OFF		0x8000	/* card disabled with "off" in /bootopts */
-#define ISA_EXTWRITE	0x0001	/* sb= flags bit 0: 8237 Extended Write strobe */
 
 #ifndef __ASSEMBLER__
 struct isa_conf {
@@ -170,8 +171,9 @@ struct isa_conf {
 };
 #endif
 
-/* Sound Blaster /dev/dsp, audio_sb.c: override with sb=irq,port,dma in
- * /bootopts, OPTi MAD16 bring-up with mad16=irq,port,dma */
+/* Sound Blaster /dev/dsp, audio-sb.c: override with sb=irq,port,dma in
+ * /bootopts, OPTi MAD16 bring-up with mad16=irq,port,dma
+ */
 #define SB_PORT         0x220
 #define SB_IRQ          5               /* use IRQ 7 with DMA 1 on an XT with a hard disk */
 #define SB_DMA          1               /* 8-bit DMA channel, 1 or 3 */
