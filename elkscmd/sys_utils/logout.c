@@ -20,6 +20,7 @@
 #include <string.h>
 #include <pwd.h>
 #include <signal.h>
+#include <sys/ioctl.h>
 
 #define errmsg(str) write(STDERR_FILENO, str, sizeof(str) - 1)
 
