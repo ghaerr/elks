@@ -83,13 +83,6 @@
 #define SB_MIN_RATE     4000U
 /* documented ceiling for DSP 0x14 without the high-speed commands */
 #define SB_MAX_RATE     20000U
-/*
- * PIO playback never issues DSP 0x14: each sample goes out through the direct
- * DAC command with the 8253 setting the pace, so the limit is CPU speed, not
- * what the DSP accepts.  The rate is quantised to whole PIT ticks.
- */
-#define SB_MAX_RATE_PIO 22050U
-
 #define SB_TC_CLOCK     1000000UL   /* time constant reference clock */
 
 /*
@@ -121,13 +114,6 @@ static unsigned char sb_opened;
 
 static unsigned int sb_rate = 8000;
 static unsigned char sb_timeconst;
-/*
- * PIO playback, selected with sb=irq,port,0 in /bootopts, for chipsets whose
- * DMA request path is broken (mfmhd.c documents the same limitation for the
- * hard disk on DRQ3).  Every sample is handed to the DSP by the CPU, so the
- * write() call runs to completion with the processor fully occupied.
- */
-static unsigned char sb_pio_mode;
 static unsigned int sb_full_play_ticks;  /* <= 103 by construction: fits 16 bits */
 
 /* cached 8237 ports for the configured channel */
@@ -181,7 +167,7 @@ enum {
     SBST_RATE,          /* value: last programmed rate in Hz            */
     SBST_TCONST,        /* value: last DSP time constant                */
     SBST_MAXWAIT,       /* value: longest block wait seen, in ticks     */
-    SBST_MODE,          /* value: 1=pio 2=mad16 4=auto-init capable     */
+    SBST_MODE,          /* value: 2=mad16 4=auto-init capable           */
     SBST_COUNT
 };
 static unsigned int sb_stat[SBST_COUNT];
@@ -446,66 +432,6 @@ static void FARPROC sb_dma_stop(void)
     outb_p(sb_dma_mask | 4, DMA1_MASK_REG);
 }
 
-/*
- * Pace samples off the 8253 rather than a calibrated delay loop.  Timer 0 runs
- * at 1.193182 MHz regardless of CPU speed, so counting its ticks gives the same
- * pitch on any machine, where a spin loop would have to be retuned per host and
- * would drift with cache and refresh.  The counter counts DOWN and wraps at
- * 65536, so elapsed ticks are (previous - current) & 0xFFFF.
- */
-#define PIT_CH0         0x40
-#define PIT_CMD         0x43
-#define PIT_LATCH0      0x00        /* counter latch, channel 0 */
-
-static unsigned int FARPROC pit_read(void)
-{
-    unsigned int flags, lo, hi;
-
-    save_flags(flags);
-    clr_irq();
-    outb_p(PIT_LATCH0, PIT_CMD);
-    lo = inb_p(PIT_CH0);
-    hi = inb_p(PIT_CH0);
-    restore_flags(flags);
-    return (hi << 8) | lo;
-}
-
-/*
- * Play one buffer a sample at a time.  Returns -EINTR if a signal arrives, so
- * a player can still be killed part way through a long block.
- */
-static int FARPROC sb_pio_play(unsigned int off, unsigned int len)
-{
-    unsigned int ticks_per_sample;
-    unsigned int prev, now, elapsed;
-    unsigned int i;
-    unsigned char sample;
-
-    /* 1193182 / rate, computed once per block rather than per sample */
-    {
-        unsigned int rem = sb_rate;
-        ticks_per_sample = (unsigned int)__divmod(1193182UL, &rem);
-    }
-    if (!ticks_per_sample)
-        ticks_per_sample = 1;
-
-    prev = pit_read();
-    for (i = 0; i < len; i++) {
-        sample = peekb((word_t)(off + i), sb_bounce_seg->base);
-        if (dsp_cmd(DSP_DIRECT_DAC) < 0 || dsp_cmd(sample) < 0)
-            return -EIO;
-        /* wait out this sample's period on the 8253 */
-        do {
-            now = pit_read();
-            elapsed = (prev - now) & 0xFFFF;
-        } while (elapsed < ticks_per_sample);
-        prev = (prev - ticks_per_sample) & 0xFFFF;
-        if ((i & 0x3FF) == 0 && current->signal)
-            return -EINTR;
-    }
-    return 0;
-}
-
 static int FARPROC sb_dsp_start(unsigned int len)
 {
     unsigned int n = len - 1U;
@@ -545,7 +471,7 @@ static void sb_dsp_irq_ack(void);       /* drains the card's interrupt read path
  */
 static int FARPROC sb_can_autoinit(void)
 {
-    if (sb_pio_mode || sb_dsp_ver_major < 2)
+    if (sb_dsp_ver_major < 2)
         return 0;
     if (sb_mad16_route && !(audio_conf[AUDIO_SB].flags & ISA_AUTOINIT))
         return 0;
@@ -726,14 +652,6 @@ static int FARPROC sb_start(unsigned int off, unsigned int len)
     unsigned int flags;
     unsigned int ticks;
     int ret;
-
-    /*
-     * PIO plays the whole block here and now, so sb_active is deliberately
-     * left clear: there is no completion interrupt to wait for, and anything
-     * that called sb_wait_complete afterwards would block forever.
-     */
-    if (sb_pio_mode)
-        return sb_pio_play(off, len);
 
     ticks = sb_play_ticks(len);
 
@@ -1042,8 +960,8 @@ static int FARPROC sb_open_impl(struct inode *inode, struct file *file)
      */
     fmemsetb((void *)0, sb_bounce_seg->base, 0x80, SB_BUFFER);
     sb_stat[SBST_OPEN]++;
-    sb_stat[SBST_MODE] = (unsigned int)((sb_pio_mode? 1: 0) |
-        (sb_mad16_route? 2: 0) | (sb_can_autoinit()? 4: 0));
+    sb_stat[SBST_MODE] = (unsigned int)((sb_mad16_route? 2: 0) |
+        (sb_can_autoinit()? 4: 0));
     sb_opened = 1;
     return 0;
 }
@@ -1159,7 +1077,7 @@ static int FARPROC sb_ioctl_impl(struct inode *inode, struct file *file,
         if (ret)
             return ret;
         if (val > 0) {                  /* 0 means read the current rate */
-            unsigned int ceiling = sb_pio_mode? SB_MAX_RATE_PIO: SB_MAX_RATE;
+            unsigned int ceiling = SB_MAX_RATE;
 
             rate = (val > (__s32)ceiling)? ceiling:
                    (val < (__s32)SB_MIN_RATE)? SB_MIN_RATE:
@@ -1323,12 +1241,6 @@ void INITPROC dsp_init(void)
         printk("sb: 8237 extended write enabled\n");
     }
     (void)0;
-    /* sb=irq,port,0 selects PIO playback: no 8237, no completion interrupt */
-    if (sb_dma == 0) {
-        sb_pio_mode = 1;
-        sb_dma = 1;                 /* keep the cached port maths harmless */
-    }
-
     if (sb_dma != 1 && sb_dma != 3) {
         printk("sb: dma %d not 1 or 3\n", sb_dma);
         return;
@@ -1374,16 +1286,6 @@ void INITPROC dsp_init(void)
         if (rc == 0) {
             sb_mad16_route = 1;
             printk("sb: mad16 at 0x%x irq %d dma %d\n", port, irq, dma);
-            /*
-             * The 82C929 has no DAC of its own: playback data is pulled by
-             * the codec at its crystal-paced rate, so the direct-DAC command
-             * PIO playback depends on has nothing to convert it.  Refuse
-             * loudly rather than run a mode that plays silence.
-             */
-            if (sb_pio_mode) {
-                printk("sb: mad16 has no direct dac, pio unavailable\n");
-                return;
-            }
         }
         else if (rc == -EINVAL)
             printk("sb: mad16 cannot route 0x%x irq %d dma %d, "
