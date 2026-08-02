@@ -70,8 +70,43 @@
 #define MC2_DEFAULT     0x03
 #define MC2_OPL4        0x20
 #define MC2_CDSEL_OFF   0x03
+/*
+ * MC3 (0xF8F behind the password) is the register the whole Sound Blaster
+ * personality hangs on: it routes the SB engine's IRQ and DMA, places its
+ * base port, and picks how sample rates map onto the codec's two crystals.
+ * Layout, from the 82C929 datasheet (Rev 1.0, pages 8-9):
+ *
+ *   bits 7:6  DAIRQ   SB interrupt     00=IRQ7  01=IRQ10  10=IRQ5  11=none
+ *   bits 5:4  DADRQ   SB DMA channel   00=DRQ1  01=DRQ0   10=DRQ3  11=none
+ *   bit  3    FMAP    rate mapping     0=Normal (both codec crystals)
+ *                                      1=Single (16.9 MHz crystal only)
+ *   bit  2    DABASE  SB base port     0=0x220  1=0x240
+ *   bits 1:0            on READ: chip revision ID ("10" for this part)
+ *   bit  1    GPMODE  on WRITE: game port timer  0=external 1=internal
+ *
+ * Datasheet normal setting is 0x02: IRQ 7, DRQ 1, base 0x220, Normal
+ * mapping, internal game timer - and 0x02 is exactly what this driver
+ * writes for the standard route, so every field below is a deliberate
+ * choice, not a leftover.
+ *
+ * Two traps for the unwary:
+ * - Bits 1:0 are not read-back-able state: reads return the chip revision,
+ *   so an MC3 readback never confirms GPMODE and a shadow copy must be
+ *   trusted instead.
+ * - FMAP must stay 0.  In Single mode every SB rate is quantised to what
+ *   the 16.9344 MHz crystal can produce, and the common telephone-quality
+ *   rates cannot be: 8000 and 16000 Hz exist only on the 24.576 MHz
+ *   crystal.  Normal mode is what makes "audioplay -r 8000" land on
+ *   exactly 8000 Hz.
+ *
+ * These four IRQs and three DRQs are the entire route space of a
+ * jumperless card; anything else has no MC3 encoding.  On a machine whose
+ * hard disk controller owns IRQ 5 and DRQ 3, that leaves exactly one
+ * usable route: IRQ 7 with DRQ 1.
+ */
 #define MC3_IRQ_MASK    0xC0
 #define MC3_DMA_MASK    0x30
+#define MC3_FMAP_SINGLE 0x08        /* must stay clear: kills 8000/16000 Hz */
 #define MC3_SB_240      0x04
 #define MC3_GP_TIMER    0x02        /* write GPMODE; read overlaps REV bit 1 */
 #define MC3_SB_OFF      0xF0        /* SB disabled while WSS is being set up */
@@ -101,8 +136,13 @@
 /*
  * SPACCESS must stay clear: the codec window and the SB personality are
  * mutually exclusive on this part, and setting it stops the DSP answering.
+ * AUTOVOL_OFF is set: the chip's automatic volume control is a gain loop
+ * riding the program material, the vendor tool offers turning it off as a
+ * first-class option, and the WSS bring-up in this file already disables
+ * it - playback level belongs to the mixer, not to a feedback circuit.
  */
-#define MC5_DEFAULT     (MC5_SHPASS | MC5_SBMIX | MC5_CDFTOEN)   /* 0x25, AD1848 */
+#define MC5_DEFAULT     (MC5_AUTOVOL_OFF | MC5_SHPASS | MC5_SBMIX | \
+                         MC5_CDFTOEN)   /* 0xA5: AD1848 normal + AVC off */
 #define MC6_DEFAULT     (MC6_WAVE | MC6_ATTN)
 
 #define CODEC_MCE       0x40        /* mode change enable in the index register */
