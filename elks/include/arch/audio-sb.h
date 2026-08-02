@@ -7,6 +7,8 @@
 #ifndef __ARCH_AUDIO_SB_H
 #define __ARCH_AUDIO_SB_H
 
+#include <arch/ports.h>     /* SB_XXX defaults and struct isa_conf */
+
 /* Driver private bits in the flags field of sb= in /bootopts, alongside the
  * generic ISA_OFF in arch/ports.h.
  */

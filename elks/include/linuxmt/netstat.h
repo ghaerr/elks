@@ -14,9 +14,6 @@
 
 #include <arch/ports.h>	/* struct isa_conf */
 
-/* /bootopts parms for each NIC; struct isa_conf lives in arch/ports.h */
-#define netif_parms_t	struct isa_conf
-
 /* Should put this into the eths struct */
 extern struct isa_conf netif_parms[MAX_ETHS];
 

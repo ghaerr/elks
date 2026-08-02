@@ -5,7 +5,6 @@
 
 #include <linuxmt/config.h>
 #include <linuxmt/types.h>
-#include <arch/ports.h>     /* struct isa_conf */
 
 #if defined(CONFIG_FARTEXT_KERNEL) && !defined(__STRICT_ANSI__)
 #define INITPROC __far __attribute__ ((far_section, noinline, section (".fartext.init")))
