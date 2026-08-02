@@ -87,7 +87,7 @@ int write_main(int argc, char ** argv)
 			exit(1);
 		}
 	}
-	if ((pwdent = getpwnam(argv[1])) == NULL) {
+	if ((pwdent = getpwuid(getuid())) == NULL) {
 		fprintf(stderr, "%s: Who are you?\n", argv[0]);
 		exit(1);
 	}

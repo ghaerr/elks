@@ -77,6 +77,7 @@
 
 /* DMA controller registers */
 #define DMA1_CMD_REG		0x08	/* command register (w) */
+#define DMA1_CMD_EXTWRITE	0x20	/* cmd bit 5: extended write strobe */
 #define DMA1_STAT_REG		0x08	/* status register (r) */
 #define DMA1_REQ_REG            0x09	/* request register (w) */
 #define DMA1_MASK_REG		0x0A	/* single-channel mask (w) */
