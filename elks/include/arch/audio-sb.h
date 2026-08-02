@@ -9,8 +9,7 @@
 
 #include <arch/ports.h>     /* SB_XXX defaults and struct isa_conf */
 
-/* Driver private bits in the flags field of sb= in /bootopts, alongside the
- * generic ISA_OFF in arch/ports.h.
+/* Driver private bits in the flags field of sb= in /bootopts.
  */
 #define ISAF_EXTWRITE   0x0001      /* set the 8237 Extended Write strobe */
 

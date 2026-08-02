@@ -158,9 +158,9 @@
 
 /* /bootopts parms for an ISA card: irq,port,ram,flags.  NICs use all four,
  * audio cards carry the 8-bit DMA channel in ram, and any driver private
- * flags are defined by the driver itself.
+ * flags are defined by the driver itself.  A port of -1 means the card was
+ * turned off with "off" in /bootopts and the driver is to skip it.
  */
-#define ISA_OFF		0x8000	/* card disabled with "off" in /bootopts */
 
 #ifndef __ASSEMBLER__
 struct isa_conf {

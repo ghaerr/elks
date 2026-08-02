@@ -26,13 +26,12 @@ rebuild:
     sb=5,220,1          IRQ, port and DMA channel
     sb=5,220,1,1        as above, plus 8237 Extended Write (see below)
     sb=off              skip the driver on a machine with no card
-    sb=on               keep the compiled-in route
 
 The argument order is irq,port,dma,flags, the same as the ne0=, wd0= and
 3c0= network options, which share the parser and the struct isa_conf that
-holds the result.  The port is read as hex, the IRQ and DMA channel as
-decimal.  An audio card keeps its DMA channel in the ram field of that
-structure and its flags in the fourth field.
+holds the result.  The IRQ is read as decimal and the port and DMA channel as
+hex, with an optional 0x, because an audio card keeps its DMA channel in the
+ram field the NICs use for a memory address.  The flags are the fourth field.
 
 The only flag is bit 0 (value 1), which sets the 8237 DMA controller's
 Extended Write strobe.  A machine whose DMA timing is tighter than 8-bit
@@ -153,9 +152,10 @@ MAD16 boards
 The MAD16 driver (audio-mad.c) adds bring-up for the OPTi 82C929 (MAD16 Pro)
 chipset, which answers SB DSP commands only once its registers have been set
 to route the SB personality.  It is only attempted when /bootopts sets
-mad16=on, or mad16=irq,port,dma to route it somewhere other than the sb=
-settings.  A real Sound Blaster does not need it, but a card with no jumpers
-will not respond at all without it.
+mad16=irq,port,dma, and a field given as 0 there follows the matching sb=
+setting, so mad16=0,220,0 routes the card to port 0x220 with the same IRQ and
+DMA channel sb= asked for.  A real Sound Blaster does not need it, but a card
+with no jumpers will not respond at all without it.
 
 The chip holds the SB route in three fields of its MC3 register:
 

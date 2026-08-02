@@ -7,7 +7,7 @@
  * that at boot; when nothing has, the card looks present but never transfers.
  * This file does the same bring-up as the Linux mad16.c C929 path, cut down to
  * what an SB-only playback driver needs, and is only reached when /bootopts
- * asks for it with mad16=on.
+ * asks for it with mad16=irq,port,dma.
  *
  * The control registers are password gated: 0xE3 must be written to 0xF8F
  * immediately before each access, so every read and write here runs with

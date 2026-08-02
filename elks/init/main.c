@@ -56,7 +56,7 @@ struct isa_conf audio_conf[MAX_AUDIO] = {
     /* NOTE:  The order must match the defines in linuxmt/audio.h:
      * AUDIO_SB, AUDIO_MAD.  ram holds the 8-bit DMA channel. */
     { SB_IRQ, SB_PORT, SB_DMA, 0 },
-    { 0, 0, 0, ISA_OFF },       /* mad16=on follows the sb= route */
+    { 0, -1, 0, 0 },            /* off until mad16= asks for the bring-up */
 };
 
 /* internal non-driver globals */
@@ -509,20 +509,18 @@ static void INITPROC comirq(char *line)
 
 /*
  * irq,port,ram,flags for any ISA card; ram is the DMA channel on an audio
- * card.  "off" sets ISA_OFF so the driver skips the card, "on" just clears
- * it and keeps the compiled-in route.
+ * card.  "off" sets the port to -1, which is how a driver is told to skip
+ * its card; port 0 is left alone, as the LANCE driver reads it as a request
+ * to autoconfigure.
  */
 static void INITPROC parse_isaopts(char *line, struct isa_conf *parms)
 {
     char *p;
 
-    if (!strncmp(line, "off", 3) || !strncmp(line, "no", 2)) {
-        parms->flags |= ISA_OFF;
+    if (!strncmp(line, "off", 3)) {
+        parms->port = -1;
         return;
     }
-    parms->flags &= ~ISA_OFF;
-    if (!strncmp(line, "on", 2))
-        return;
     parms->irq = (int)simple_strtol(line, 0);
     if ((p = strchr(line, ','))) {
         parms->port = (int)simple_strtol(p+1, 16);

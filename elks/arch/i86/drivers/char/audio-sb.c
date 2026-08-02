@@ -1216,7 +1216,7 @@ void INITPROC dsp_init(void)
     struct isa_conf *conf = &audio_conf[AUDIO_SB];
     addr_t phys;
 
-    if (conf->flags & ISA_OFF)          /* sb=off */
+    if (conf->port == -1)               /* sb=off */
         return;
     sb_base = (unsigned int)conf->port;
     sb_irq_line = (unsigned char)conf->irq;
@@ -1260,8 +1260,8 @@ void INITPROC dsp_init(void)
     sb_dma_addr_cache(phys);
 
 #ifdef CONFIG_AUDIO_MAD
-    if (!(audio_conf[AUDIO_MAD].flags & ISA_OFF)) {
-        /* mad16=on leaves the entry blank, meaning "wherever sb= points" */
+    if (audio_conf[AUDIO_MAD].port != -1) {
+        /* a field left at 0 in mad16= follows the sb= route */
         unsigned int port = audio_conf[AUDIO_MAD].port?
             (unsigned int)audio_conf[AUDIO_MAD].port: sb_base;
         int irq = audio_conf[AUDIO_MAD].irq?
