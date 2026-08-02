@@ -74,6 +74,14 @@ printer port, but the ELKS printer driver polls and never claims it, so it is
 free in practice; the driver tolerates the 8259 spurious interrupts that also
 arrive on IRQ 7.
 
+LPT1 itself is a second source of interrupts on that line.  The printer port
+powers up with its own interrupt enabled, and a floating or strobed ACK then
+enters the sound card's handler part way through a transfer, which is audible
+as distortion.  CONFIG_AUDIO_SB_LPTOFF, on by default, has the driver write
+LPT1's control register once at boot with that interrupt bit clear.  It acts
+only when the card is on IRQ 7, so it costs nothing on a machine using IRQ 5;
+turn it off if something else there drives LPT1 from its interrupt.
+
 IRQ 2 and IRQ 3 are the other candidates if the printer port is genuinely
 needed, but check them against any network card first: an SMC Ultra reads its
 own interrupt out of the card's configuration, and dmesg reports which one it

@@ -1,7 +1,7 @@
 /*
  * audiomix - read and set Sound Blaster mixer levels
  *
- * usage: audiomix [-p port] [-m pct] [-v pct] [-r reg] [-s reg=val] [-z] [-k]
+ * usage: audiomix [-p port] [-m pct] [-v pct] [-r reg] [-s reg=val] [-z]
  *
  * The /dev/dsp driver has no mixer ioctl.  It programs master and voice to its
  * own defaults every time the device is opened, so a level set here holds only
@@ -188,92 +188,13 @@ static void mute_inputs(void)
     mix_write(MIX_MIC, 0x00);
 }
 
-/*
- * AD1848 codec behind the OPTi's Sound Blaster personality.  Only reachable
- * when MC5 SPACCESS is set.  The access idiom is the vendor driver's
- * (Knipperts, AD1848.PAS ReadCODECReg): preserve the upper nibble of the index
- * register - it holds INIT, MCE and TRD - and read the data port three times,
- * which that driver marks "Errata for AD1848".
- */
-#define WSS_BASE        0x530
-#define CODEC_BASE      (WSS_BASE + 4)      /* index, data, status, PIO */
-
-static const char *codec_rate(unsigned char v)
-{
-    static const char *xtal1[8] = { "8000", "16000", "27428", "32000",
-                                    "n/a", "n/a", "48000", "9600" };
-    static const char *xtal2[8] = { "5512", "11025", "18900", "22050",
-                                    "37800", "44100", "33075", "6620" };
-    unsigned char cfs = (unsigned char)((v >> 1) & 0x07);
-
-    return (v & 0x01)? xtal2[cfs] : xtal1[cfs];
-}
-
-static int codec_ready(void)
-{
-    int i;
-
-    for (i = 0; i < 30000; i++)
-        if (inb(CODEC_BASE) != 0x80)        /* 0x80 = still initialising */
-            return 0;
-    return -1;
-}
-
-static unsigned char codec_read(unsigned char reg)
-{
-    unsigned char old, v;
-
-    old = inb(CODEC_BASE);
-    outb((unsigned char)((old & 0xF0) | (reg & 0x0F)), CODEC_BASE);
-    mix_delay();
-    v = inb(CODEC_BASE + 1);
-    v = inb(CODEC_BASE + 1);
-    v = inb(CODEC_BASE + 1);            /* errata: read three times */
-    outb(old, CODEC_BASE);
-    mix_delay();
-    return v;
-}
-
-static void codec_dump(void)
-{
-    unsigned char i8, i9, i6, i7, st;
-
-    if (codec_ready() < 0) {
-        printf("codec: not answering at 0x%x", CODEC_BASE);
-        printf(" (MC5 SPACCESS clear, or not a MAD16)\n");
-        return;
-    }
-    i8 = codec_read(8);
-    i9 = codec_read(9);
-    i6 = codec_read(6);
-    i7 = codec_read(7);
-    st = inb(CODEC_BASE + 2);
-
-    printf("codec at 0x%x (index reg = 0x%02x)\n", CODEC_BASE, inb(CODEC_BASE));
-    printf("  I8  format 0x%02x  %s, %s, %s Hz\n", i8,
-        (i8 & 0x10)? "STEREO" : "mono",
-        (i8 & 0x20)? ((i8 & 0x40)? "8-bit A-law" : "8-bit u-law")
-                   : ((i8 & 0x40)? "16-bit signed" : "8-bit unsigned"),
-        codec_rate(i8));
-    printf("  I9  iface  0x%02x  playback %s, %s, %s\n", i9,
-        (i9 & 0x01)? "ENABLED" : "off",
-        (i9 & 0x40)? "PIO" : "DMA",
-        (i9 & 0x04)? "single-DMA" : "dual-DMA");
-    printf("  I6  left DAC  0x%02x  %s, -%d.5 dB\n", i6,
-        (i6 & 0x80)? "MUTED" : "on", (i6 & 0x3F) * 3 / 2);
-    printf("  I7  right DAC 0x%02x  %s, -%d.5 dB\n", i7,
-        (i7 & 0x80)? "MUTED" : "on", (i7 & 0x3F) * 3 / 2);
-    printf("  status 0x%02x\n", st);
-}
-
 static void usage(void)
 {
     fprintf(stderr, "usage: audiomix [-p port] [-m pct] [-v pct] [-r reg]"
-        " [-s reg=val] [-z] [-k]\n");
+        " [-s reg=val] [-z]\n");
     fprintf(stderr, "       -m master level 0-100, -v voice (PCM) level 0-100\n");
     fprintf(stderr, "       -r dump one register, -s write one raw register\n");
     fprintf(stderr, "       -z mute the fm, cd, line and mic inputs\n");
-    fprintf(stderr, "       -k dump the AD1848 codec behind the SB personality\n");
     fprintf(stderr, "       note: every run resets the DSP, which on some cards\n");
     fprintf(stderr, "       restores mixer defaults - so pass all changes at once\n");
     exit(1);
@@ -285,9 +206,9 @@ int main(int argc, char **argv)
     long master = -1, voice = -1, one = -1;
     unsigned char v;
     char *set = NULL;
-    int zap = 0, kdump = 0;
+    int zap = 0;
 
-    while ((c = getopt(argc, argv, "p:m:v:r:s:zk")) != -1) {
+    while ((c = getopt(argc, argv, "p:m:v:r:s:z")) != -1) {
         switch (c) {
         case 'p': base = (unsigned int)strtol(optarg, (char **)0, 0); break;
         case 'm': master = atol(optarg); break;
@@ -295,7 +216,6 @@ int main(int argc, char **argv)
         case 'r': one = strtol(optarg, (char **)0, 0); break;
         case 's': set = optarg; break;
         case 'z': zap = 1; break;
-        case 'k': kdump = 1; break;
         default: usage();
         }
     }
@@ -344,9 +264,6 @@ int main(int argc, char **argv)
             mix_read((unsigned char)one));
         return 0;
     }
-
-    if (kdump)
-        codec_dump();
 
     show("master", MIX_MASTER);
     show("voice", MIX_VOICE);

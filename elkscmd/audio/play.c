@@ -23,7 +23,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
-#include <sys/soundcard.h>
+#include <sys/audio.h>
 
 #define DEFAULT_RATE    8000L
 #define MIN_RATE        4000L       /* driver limits */

@@ -2,7 +2,7 @@
  * /dev/dsp audio ioctl definitions.
  *
  * This is the single definition of the audio ABI.  User programs reach it
- * through <sys/soundcard.h>, which is a __SYSINC__ shim onto this file, so
+ * through <sys/audio.h>, which is a __SYSINC__ shim onto this file, so
  * there is no second copy to drift out of sync.
  *
  * The /dev/dsp driver plays raw unsigned 8-bit PCM through 8-bit ISA DMA
@@ -59,9 +59,8 @@
  * Returned by SNDCTL_DSP_GETERROR.  play_underruns counts DMA blocks whose
  * completion deadline passed, which is the only way a program can tell that
  * audio broke up rather than played cleanly.  The other named fields are
- * kept at their OSS names and reported as zero; the filler words carry the
- * driver's per-session event counters, in the order of the sb_stat enum in
- * audio-sb.c, so a player can dump them without any extra ioctl.
+ * kept at their OSS names, and they and the filler words are reported as
+ * zero.
  */
 struct audio_errinfo {
     __s32       play_underruns;

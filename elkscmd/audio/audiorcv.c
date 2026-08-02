@@ -48,7 +48,7 @@
 #include <netinet/in.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
-#include <sys/soundcard.h>
+#include <sys/audio.h>
 
 #define DEF_PORT        4950
 #define DEFAULT_RATE    8000L

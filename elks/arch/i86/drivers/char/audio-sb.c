@@ -86,14 +86,11 @@
 #define SB_MAX_RATE     20000U
 #define SB_TC_CLOCK     1000000UL   /* time constant reference clock */
 
-/* Set to 1 for a per-session diagnostics line on the console at close. */
-#ifndef SB_DEBUG
-#define SB_DEBUG 0
-#endif
-
+#ifdef CONFIG_AUDIO_SB_LPTOFF
 /* LPT1 shares IRQ 7 with the card; bit 4 of its control register is IRQ enable */
 #define LPT1_CONTROL    0x37A
 #define LPT1_CTRL_IDLE  0x0C        /* INIT + SELECT_IN, interrupt disabled */
+#endif
 
 static unsigned int sb_base;
 static unsigned char sb_dma;
@@ -135,42 +132,11 @@ static struct wait_queue sb_wait;
 static unsigned char sb_mad16_route;     /* card is an OPTi MAD16 in SB mode */
 static unsigned char sb_ai_active;       /* continuous auto-init DMA running */
 
-/*
- * Playback event counters, for diagnosing a bad-sounding run after the fact.
- * Deliberately 16-bit: one increment is a single instruction on the 8086, so
- * the running driver pays nothing for them.  They are reported through the
- * filler words of SNDCTL_DSP_GETERROR, for a player that wants to dump them,
- * and as one printk when the device closes - never from the playback path.
- */
-enum {
-    SBST_OPEN,          /* opens                                        */
-    SBST_WRITE,         /* write() calls                                */
-    SBST_BLOCK,         /* single-block transfers started               */
-    SBST_AISTART,       /* auto-init runs started                       */
-    SBST_IRQ,           /* completion interrupts                        */
-    SBST_SPURIOUS,      /* interrupts with no transfer active           */
-    SBST_CMDTO,         /* DSP command timeouts                         */
-    SBST_WAITTO,        /* block-completion deadline timeouts           */
-    SBST_AIHALT,        /* auto-init halts                              */
-    SBST_DRAIN,         /* drains (SYNC/close)                          */
-    SBST_AIUNDER,       /* auto-init underrun restarts                  */
-    SBST_RATE,          /* value: last programmed rate in Hz            */
-    SBST_TCONST,        /* value: last DSP time constant                */
-    SBST_MAXWAIT,       /* value: longest block wait seen, in ticks     */
-    SBST_MODE,          /* value: 2=mad16 4=auto-init capable           */
-    SBST_COUNT
-};
-static unsigned int sb_stat[SBST_COUNT];
 static volatile unsigned char sb_queued; /* filled halves not yet drained (0..2) */
 static volatile unsigned char sb_underrun;
 
 /* GETERROR payload: 104 bytes, far too big for the 640-byte kernel stack */
 static struct audio_errinfo sb_errinfo;
-/* the counters are reported in the filler words, so they must fit there */
-struct sbst_fits_filler {
-    char ok[(SBST_COUNT <= sizeof(sb_errinfo.filler) /
-                           sizeof(sb_errinfo.filler[0]))? 1: -1];
-};
 static __s32 sb_play_underruns;
 
 /*
@@ -211,8 +177,6 @@ static void FARPROC sb_rate_cache(unsigned int rate)
     sb_rate = rate;
     sb_timeconst = sb_timeconst_for(rate);
     sb_full_play_ticks = sb_ceil_play_ticks(SB_BOUNCE, rate);
-    sb_stat[SBST_RATE] = rate;
-    sb_stat[SBST_TCONST] = sb_timeconst;
 }
 
 /*
@@ -266,7 +230,6 @@ static int FARPROC dsp_wait_w(void)
         inb_p(0x61);            /* delay: a read plus its recovery cycle */
     } while (!time_after(jiffies(), deadline));
 
-    sb_stat[SBST_CMDTO]++;
     return -EIO;
 }
 
@@ -488,7 +451,6 @@ static int FARPROC sb_ai_start(void)
     if (dsp_cmd(DSP_DMA_OUT_8AI) < 0)
         return -EIO;
     (void)dsp_cmd(DSP_SPEAKER_ON);
-    sb_stat[SBST_AISTART]++;
     sb_ai_active = 1;
     return 0;
 }
@@ -509,7 +471,6 @@ static void FARPROC sb_ai_halt(void)
     sb_fill = 0;
     restore_flags(flags);
 
-    sb_stat[SBST_AIHALT]++;
     if (was_active) {
         (void)dsp_cmd(DSP_HALT_DMA);        /* stop the transfer in flight */
         (void)dsp_cmd(DSP_DMA_EXIT_AI);     /* and leave auto-init mode */
@@ -544,7 +505,6 @@ static int FARPROC sb_ai_queue(char *buf, unsigned int len)
         prepare_to_wait_interruptible(&sb_wait);
         if (sb_underrun) {                  /* fell behind: restart clean */
             finish_wait(&sb_wait);
-            sb_stat[SBST_AIUNDER]++;
             sb_ai_halt();
             sb_play_underruns++;
             break;
@@ -606,7 +566,6 @@ static void FARPROC sb_ai_drain(void)
         current->timeout = 0;
         finish_wait(&sb_wait);
     }
-    sb_stat[SBST_DRAIN]++;
     fmemsetb((void *)0, sb_bounce_seg->base, 0x80, SB_BUFFER);
     sb_ai_halt();
 }
@@ -628,7 +587,6 @@ static int FARPROC sb_start(unsigned int off, unsigned int len)
     sb_active_min_done = jiffies() + ((ticks > 1)? ticks - 1: 0);
     restore_flags(flags);
 
-    sb_stat[SBST_BLOCK]++;
     ret = sb_dsp_start(len);
     if (ret < 0) {
         save_flags(flags);
@@ -768,7 +726,6 @@ static void sb_dsp_irq_ack(void)
  */
 static void sb_interrupt(int irq, struct pt_regs *regs)
 {
-    sb_stat[SBST_IRQ]++;
     sb_dsp_irq_ack();
     if (sb_ai_active) {                 /* a half finished under auto-init */
         if (sb_queued > 0)
@@ -779,7 +736,6 @@ static void sb_interrupt(int irq, struct pt_regs *regs)
         return;
     }
     if (!sb_active) {
-        sb_stat[SBST_SPURIOUS]++;
         return;
     }
     sb_dma_done = 1;
@@ -805,7 +761,6 @@ static int FARPROC sb_wait_complete(unsigned int len)
     jiff_t entry = jiffies();
     jiff_t deadline = entry + sb_play_ticks(len) * 2 + (2 * HZ) + 1;
     unsigned int flags;
-    unsigned int waited;
 
     for (;;) {
         prepare_to_wait_interruptible(&sb_wait);
@@ -820,7 +775,6 @@ static int FARPROC sb_wait_complete(unsigned int len)
         }
         if (time_after(jiffies(), deadline)) {
             finish_wait(&sb_wait);
-            sb_stat[SBST_WAITTO]++;
             sb_play_underruns++;
             sb_halt();
             return -EIO;
@@ -846,9 +800,6 @@ static int FARPROC sb_wait_complete(unsigned int len)
     sb_idle();
     restore_flags(flags);
     sb_dsp_irq_ack();
-    waited = (unsigned int)(jiffies() - entry);
-    if (waited > sb_stat[SBST_MAXWAIT])
-        sb_stat[SBST_MAXWAIT] = waited;
     return 0;
 }
 
@@ -915,10 +866,6 @@ static int FARPROC sb_open_impl(struct inode *inode, struct file *file)
      * or whatever last passed through.
      */
     fmemsetb((void *)0, sb_bounce_seg->base, 0x80, SB_BUFFER);
-    memset(sb_stat, 0, sizeof(sb_stat));
-    sb_stat[SBST_OPEN]++;
-    sb_stat[SBST_MODE] = (unsigned int)((sb_mad16_route? 2: 0) |
-        (sb_can_autoinit()? 4: 0));
     sb_opened = 1;
     return 0;
 }
@@ -932,22 +879,6 @@ static void FARPROC sb_release_impl(struct inode *inode, struct file *file)
             (void)sb_wait_complete(sb_active_len);
         sb_halt();
     }
-#if SB_DEBUG
-    /*
-     * One line per session, from close - the playback path never prints.
-     * Everything a bad-sounding run needs to be diagnosed after the fact:
-     * transfer and interrupt counts, the failure counters, the route mode
-     * and the rate the DSP was really programmed with.  The same counters
-     * are always available through SNDCTL_DSP_GETERROR's filler words.
-     */
-    printk("sb: close w%u b%u ai%u irq%u sp%u cto%u wto%u ur%u mx%u "
-           "r%u tc%u m%x\n",
-        sb_stat[SBST_WRITE], sb_stat[SBST_BLOCK], sb_stat[SBST_AISTART],
-        sb_stat[SBST_IRQ], sb_stat[SBST_SPURIOUS], sb_stat[SBST_CMDTO],
-        sb_stat[SBST_WAITTO], sb_stat[SBST_AIUNDER],
-        sb_stat[SBST_MAXWAIT], sb_stat[SBST_RATE], sb_stat[SBST_TCONST],
-        sb_stat[SBST_MODE]);
-#endif
     sb_opened = 0;
 }
 
@@ -974,7 +905,6 @@ static size_t FARPROC sb_write_impl(struct inode *inode, struct file *file,
     if (!(file->f_mode & FMODE_WRITE))
         return -EINVAL;
 
-    sb_stat[SBST_WRITE]++;
     while (done < count) {
         chunk = (unsigned int)(count - done);
         if (chunk > SB_BOUNCE)
@@ -1090,17 +1020,10 @@ static int FARPROC sb_ioctl_impl(struct inode *inode, struct file *file,
         val = (__s32)SB_BOUNCE;
         return sb_put_arg(arg, &val, sizeof(val));
 
-    /* The filler words carry the sb_stat counters, in enum order. */
     case SNDCTL_DSP_GETERROR:
-    {
-        int i;
-
         memset(&sb_errinfo, 0, sizeof(sb_errinfo));
         sb_errinfo.play_underruns = sb_play_underruns;
         sb_play_underruns = 0;
-        for (i = 0; i < SBST_COUNT; i++)
-            sb_errinfo.filler[i] = (__s32)sb_stat[i];
-    }
         return sb_put_arg(arg, &sb_errinfo, sizeof(sb_errinfo));
     }
 
@@ -1256,15 +1179,18 @@ void INITPROC dsp_init(void)
         goto out_free;
     }
     (void)sb_read_dsp_version();
+#ifdef CONFIG_AUDIO_SB_LPTOFF
     /*
      * IRQ 7 is LPT1's line as well as the card's, and the printer port powers
      * up with its interrupt enabled; a floating or strobed ACK then fires the
      * sound ISR at random points in a transfer, audible as distortion.  The
      * lp driver polls and never requests IRQ 7, so idle LPT1's control
-     * register with the interrupt bit clear.
+     * register with the interrupt bit clear.  Turn this off to leave the
+     * printer port alone on a machine that drives LPT1 from its interrupt.
      */
     if (sb_irq_line == 7)
         outb_p(LPT1_CTRL_IDLE, LPT1_CONTROL);
+#endif
 
     if (request_irq((int)sb_irq_line, sb_interrupt, INT_GENERIC)) {
         printk("sb: irq %d busy\n", sb_irq_line);
