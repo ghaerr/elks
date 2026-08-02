@@ -136,13 +136,13 @@
 /*
  * SPACCESS must stay clear: the codec window and the SB personality are
  * mutually exclusive on this part, and setting it stops the DSP answering.
- * AUTOVOL_OFF is set: the chip's automatic volume control is a gain loop
- * riding the program material, the vendor tool offers turning it off as a
- * first-class option, and the WSS bring-up in this file already disables
- * it - playback level belongs to the mixer, not to a feedback circuit.
+ * Bit 7 stays clear too, per the datasheet's printed normal setting: the
+ * vendor sources contradict themselves about which polarity of the
+ * "automatic volume" bit is off, and line-out capture measured LESS
+ * output for LOUDER input with rising harmonics - gain pumping - while
+ * the bit was set.  Datasheet-normal 0x25 measures monotonic.
  */
-#define MC5_DEFAULT     (MC5_AUTOVOL_OFF | MC5_SHPASS | MC5_SBMIX | \
-                         MC5_CDFTOEN)   /* 0xA5: AD1848 normal + AVC off */
+#define MC5_DEFAULT     (MC5_SHPASS | MC5_SBMIX | MC5_CDFTOEN)   /* 0x25 */
 #define MC6_DEFAULT     (MC6_WAVE | MC6_ATTN)
 
 #define CODEC_MCE       0x40        /* mode change enable in the index register */
