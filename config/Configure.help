@@ -426,9 +426,9 @@ CONFIG_CHAR_DEV_DSP
   Include support for playing sound on a Sound Blaster or compatible ISA
   card through /dev/dsp, using the OSS ioctl interface.
 
-  Playback only, mono, raw unsigned 8-bit PCM, one DMA block in flight at
-  a time.  There is no recording, no mixer control and no MIDI.  Sample
-  conversion belongs in user space; see the play command.
+  Playback only, mono, raw unsigned 8-bit PCM.  There is no recording, no
+  mixer control and no MIDI.  Sample conversion belongs in user space; see
+  the play command.
 
   The card is driven with 8-bit ISA DMA on channel 1 or 3 only, using the
   classic DSP 0x14 single-block command, so any card from a Sound Blaster

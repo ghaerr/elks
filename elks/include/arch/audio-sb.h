@@ -8,9 +8,9 @@
 #define __ARCH_AUDIO_SB_H
 
 #include <arch/ports.h>     /* SB_XXX defaults and struct isa_conf */
+#include <linuxmt/init.h>   /* INITPROC, FARPROC */
 
-/* Driver private bits in the flags field of sb= in /bootopts.
- */
+/* Driver private bits in the flags field of sb= in /bootopts */
 #define ISAF_EXTWRITE   0x0001      /* set the 8237 Extended Write strobe */
 
 /* DSP register offsets from the card base address */

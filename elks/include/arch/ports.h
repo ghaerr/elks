@@ -12,10 +12,10 @@
  *  4   Com1    (/dev/ttyS0) CONFIG_CHAR_DEV_RS     Optional
  *  5*  Com3    (/dev/ttyS2) CONFIG_CHAR_DEV_RS     Optional
  *  5*  HW IDE hard drive    CONFIG_BLK_DEV_HD      Non-working directhd.c
- *  5*  Sound Blaster (/dev/dsp) CONFIG_AUDIO_SB    Optional, avoid if a HD is fitted
+ *  5*  Sound Blaster (dsp)  CONFIG_CHAR_DEV_DSP    Optional, avoid if a HD is fitted
  *  6   HW floppy drive      CONFIG_BLK_DEV_FD      Optional
  *  7   Unused (LPT, Com4)
- *  7*  Sound Blaster (/dev/dsp) CONFIG_AUDIO_SB    Optional, also gets PIC spurious IRQs
+ *  7*  Sound Blaster (dsp)  CONFIG_CHAR_DEV_DSP    Optional, also gets PIC spurious IRQs
  *  8   Unused (RTC)
  *  9*  3C509/EL3 (/dev/3c0) CONFIG_ETH_EL3         Optional
  * 10*  WD 80x3   (/dev/wd0) CONFIG_ETH_WD          Optional
@@ -164,10 +164,10 @@
 
 #ifndef __ASSEMBLER__
 struct isa_conf {
-	int	irq;
-	int	port;
-	unsigned int ram;
-	unsigned int flags;
+    int irq;
+    int port;
+    unsigned int ram;
+    unsigned int flags;
 };
 #endif
 

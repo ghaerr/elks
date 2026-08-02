@@ -2,10 +2,11 @@
  * Sound Blaster /dev/dsp driver
  *
  * Playback only, mono, raw unsigned 8-bit PCM, through 8-bit ISA DMA on the
- * primary 8237 (channel 1 or 3) using the classic DSP 0x14 single-block command
- * and a time constant, so anything from a Sound Blaster 1.0 upwards works.
- * There is no 16-bit DMA, no SB16 high-DMA mode, no recording, no runtime mixer
- * control and no MIDI.  Sample format conversion belongs in user space.
+ * primary 8237 (channel 1 or 3), driven by a time constant and either of the
+ * two DSP playback commands described below, so anything from a Sound Blaster
+ * 1.0 upwards works.  There is no 16-bit DMA, no SB16 high-DMA mode, no
+ * recording, no runtime mixer control and no MIDI.  Sample format conversion
+ * belongs in user space.
  *
  * On an XT with a hard disk the card cannot keep its factory IRQ 5 and DMA 3:
  * the hard disk controller owns both, so jumper the card for IRQ 7 and DMA 1.
@@ -59,18 +60,13 @@
 
 /*
  * Default playback levels, in percent, quantised by sb_mixer_lr_byte() to the
- * card's 3- or 4-bit level fields.  Master stays below full scale because the
- * master and voice attenuators are in series and full scale clips hot 8-bit
- * material in the mixer; FM is muted because nothing here programs the OPL,
- * so it only contributes its idle noise floor.  Some cards do not implement
- * the don't-care bits of the packing, so never read-modify-write mixer
- * registers.  audiomix(1) changes levels at runtime.
- */
-/*
- * 71% is 5 of the 7 steps the SB Pro mixer offers, and 11 of 15 on an
- * SB16.  Master and voice attenuate in series, so leaving both a couple
- * of steps below full scale keeps hot 8-bit material out of the clipping
- * the top of the range brings on some cards.
+ * card's 3- or 4-bit level fields: 71% is 5 of the 7 steps an SB Pro offers
+ * and 11 of 15 on an SB16.  Master and voice attenuate in series, so leaving
+ * both a couple of steps below full scale keeps hot 8-bit material out of the
+ * clipping the top of the range brings on some cards.  FM is muted because
+ * nothing here programs the OPL, so it only contributes its idle noise floor.
+ * Some cards do not implement the don't-care bits of the packing, so never
+ * read-modify-write mixer registers.  audiomix(1) changes levels at runtime.
  */
 #define SB_DEFAULT_MASTERVOL 71     /* 5/7 */
 #define SB_DEFAULT_PLAYVOL   71     /* 5/7 */
@@ -94,18 +90,9 @@
 #define SB_DEBUG 0
 #endif
 
-/*
- * 8237 command register bit 5.  dma.h gains this define through the MFM
- * driver's work; guard it so this driver builds either way.
- */
-#ifndef DMA1_CMD_EXTWRITE
-#define DMA1_CMD_EXTWRITE 0x20
-#endif
-
 /* LPT1 shares IRQ 7 with the card; bit 4 of its control register is IRQ enable */
 #define LPT1_CONTROL    0x37A
 #define LPT1_CTRL_IDLE  0x0C        /* INIT + SELECT_IN, interrupt disabled */
-
 
 static unsigned int sb_base;
 static unsigned char sb_dma;
@@ -151,7 +138,7 @@ static unsigned char sb_ai_active;       /* continuous auto-init DMA running */
  * Playback event counters, for diagnosing a bad-sounding run after the fact.
  * Deliberately 16-bit: one increment is a single instruction on the 8086, so
  * the running driver pays nothing for them.  They are reported through the
- * filler words of SNDCTL_DSP_GETERROR, which existing players already fetch,
+ * filler words of SNDCTL_DSP_GETERROR, for a player that wants to dump them,
  * and as one printk when the device closes - never from the playback path.
  */
 enum {
@@ -798,7 +785,6 @@ static void sb_dsp_irq_ack(void)
  */
 static void sb_interrupt(int irq, struct pt_regs *regs)
 {
-
     sb_stat[SBST_IRQ]++;
     sb_dsp_irq_ack();
     if (sb_ai_active) {                 /* a half finished under auto-init */
@@ -920,7 +906,6 @@ static int FARPROC sb_queue_chunk(char *buf, unsigned int len)
 
 static int FARPROC sb_open_impl(struct inode *inode, struct file *file)
 {
-
     if (!sb_present || !sb_bounce_seg)
         return -ENODEV;
     if (MINOR(inode->i_rdev) != 0)
@@ -957,7 +942,6 @@ static int FARPROC sb_open_impl(struct inode *inode, struct file *file)
 
 static void FARPROC sb_release_impl(struct inode *inode, struct file *file)
 {
-
     if (sb_ai_active)
         sb_ai_drain();          /* let queued halves finish, then stop */
     else {
@@ -1004,7 +988,6 @@ static size_t FARPROC sb_write_impl(struct inode *inode, struct file *file,
     unsigned int chunk;
     int ret;
 
-
     if (!(file->f_mode & FMODE_WRITE))
         return -EINVAL;
 
@@ -1041,7 +1024,6 @@ static int FARPROC sb_ioctl_impl(struct inode *inode, struct file *file,
     __s32 val;
     unsigned int rate;
     int ret;
-
 
     switch (cmd) {
     case SNDCTL_DSP_RESET:

@@ -44,7 +44,6 @@
 #define DSP_GET_VERSION 0xE1
 #define DSP_READY       0xAA
 
-#define MIX_RESET       0x00
 #define MIX_VOICE       0x04
 #define MIX_MIC         0x0A
 #define MIX_FILTER      0x0E
@@ -141,7 +140,8 @@ static void mix_write(unsigned char reg, unsigned char val)
 /* Percentage of full scale, decoded for whichever layout this card uses.
  * A DSP 3.xx card packs two 3-bit fields at bits 7-5 and 3-1 - bits 4 and 0
  * do not exist in its register file and read back as 1 - so decoding it as
- * 4-bit reported 0xFF as "15/15" when the level is physically 7/7. */
+ * 4-bit reported 0xFF as "15/15" when the level is physically 7/7.
+ */
 static void show(const char *name, unsigned char reg)
 {
     unsigned char v = mix_read(reg);

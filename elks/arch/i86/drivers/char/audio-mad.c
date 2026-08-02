@@ -18,21 +18,20 @@
  * the internal FIFO to keep DRQ asserted, which looks like a dead DMA channel.
  */
 
-/* Set to 1 for codec readback reporting at boot. */
-#ifndef MAD16_DEBUG
-#define MAD16_DEBUG 0
-#endif
-
 #include <linuxmt/config.h>
 #include <linuxmt/types.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/init.h>
 #include <linuxmt/string.h>
-#include <linuxmt/audio.h>
 #include <arch/io.h>
 #include <arch/irq.h>
 #include <arch/audio-sb.h>
+
+/* Set to 1 for codec readback reporting at boot. */
+#ifndef MAD16_DEBUG
+#define MAD16_DEBUG 0
+#endif
 
 /*
  * All port access goes through the inb_p/outb_p bus-recovery forms except
@@ -54,7 +53,6 @@
     unsigned char _v;                                       \
     asm volatile ("inb %%dx,%%al" : "=Ral" (_v) : "d" (port)); \
     _v; })
-
 
 /* MC1..MC6 control registers, password port, and the WSS window */
 #define MC_PWD_PORT     0xF8F
@@ -108,9 +106,6 @@
  * hard disk controller owns IRQ 5 and DRQ 3, that leaves exactly one
  * usable route: IRQ 7 with DRQ 1.
  */
-#define MC3_IRQ_MASK    0xC0
-#define MC3_DMA_MASK    0x30
-#define MC3_FMAP_SINGLE 0x08        /* must stay clear: kills 8000/16000 Hz */
 #define MC3_SB_240      0x04
 #define MC3_GP_TIMER    0x02        /* write GPMODE; read overlaps REV bit 1 */
 #define MC3_SB_OFF      0xF0        /* SB disabled while WSS is being set up */
@@ -122,11 +117,8 @@
  * datasheet's normal setting is 0x2F for a CS4231/4248 and 0x25 for an
  * AD1848/1846, the difference being CFIX, which must be off for an AD1848.
  */
-#define MC5_AUTOVOL_OFF 0x80        /* 1 = automatic volume disabled */
-#define MC5_MUST0_6     0x40
 #define MC5_SHPASS      0x20        /* protect the codec shadow registers */
 #define MC5_SPACCESS    0x10        /* codec reachable during SB mode */
-#define MC5_CFIFO       0x08
 #define MC5_SBMIX       0x04        /* Sound Blaster mixer enable */
 #define MC5_CFIX        0x02        /* 1 = CS4231/4248, 0 = AD1848/1846 */
 #define MC5_CDFTOEN     0x01
@@ -230,14 +222,14 @@ void FARPROC mad16_codec_fix_fmt(void)
     if (v & CODEC_FMT_MASK) {
         /* MCE on the index access: the codec ignores format writes
          * without it.  ACAL is off in the codec setup, so leaving MCE
-         * again does not start a recalibration that would mute us. */
+         * again does not start a recalibration that would mute us.
+         */
         outb_p(0x48, CODEC_BASE);
         outb_p((unsigned char)(v & ~CODEC_FMT_MASK), CODEC_BASE + 1);
         outb_p(8, CODEC_BASE);
     }
     mc_write(MC5, mad16_mc[4]);
 }
-
 
 /*
  * Present if MC1 reads differently through the password gate than without it,
@@ -409,13 +401,10 @@ static int INITPROC codec_init(unsigned int base, unsigned char *mc5_extra)
         cs_compat = 1;
 
     /*
-     * Program every register to an explicit value, then read each one back
-     * and re-write on mismatch: the codec silently ignores writes while its
-     * INIT or calibration state is active, so an unverified write may simply
-     * not have happened, leaving whatever state the chip powered up with or
-     * a previous run left behind.  Register 12 is skipped in the verify (its
-     * high bits identify the part, not store the write) and register 9's
-     * verify masks the read-only ACI bit.
+     * Program every register to an explicit value.  The codec silently
+     * ignores writes while its INIT or calibration state is active, so a
+     * write is not proof the register took; MAD16_DEBUG adds a readback pass
+     * that re-writes any mismatch and reports how many stayed stuck.
      */
     for (i = 0; i < 16; i++)
         codec_write(base, (unsigned char)i, init_values[i], CODEC_MCE);

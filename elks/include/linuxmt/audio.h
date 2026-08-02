@@ -16,10 +16,12 @@
 
 #include <linuxmt/types.h>
 
+#ifdef __KERNEL__
 /* Enumeration for the audio_conf array in init/main.c */
 #define AUDIO_SB        0   /* Sound Blaster and compatibles, audio-sb.c */
 #define AUDIO_MAD       1   /* OPTi 82C929 MAD16 bring-up, audio-mad.c */
 #define MAX_AUDIO       2
+#endif
 
 /*
  * An ELKS ioctl command is a 16-bit int, but the Linux OSS encoding puts its
@@ -45,9 +47,6 @@
 #define SNDCTL_DSP_POST         OSS__SIOC('P', 8)   /* end of a short sound  */
 #define SNDCTL_DSP_GETFMTS      OSS__SIOC('P', 11)  /* R   DSP_FMT_ mask     */
 #define SNDCTL_DSP_GETERROR     OSS__SIOC('P', 25)  /* R   struct audio_errinfo */
-
-/* SNDCTL_DSP_HALT is the modern name for RESET; both are the same command. */
-#define SNDCTL_DSP_HALT         SNDCTL_DSP_RESET
 
 /*
  * Sample formats, numbered as in OSS.  Unsigned 8-bit PCM is the only
