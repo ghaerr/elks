@@ -68,8 +68,9 @@
  * the don't-care bits of the packing, so never read-modify-write mixer
  * registers.  audiomix(1) changes levels at runtime.
  */
-#define SB_DEFAULT_MASTERVOL 85     /* 6/7 - full scale clips some cards */
-#define SB_DEFAULT_PLAYVOL   85     /* 6/7 */
+#define SB_DEFAULT_MASTERVOL 80     /* below full scale - the output stage
+                                       measurably folds when driven hard */
+#define SB_DEFAULT_PLAYVOL   60
 #define SB_DEFAULT_FMVOL     0
 
 /*
@@ -417,6 +418,29 @@ static void FARPROC sb_dma_program(unsigned int off, unsigned int len)
     outb_p(sb_dma_mask, DMA1_MASK_REG);           /* unmask, transfer armed */
 }
 
+/*
+ * Measured on a PT-200 whose codec DAC has a broken midpoint: tones that
+ * cross 0x80 fold (second harmonic above the fundamental), tones confined
+ * to either half play three times cleaner.  With sb= flags bit 2 set,
+ * every sample is halved and biased into 128..255, so playback simply
+ * never touches the broken transition - at the price of one bit of
+ * dynamic range.  One shift and one OR per byte; a 4096-byte block costs
+ * about a millisecond on a 4.77 MHz 8086, well inside the half-second
+ * the block takes to play.
+ */
+static void FARPROC sb_halfrange(unsigned int off, unsigned int len)
+{
+    unsigned int i;
+
+    if (!(audio_conf[AUDIO_SB].flags & ISA_HALFRANGE))
+        return;
+    for (i = 0; i < len; i++) {
+        unsigned char v = peekb((word_t)(off + i), sb_bounce_seg->base);
+        pokeb((word_t)(off + i), sb_bounce_seg->base,
+              (unsigned char)((v >> 1) | 0x80));
+    }
+}
+
 static void FARPROC sb_dma_stop(void)
 {
     outb_p(sb_dma_mask | 4, DMA1_MASK_REG);
@@ -650,6 +674,7 @@ static int FARPROC sb_ai_queue(char *buf, unsigned int len)
 
     off = sb_fill? SB_BOUNCE: 0;
     fmemcpyb((void *)off, sb_bounce_seg->base, buf, current->t_regs.ds, len);
+    sb_halfrange((unsigned int)off, len);
     if (len < SB_BOUNCE)                     /* pad the tail with silence */
         fmemsetb((void *)(off + len), sb_bounce_seg->base, 0x80,
                  SB_BOUNCE - len);
@@ -973,6 +998,7 @@ static int FARPROC sb_queue_chunk(char *buf, unsigned int len)
 
     off = sb_fill? SB_BOUNCE: 0;
     fmemcpyb((void *)off, sb_bounce_seg->base, buf, current->t_regs.ds, len);
+    sb_halfrange((unsigned int)off, len);
 
     if (sb_active) {
         ret = sb_wait_complete(sb_active_len);

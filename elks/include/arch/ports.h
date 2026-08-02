@@ -161,6 +161,8 @@
 #define ISA_OFF		0x8000	/* card disabled with "off" in /bootopts */
 #define ISA_EXTWRITE	0x0001	/* sb= flags bit 0: 8237 Extended Write strobe */
 #define ISA_AUTOINIT	0x0002	/* sb= flags bit 1: auto-init DMA on a MAD16 too */
+#define ISA_HALFRANGE	0x0004	/* sb= flags bit 2: fold samples into 128..255 for
+				   a DAC whose midpoint transition is broken */
 
 #ifndef __ASSEMBLER__
 struct isa_conf {
