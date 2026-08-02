@@ -58,12 +58,7 @@
 #define MAX_BUFSIZE     4096        /* == the driver's default DMA block */
 
 static unsigned char buf[MAX_BUFSIZE];
-/*
- * Expansion target: a half block of packed data becomes a full block of
- * PCM.  Reading further ahead than one block was measured to be worse -
- * the read blocks for as long as it takes the network to deliver all of
- * it, and the card runs dry in the meantime.
- */
+/* Expansion target: a half block of packed data becomes a full block of PCM */
 static unsigned char pcm[MAX_BUFSIZE];
 static audio_errinfo einfo;         /* 104 bytes: keep off the small stack */
 

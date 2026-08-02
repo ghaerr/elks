@@ -132,11 +132,8 @@
 /*
  * SPACCESS must stay clear: the codec window and the SB personality are
  * mutually exclusive on this part, and setting it stops the DSP answering.
- * Bit 7 stays clear too, per the datasheet's printed normal setting: the
- * vendor sources contradict themselves about which polarity of the
- * "automatic volume" bit is off, and line-out capture measured LESS
- * output for LOUDER input with rising harmonics - gain pumping - while
- * the bit was set.  Datasheet-normal 0x25 measures monotonic.
+ * Bit 7, automatic volume, stays clear as well: that is the datasheet's
+ * printed normal setting, and setting it measured as gain pumping.
  */
 #define MC5_DEFAULT     (MC5_SHPASS | MC5_SBMIX | MC5_CDFTOEN)   /* 0x25 */
 #define MC6_DEFAULT     (MC6_WAVE | MC6_ATTN)
@@ -272,11 +269,12 @@ static int INITPROC mad16_valid_route(unsigned int port, int irq, int dma)
  * MC3 holds the SB route in three fields:
  *
  *      bit    2    SB port, clear = 0x220, set = 0x240
- *      bits 7:6    IRQ, 00 = 7, 10 = 5, 11 = disabled, 01 invalid
- *      bits 5:4    DMA, 00 = 1, 10 = 3, 11 = disabled, 01 invalid
+ *      bits 7:6    IRQ, 00 = 7, 10 = 5, 11 = disabled, 01 = 10
+ *      bits 5:4    DMA, 00 = 1, 10 = 3, 11 = disabled, 01 = 0
  *
- * mad16_valid_route has already rejected anything the fields cannot express,
- * so the invalid 01 pattern cannot be produced here.
+ * mad16_valid_route has already rejected anything this driver does not offer,
+ * so the 01 encodings, which the chip supports but the driver does not use,
+ * cannot be produced here.
  */
 static unsigned char INITPROC mad16_mc3_for_sb(unsigned int port, int irq, int dma)
 {

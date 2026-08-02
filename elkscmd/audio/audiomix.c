@@ -1,24 +1,20 @@
 /*
  * audiomix - read and set Sound Blaster mixer levels
  *
- * usage: audiomix [-p port] [-m level] [-v level] [-r reg] [-s reg=val]
+ * usage: audiomix [-p port] [-m pct] [-v pct] [-r reg] [-s reg=val] [-z] [-k]
  *
- * The /dev/dsp driver has no mixer ioctl: it sets master and voice to full
- * scale once at init and treats level as purely a property of the samples.
- * That is the right default for a card whose output is wired to headphones,
- * but on a board with its own amplifier every gain stage at maximum clips.
- * This reads the mixer back so the actual levels can be seen, and sets them so
- * a sane value can be found by ear before baking it into the driver.
+ * The /dev/dsp driver has no mixer ioctl.  It programs master and voice to its
+ * own defaults every time the device is opened, so a level set here holds only
+ * until the next open: this finds a level by ear, it does not configure the
+ * card.  Port I/O from user space works because ELKS runs the 8086 in real
+ * mode with no I/O privilege level, the same way beep(1) drives the PIT.  Do
+ * not run it during playback - reading the DSP version resets the DSP.
  *
- * Port I/O from user space works because ELKS runs the 8086 in real mode with
- * no I/O privilege level, the same way beep(1) drives the PIT.  Reading the
- * mixer is harmless while the driver is idle; do not run it during playback.
- *
- * The level registers are two 4-bit fields on both the SB Pro and the SB16,
- * bits 7-4 for left and 3-0 for right, so one decoding covers both.  Linux's
- * sbpro_mix table is the reference: MIX_ENT(SOUND_MIXER_VOLUME, 0x22, 7, 4,
- * 0x22, 3, 4) is a bit offset of 7 and a width of 4.  The microphone level is
- * the exception at 3 bits, MIX_ENT(SOUND_MIXER_MIC, 0x0a, 2, 3, ...).
+ * A level register holds left in the high half and right in the low, but the
+ * width differs: a DSP 4.xx SB16 has 4 bits each at 7-4 and 3-0, while a DSP
+ * 3.xx SB Pro has 3 at 7-5 and 3-1, and bits 4 and 0 do not exist there and
+ * read back as 1.  Decoding an SB Pro as 4-bit reports 0xFF as 15/15 when the
+ * level is physically 7/7, so both layouts are handled separately.
  *
  * A Sound Blaster 1.x or 2.0 (DSP 1.xx/2.xx) has no mixer at all.
  *
@@ -273,7 +269,7 @@ static void codec_dump(void)
 static void usage(void)
 {
     fprintf(stderr, "usage: audiomix [-p port] [-m pct] [-v pct] [-r reg]"
-        " [-s reg=val] [-z]\n");
+        " [-s reg=val] [-z] [-k]\n");
     fprintf(stderr, "       -m master level 0-100, -v voice (PCM) level 0-100\n");
     fprintf(stderr, "       -r dump one register, -s write one raw register\n");
     fprintf(stderr, "       -z mute the fm, cd, line and mic inputs\n");

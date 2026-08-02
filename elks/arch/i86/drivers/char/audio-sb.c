@@ -13,7 +13,8 @@
  * See Documentation/text/soundblaster.txt.
  *
  * A DSP 2.00 or later card plays through auto-init DMA (DSP 0x1C with 8237
- * mode 0x58) over the two-block buffer as a circular one, so nothing is
+ * mode 0x58 plus the channel) over the two-block buffer as a circular one, so
+ * nothing is
  * reprogrammed between blocks and playback is gapless.  A Sound Blaster 1.x,
  * which has only the single-block command, and a card reached through an OPTi
  * MAD16, whose engine does not raise the per-block interrupt auto-init needs,
@@ -361,19 +362,6 @@ static int INITPROC sb_dma_unusable(addr_t phys)
 }
 
 /* Caller holds interrupts off: the address flip-flop is shared chip state. */
-/*
- * One write, at init, matching the configuration that measures clean.  On the
- * PC1640 the "8237" is part of the Amstrad ASIC: rewriting its command
- * register between transfers audibly distorts playback, and the machine that
- * needs this strobe demonstrably keeps it across BIOS disk traffic, so there
- * is nothing to re-assert.
- */
-static void FARPROC sb_extwrite_assert(void)
-{
-    if (audio_conf[AUDIO_SB].flags & ISAF_EXTWRITE)
-        outb_p(DMA1_CMD_EXTWRITE, DMA1_CMD_REG);
-}
-
 static void FARPROC sb_dma_program(unsigned int off, unsigned int len)
 {
     union {
@@ -757,11 +745,6 @@ static void FARPROC sb_mixer_program(void)
  * and undoes the mute, so anything that has touched the card since boot leaves
  * state we have to reassert rather than assume.
  */
-static void INITPROC sb_mixer_init(void)
-{
-    sb_mixer_program();
-}
-
 /*
  * SB Pro, MAD16 and many compatibles hold their interrupt asserted until the
  * DSP read path is serviced, so drain it rather than just reading status once.
@@ -1211,7 +1194,7 @@ void INITPROC dsp_init(void)
      * register between transfers audibly disturbs playback.
      */
     if (conf->flags & ISAF_EXTWRITE) {
-        sb_extwrite_assert();
+        outb_p(DMA1_CMD_EXTWRITE, DMA1_CMD_REG);
         printk("sb: 8237 extended write enabled\n");
     }
     if (sb_dma != 1 && sb_dma != 3) {
@@ -1291,7 +1274,7 @@ void INITPROC dsp_init(void)
         printk("sb: dsp not responding\n");
         goto out_irq;
     }
-    sb_mixer_init();
+    sb_mixer_program();
 
     if (register_chrdev(DSP_MAJOR, "dsp", &sb_dsp_fops)) {
         printk("sb: unable to register\n");
