@@ -47,10 +47,7 @@ struct isa_conf netif_parms[MAX_ETHS] = {
     { ULTRA_IRQ, ULTRA_PORT, ULTRA_RAM, ULTRA_FLAGS },
     { LANCE_IRQ, LANCE_PORT, 0, LANCE_FLAGS },
 };
-int mfmhd_slow_profile;         /* /bootopts mfm= bit 0: slow controller timing */
-int mfmhd_pio;                  /* /bootopts mfm= bit 1: PIO sector transfers */
-int mfmhd_trace;                /* /bootopts mfm= bit 2: driver request tracing */
-int mfm_opts;                   /* CONFIG_BLK_DEV_MFM mfm= options */
+struct isa_conf mfm_conf = { MFM_IRQ, MFM_PORT, 0, MFM_FLAGS }; /* XT MFM disk */
 int iga_opts;                   /* CONFIG_CONSOLE_AMSTRAD_IGA iga= options */
 /* the one audio card: ram holds the 8-bit DMA channel, flags are ISAF_ bits */
 struct isa_conf sb_conf = { SB_IRQ, SB_PORT, SB_DMA, SB_FLAGS };
@@ -700,7 +697,7 @@ static int INITPROC parse_options(void)
             continue;
         }
         if (!strncmp(line,"mfm=",4)) {
-            mfm_opts = (int)simple_strtol(line+4, 10);
+            parse_isaopts(line+4, &mfm_conf);
             continue;
         }
         if (!strncmp(line,"iga=",4)) {
