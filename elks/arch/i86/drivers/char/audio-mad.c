@@ -18,6 +18,12 @@
  * The attached WSS codec is initialised before the SB profile is written.
  * Without that step some boards accept DSP commands but never drain enough of
  * the internal FIFO to keep DRQ asserted, which looks like a dead DMA channel.
+ *
+ * Copyright (C) 2026 G Keet
+ * Licensed under the GNU General Public License version 2, the same
+ * terms as the ELKS kernel.
+ * The 82C929 and AD1848 register sequences are adapted from the Linux 2.x
+ * OSS drivers mad16.c and ad1848.c.
  */
 
 #include <linuxmt/errno.h>

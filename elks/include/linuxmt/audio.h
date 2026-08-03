@@ -9,6 +9,11 @@
  * (8237 channel 1 or 3).  There is no recording path, no mixer, no MIDI and
  * no sequencer.  Command numbers match upstream OSS, so an ioctl that is
  * not implemented here returns -EINVAL under its usual number.
+ *
+ * Copyright (C) 2026 G Keet
+ * Licensed under the GNU General Public License version 2, the same
+ * terms as the ELKS kernel.
+ * The ioctl numbers and encoding follow the Linux 2.x OSS sound interface.
  */
 
 #ifndef __LINUXMT_AUDIO_H

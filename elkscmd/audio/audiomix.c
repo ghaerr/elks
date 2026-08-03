@@ -20,6 +20,11 @@
  *
  * Register 0x0E is not a level: bit 1 selects stereo and bit 5 switches the
  * output filter off, and 0 in both is mono with the filter engaged.
+ *
+ * Copyright (C) 2026 G Keet
+ * Licensed under the GNU General Public License version 2, the same
+ * terms as the ELKS kernel.
+ * The mixer level scaling follows change_bits() in the Linux 2.x OSS driver.
  */
 
 #include <stdio.h>

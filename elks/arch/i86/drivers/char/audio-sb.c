@@ -35,6 +35,10 @@
  * arch/audio-sb.h; ISAF_MAD16 asks for the OPTi 82C929 bring-up in audio-mad.c
  * before the card is probed, because such a card does not answer DSP commands
  * until its MC registers present the Sound Blaster personality.
+ *
+ * Copyright (C) 2026 G Keet
+ * Licensed under the GNU General Public License version 2, the same
+ * terms as the ELKS kernel.
  */
 
 #include <linuxmt/major.h>

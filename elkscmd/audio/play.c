@@ -13,6 +13,10 @@
  * Only raw unsigned 8-bit PCM is understood.  Convert on the host first:
  *   sox in.wav -t raw -r 8000 -c 1 -b 8 -e unsigned out.raw
  *   ffmpeg -i in.wav -f u8 -ar 8000 -ac 1 out.raw
+ *
+ * Copyright (C) 2026 G Keet
+ * Licensed under the GNU General Public License version 2, the same
+ * terms as the ELKS kernel.
  */
 
 #include <errno.h>

@@ -35,6 +35,10 @@
  * the 4000 Hz minimum, so a serial link needs 40000 baud or better.  TCP flow
  * control does the throttling, so a slow link breaks the audio up rather than
  * corrupting it, and the underrun count says so.
+ *
+ * Copyright (C) 2026 G Keet
+ * Licensed under the GNU General Public License version 2, the same
+ * terms as the ELKS kernel.
  */
 
 #include <errno.h>

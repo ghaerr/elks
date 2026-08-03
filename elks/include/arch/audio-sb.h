@@ -2,6 +2,10 @@
  * Sound Blaster card registers, DSP commands and mixer layout, used by the
  * /dev/dsp driver (audio-sb.c).  Compiled-in port/IRQ/DMA defaults are the
  * SB_XXX defines in arch/ports.h.
+ *
+ * Copyright (C) 2026 G Keet
+ * Licensed under the GNU General Public License version 2, the same
+ * terms as the ELKS kernel.
  */
 
 #ifndef __ARCH_AUDIO_SB_H
