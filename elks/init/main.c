@@ -11,6 +11,7 @@
 #include <linuxmt/fs.h>
 #include <linuxmt/utsname.h>
 #include <linuxmt/netstat.h>
+#include <linuxmt/audio.h>
 #include <linuxmt/trace.h>
 #include <linuxmt/devnum.h>
 #include <linuxmt/heap.h>
@@ -37,7 +38,7 @@
 #define ARRAYLEN(a)     (sizeof(a)/sizeof(a[0]))
 
 /* external driver options */
-struct netif_parms netif_parms[MAX_ETHS] = {
+struct isa_conf netif_parms[MAX_ETHS] = {
     /* NOTE:  The order must match the defines in netstat.h:
      * ETH_NE2K, ETH_WD, ETH_EL3, ETH_ULTRA, ETH_LANCE */
     { NE2K_IRQ, NE2K_PORT, 0, NE2K_FLAGS },
@@ -51,6 +52,8 @@ int mfmhd_pio;                  /* /bootopts mfm= bit 1: PIO sector transfers */
 int mfmhd_trace;                /* /bootopts mfm= bit 2: driver request tracing */
 int mfm_opts;                   /* CONFIG_BLK_DEV_MFM mfm= options */
 int iga_opts;                   /* CONFIG_CONSOLE_AMSTRAD_IGA iga= options */
+/* the one audio card: ram holds the 8-bit DMA channel, flags are ISAF_ bits */
+struct isa_conf sb_conf = { SB_IRQ, SB_PORT, SB_DMA, SB_FLAGS };
 
 /* internal non-driver globals */
 seg_t kernel_cs, kernel_ds;     /* always segment values even in PM */
@@ -500,10 +503,20 @@ static void INITPROC comirq(char *line)
 #endif
 }
 
-static void INITPROC parse_nic(char *line, struct netif_parms *parms)
+/*
+ * irq,port,ram,flags for any ISA card; ram is the DMA channel on an audio
+ * card.  "off" sets the port to -1, which is how a driver is told to skip
+ * its card; port 0 is left alone, as the LANCE driver reads it as a request
+ * to autoconfigure.
+ */
+static void INITPROC parse_isaopts(char *line, struct isa_conf *parms)
 {
     char *p;
 
+    if (!strcmp(line, "off")) {          /* exact, so "offxxx" is not "off" */
+        parms->port = -1;
+        return;
+    }
     parms->irq = (int)simple_strtol(line, 0);
     if ((p = strchr(line, ','))) {
         parms->port = (int)simple_strtol(p+1, 16);
@@ -641,23 +654,23 @@ static int INITPROC parse_options(void)
             continue;
         }
         if (!strncmp(line,"ne0=",4)) {
-            parse_nic(line+4, &netif_parms[ETH_NE2K]);
+            parse_isaopts(line+4, &netif_parms[ETH_NE2K]);
             continue;
         }
         if (!strncmp(line,"wd0=",4)) {
-            parse_nic(line+4, &netif_parms[ETH_WD]);
+            parse_isaopts(line+4, &netif_parms[ETH_WD]);
             continue;
         }
         if (!strncmp(line,"3c0=",4)) {
-            parse_nic(line+4, &netif_parms[ETH_EL3]);
+            parse_isaopts(line+4, &netif_parms[ETH_EL3]);
             continue;
         }
         if (!strncmp(line,"ul0=",4)) {
-            parse_nic(line+4, &netif_parms[ETH_ULTRA]);
+            parse_isaopts(line+4, &netif_parms[ETH_ULTRA]);
             continue;
         }
         if (!strncmp(line,"le0=",4)) {
-            parse_nic(line+4, &netif_parms[ETH_LANCE]);
+            parse_isaopts(line+4, &netif_parms[ETH_LANCE]);
             continue;
         }
         if (!strncmp(line,"debug=", 6)) {
@@ -692,6 +705,10 @@ static int INITPROC parse_options(void)
         }
         if (!strncmp(line,"iga=",4)) {
             iga_opts = (int)simple_strtol(line+4, 10);
+            continue;
+        }
+        if (!strncmp(line,"sb=",3)) {
+            parse_isaopts(line+3, &sb_conf);
             continue;
         }
         if (!strncmp(line,"heap=",5)) {

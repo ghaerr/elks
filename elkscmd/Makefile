@@ -17,6 +17,7 @@ include $(BASEDIR)/Makefile-rules
 IA16DIRS =       \
 	advent      \
 	ash         \
+	audio       \
 	basic       \
 	bc          \
 	busyelks    \

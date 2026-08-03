@@ -421,6 +421,46 @@ Enable standard serial ports
 CONFIG_CHAR_DEV_RS
   Include support for serial port devices.
 
+Sound Blaster /dev/dsp driver
+CONFIG_CHAR_DEV_DSP
+  Include support for playing sound on a Sound Blaster or compatible ISA
+  card through /dev/dsp, using the OSS ioctl interface.
+
+  Playback only, mono, raw unsigned 8-bit PCM.  There is no recording, no
+  mixer control and no MIDI.  Sample conversion belongs in user space; see
+  the play command.
+
+  The card is driven with 8-bit ISA DMA on channel 1 or 3 only.  A DSP
+  2.00 or later card plays through gapless auto-init DMA; a Sound Blaster
+  1.x, and any card behind an OPTi MAD16, falls back to the single-block
+  command, so any card from a Sound Blaster 1.0 upwards will work at up
+  to 20000 Hz.
+
+  The compiled-in port, IRQ, DMA channel and buffer size are the SB_XXX
+  defines in arch/ports.h.  /bootopts sb=irq,port,dma overrides them
+  without a rebuild, sb=off disables the driver on a machine with no
+  card, and mad16= first programs an OPTi 82C929 (MAD16) jumperless
+  chipset into Sound Blaster mode.  A fourth sb= field of 1
+  (sb=irq,port,dma,1) sets the 8237 Extended Write strobe, needed on an
+  Amstrad PC1512/1640 whose DMA timing would otherwise distort audio.
+
+  See Documentation/text/soundblaster.txt for the details, including why
+  an XT-class machine with a hard disk must use IRQ 7 with DMA 1.
+
+CONFIG_AUDIO_SB_LPTOFF
+  Disable the LPT1 printer interrupt when the sound card is on IRQ 7.
+
+  IRQ 7 belongs to LPT1 as well as the sound card, and the printer port
+  powers up with its interrupt enabled.  A floating or strobed ACK line
+  then fires the sound card's interrupt handler part way through a
+  transfer, which is audible as distortion.  The ELKS printer driver
+  polls and never asks for IRQ 7, so with this set the driver writes
+  LPT1's control register once at boot with the interrupt bit clear.
+
+  Nothing is done unless the card is actually on IRQ 7, so this is
+  harmless on a machine using IRQ 5.  Say N only if something else on
+  the machine drives LPT1 from its interrupt.
+
 Enable meta device driver
 CONFIG_DEV_META
   Include meta driver to provide support for userspace device drivers.
