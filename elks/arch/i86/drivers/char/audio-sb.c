@@ -30,12 +30,13 @@
  * has no such side effect.  Until then a wrong irq= shows up as a per-block
  * timeout rather than working silently.
  *
- * /bootopts sb=irq,port,dma overrides the compiled-in settings, and sb=off
- * skips the driver entirely.
+ * /bootopts sb=irq,port,dma,flags overrides the compiled-in settings, and
+ * sb=off skips the driver entirely.  The flag bits are the ISAF_ defines in
+ * arch/audio-sb.h; ISAF_MAD16 asks for the OPTi 82C929 bring-up in audio-mad.c
+ * before the card is probed, because such a card does not answer DSP commands
+ * until its MC registers present the Sound Blaster personality.
  */
 
-#include <linuxmt/config.h>
-#include <linuxmt/types.h>
 #include <linuxmt/major.h>
 #include <linuxmt/fs.h>
 #include <linuxmt/kernel.h>
@@ -86,11 +87,9 @@
 #define SB_MAX_RATE     20000U
 #define SB_TC_CLOCK     1000000UL   /* time constant reference clock */
 
-#ifdef CONFIG_AUDIO_SB_LPTOFF
 /* LPT1 shares IRQ 7 with the card; bit 4 of its control register is IRQ enable */
 #define LPT1_CONTROL    0x37A
 #define LPT1_CTRL_IDLE  0x0C        /* INIT + SELECT_IN, interrupt disabled */
-#endif
 
 static unsigned int sb_base;
 static unsigned char sb_dma;
@@ -1101,7 +1100,7 @@ static addr_t INITPROC sb_alloc_bounce(void)
 
 void INITPROC dsp_init(void)
 {
-    struct isa_conf *conf = &audio_conf[AUDIO_SB];
+    struct isa_conf *conf = &sb_conf;
     addr_t phys;
 
     if (conf->port == -1)               /* sb=off */
@@ -1148,15 +1147,15 @@ void INITPROC dsp_init(void)
     sb_dma_addr_cache(phys);
 
 #ifdef CONFIG_AUDIO_MAD
-    if (audio_conf[AUDIO_MAD].port != -1) {
-        /* a field left at 0 in mad16= follows the sb= route */
-        unsigned int port = audio_conf[AUDIO_MAD].port?
-            (unsigned int)audio_conf[AUDIO_MAD].port: sb_base;
-        int irq = audio_conf[AUDIO_MAD].irq?
-            audio_conf[AUDIO_MAD].irq: (int)sb_irq_line;
-        int dma = audio_conf[AUDIO_MAD].ram?
-            (int)audio_conf[AUDIO_MAD].ram: (int)sb_dma;
-        int rc = mad16_early_init(port, irq, dma);
+    /*
+     * An OPTi 82C929 is not a second sound card, it is this one wearing a
+     * different hat: the chip does not answer DSP commands at all until its
+     * MC registers have been told to present the Sound Blaster personality.
+     * So the route is the sb= route - there is nothing separate to configure -
+     * and the flag bit only says that this card needs the step performed.
+     */
+    if (conf->flags & ISAF_MAD16) {
+        int rc = mad16_early_init(sb_base, (int)sb_irq_line, (int)sb_dma);
 
         /*
          * Distinguish the two failures: a card with no jumpers depends on this
@@ -1164,11 +1163,13 @@ void INITPROC dsp_init(void)
          */
         if (rc == 0) {
             sb_mad16_route = 1;
-            printk("sb: mad16 at 0x%x irq %d dma %d\n", port, irq, dma);
+            printk("sb: mad16 at 0x%x irq %d dma %d\n", sb_base, sb_irq_line,
+                   sb_dma);
         }
         else if (rc == -EINVAL)
             printk("sb: mad16 cannot route 0x%x irq %d dma %d, "
-                   "allows port 0x220/0x240 irq 5/7 dma 1/3\n", port, irq, dma);
+                   "allows port 0x220/0x240 irq 5/7 dma 1/3\n", sb_base,
+                   sb_irq_line, sb_dma);
         else
             printk("sb: mad16 82c929 not detected\n");
     }
@@ -1179,18 +1180,16 @@ void INITPROC dsp_init(void)
         goto out_free;
     }
     (void)sb_read_dsp_version();
-#ifdef CONFIG_AUDIO_SB_LPTOFF
     /*
      * IRQ 7 is LPT1's line as well as the card's, and the printer port powers
      * up with its interrupt enabled; a floating or strobed ACK then fires the
      * sound ISR at random points in a transfer, audible as distortion.  The
      * lp driver polls and never requests IRQ 7, so idle LPT1's control
-     * register with the interrupt bit clear.  Turn this off to leave the
-     * printer port alone on a machine that drives LPT1 from its interrupt.
+     * register with the interrupt bit clear.  ISAF_LPTIRQ leaves the printer
+     * port alone on a machine that really does drive LPT1 from its interrupt.
      */
-    if (sb_irq_line == 7)
+    if (sb_irq_line == 7 && !(conf->flags & ISAF_LPTIRQ))
         outb_p(LPT1_CTRL_IDLE, LPT1_CONTROL);
-#endif
 
     if (request_irq((int)sb_irq_line, sb_interrupt, INT_GENERIC)) {
         printk("sb: irq %d busy\n", sb_irq_line);

@@ -52,12 +52,8 @@ int mfmhd_pio;                  /* /bootopts mfm= bit 1: PIO sector transfers */
 int mfmhd_trace;                /* /bootopts mfm= bit 2: driver request tracing */
 int mfm_opts;                   /* CONFIG_BLK_DEV_MFM mfm= options */
 int iga_opts;                   /* CONFIG_CONSOLE_AMSTRAD_IGA iga= options */
-struct isa_conf audio_conf[MAX_AUDIO] = {
-    /* NOTE:  The order must match the defines in linuxmt/audio.h:
-     * AUDIO_SB, AUDIO_MAD.  ram holds the 8-bit DMA channel. */
-    { SB_IRQ, SB_PORT, SB_DMA, 0 },
-    { 0, -1, 0, 0 },            /* off until mad16= asks for the bring-up */
-};
+/* the one audio card: ram holds the 8-bit DMA channel, flags are ISAF_ bits */
+struct isa_conf sb_conf = { SB_IRQ, SB_PORT, SB_DMA, SB_FLAGS };
 
 /* internal non-driver globals */
 seg_t kernel_cs, kernel_ds;     /* always segment values even in PM */
@@ -517,7 +513,7 @@ static void INITPROC parse_isaopts(char *line, struct isa_conf *parms)
 {
     char *p;
 
-    if (!strncmp(line, "off", 3)) {
+    if (!strcmp(line, "off")) {          /* exact, so "offxxx" is not "off" */
         parms->port = -1;
         return;
     }
@@ -712,11 +708,7 @@ static int INITPROC parse_options(void)
             continue;
         }
         if (!strncmp(line,"sb=",3)) {
-            parse_isaopts(line+3, &audio_conf[AUDIO_SB]);
-            continue;
-        }
-        if (!strncmp(line,"mad16=",6)) {
-            parse_isaopts(line+6, &audio_conf[AUDIO_MAD]);
+            parse_isaopts(line+3, &sb_conf);
             continue;
         }
         if (!strncmp(line,"heap=",5)) {

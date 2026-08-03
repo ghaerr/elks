@@ -12,6 +12,8 @@
 
 /* Driver private bits in the flags field of sb= in /bootopts */
 #define ISAF_EXTWRITE   0x0001      /* set the 8237 Extended Write strobe */
+#define ISAF_MAD16      0x0002      /* route an OPTi 82C929 into SB mode first */
+#define ISAF_LPTIRQ     0x0004      /* leave LPT1's interrupt alone on IRQ 7 */
 
 /* DSP register offsets from the card base address */
 #define SB_RESET        0x06        /* w  write 1 then 0 to reset the DSP */
@@ -45,8 +47,8 @@
 #define SB_FILT_OFF     0x20        /* set = SB Pro output filter bypassed */
 
 #ifndef __ASSEMBLER__
-/* sb= and mad16= routes, parsed in init/main.c; indices in linuxmt/audio.h */
-extern struct isa_conf audio_conf[];
+/* the sb= route, parsed in init/main.c */
+extern struct isa_conf sb_conf;
 
 /* audio-mad.c, only linked when CONFIG_AUDIO_MAD is set */
 extern int  INITPROC mad16_early_init(unsigned int port, int irq, int dma);

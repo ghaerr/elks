@@ -28,6 +28,7 @@ rebuild:
 
     sb=5,220,1          IRQ, port and DMA channel
     sb=5,220,1,1        as above, plus 8237 Extended Write (see below)
+    sb=7,220,1,3        the same with an OPTi MAD16 card, which needs bit 1
     sb=off              skip the driver on a machine with no card
 
 The argument order is irq,port,dma,flags, the same as the ne0=, wd0= and
@@ -36,13 +37,28 @@ holds the result.  The IRQ is read as decimal and the port and DMA channel as
 hex, with an optional 0x, because an audio card keeps its DMA channel in the
 ram field the NICs use for a memory address.  The flags are the fourth field.
 
-The only flag is bit 0 (value 1), which sets the 8237 DMA controller's
-Extended Write strobe.  A machine whose DMA timing is tighter than 8-bit
-cards expect - the Amstrad PC1512 and PC1640 - drops bytes without it, and
-plays otherwise clean audio as heavy distortion.  Say sb=irq,port,dma,1 on
-such a machine and leave it off everywhere else.  It is a controller-wide
-bit, so a machine that also runs the XT MFM driver can set it there with
-mfm= bit 4 instead; setting it from both is harmless.
+The flag bits are the ISAF_ defines in arch/audio-sb.h:
+
+    bit 0    1    set the 8237 DMA controller's Extended Write strobe
+    bit 1    2    bring an OPTi 82C929 (MAD16) up in Sound Blaster mode
+    bit 2    4    leave LPT1's interrupt alone when the card is on IRQ 7
+
+Bit 0 exists because a machine whose DMA timing is tighter than 8-bit cards
+expect - the Amstrad PC1512 and PC1640 - drops bytes without it, and plays
+otherwise clean audio as heavy distortion.  Say sb=irq,port,dma,1 on such a
+machine and leave it off everywhere else.  It is a controller-wide bit, so a
+machine that also runs the XT MFM driver can set it there with mfm= bit 4
+instead; setting it from both is harmless.
+
+Bit 1 is described under "MAD16 boards" below.
+
+Bit 2 concerns the printer port.  IRQ 7 is LPT1's line as well as the card's,
+and the port powers up with its interrupt enabled; a floating or strobed ACK
+then fires the sound ISR part way through a transfer, which is audible as
+distortion.  The lp driver polls and never asks for IRQ 7, so the driver
+idles LPT1's control register with the interrupt bit clear whenever the card
+is on 7.  Set bit 2 to skip that on a machine that genuinely drives its
+printer port from the interrupt.  The bit does nothing on any other IRQ.
 
 The IRQ is claimed during boot rather than at open, so the sound card wins any
 contest for it.  IRQ 5 is also Com3, so selecting it means the serial driver
@@ -161,13 +177,35 @@ channels returns EINVAL.
 MAD16 boards
 ------------
 
-The MAD16 driver (audio-mad.c) adds bring-up for the OPTi 82C929 (MAD16 Pro)
-chipset, which answers SB DSP commands only once its registers have been set
-to route the SB personality.  It is only attempted when /bootopts sets
-mad16=irq,port,dma, and a field given as 0 there follows the matching sb=
-setting, so mad16=0,220,0 routes the card to port 0x220 with the same IRQ and
-DMA channel sb= asked for.  A real Sound Blaster does not need it, but a card
-with no jumpers will not respond at all without it.
+MAD16 is not a sound card and audio-mad.c is not a second /dev/dsp driver.
+The OPTi 82C929 (marketed as MAD16 Pro) is a multimedia controller chip found
+on a great many early-90s ISA boards, where it sits between the bus and an
+AD1848 class codec and can present itself as more than one kind of card.  It
+comes out of reset presenting none of them: the chip has no jumpers, so
+before anything can talk to it, its MC configuration registers have to be
+written to say which personality to expose and on which port, IRQ and DMA
+channel.  Until that is done the board is silent and a DSP probe at 0x220
+finds nothing at all.
+
+What audio-mad.c does is exactly that one step - it puts the chip into Sound
+Blaster mode.  After it returns, the board answers ordinary SB DSP commands
+and audio-sb.c drives it like any other Sound Blaster; the playback path,
+the DMA and the mixer are all the SB driver's.  That is why every message it
+prints is prefixed "sb:" and why there is one /bootopts line, not two: the
+port, IRQ and DMA come from sb= because they are the settings the card will
+have once the routing is applied.
+
+So the flag bit means "this card is an OPTi 82C929, route it to SB mode
+first".  A real Sound Blaster, or anything already answering at its port,
+does not need it and should not set it:
+
+    sb=7,220,1,2        OPTi card at 0x220, IRQ 7, DMA 1
+    sb=7,220,1,3        the same, plus Extended Write for a PC1512/PC1640
+
+Only the codec side keeps a foot in audio-mad.c after boot.  The 82C929
+rewrites the codec's data format register whenever it maps a rate, which
+would fold linear samples about 0x80, so audio-sb.c calls back into
+mad16_codec_fix_fmt() to put the companding bits back after each rate change.
 
 The chip holds the SB route in three fields of its MC3 register:
 

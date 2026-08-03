@@ -171,12 +171,13 @@ struct isa_conf {
 };
 #endif
 
-/* Sound Blaster /dev/dsp, audio-sb.c: override with sb=irq,port,dma in
- * /bootopts, OPTi MAD16 bring-up with mad16=irq,port,dma
+/* Sound Blaster /dev/dsp, audio-sb.c: override with sb=irq,port,dma,flags in
+ * /bootopts, flag bits are the ISAF_ defines in arch/audio-sb.h
  */
 #define SB_PORT         0x220
 #define SB_IRQ          5               /* use IRQ 7 with DMA 1 on an XT with a hard disk */
 #define SB_DMA          1               /* 8-bit DMA channel, 1 or 3 */
+#define SB_FLAGS        0
 #define SB_BUFSIZE      4096            /* one playback DMA block, two are buffered */
 
 /* bioshd.c*/

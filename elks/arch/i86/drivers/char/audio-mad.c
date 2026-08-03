@@ -7,7 +7,9 @@
  * that at boot; when nothing has, the card looks present but never transfers.
  * This file does the same bring-up as the Linux mad16.c C929 path, cut down to
  * what an SB-only playback driver needs, and is only reached when /bootopts
- * asks for it with mad16=irq,port,dma.
+ * sets ISAF_MAD16 in the sb= flags.  It is not a /dev/dsp driver: it puts the
+ * chip into Sound Blaster mode and audio-sb.c drives it from there, which is
+ * why the route comes from sb= and every message here is prefixed "sb:".
  *
  * The control registers are password gated: 0xE3 must be written to 0xF8F
  * immediately before each access, so every read and write here runs with
@@ -18,8 +20,6 @@
  * the internal FIFO to keep DRQ asserted, which looks like a dead DMA channel.
  */
 
-#include <linuxmt/config.h>
-#include <linuxmt/types.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/init.h>

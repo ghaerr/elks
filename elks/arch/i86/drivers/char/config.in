@@ -56,7 +56,6 @@ mainmenu_option next_comment
 		bool 'Sound Blaster /dev/dsp driver'	CONFIG_CHAR_DEV_DSP	  n
 	fi
 	if [ "$CONFIG_CHAR_DEV_DSP" = "y" ]; then
-		bool '  Disable the LPT1 interrupt on IRQ 7' CONFIG_AUDIO_SB_LPTOFF y
 		define_bool CONFIG_AUDIO_SB y
 		define_bool CONFIG_AUDIO_MAD y
 	fi
