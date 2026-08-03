@@ -55,8 +55,4 @@ mainmenu_option next_comment
 	if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
 		bool 'Sound Blaster /dev/dsp driver'	CONFIG_CHAR_DEV_DSP	  n
 	fi
-	if [ "$CONFIG_CHAR_DEV_DSP" = "y" ]; then
-		define_bool CONFIG_AUDIO_SB y
-		define_bool CONFIG_AUDIO_MAD y
-	fi
 endmenu

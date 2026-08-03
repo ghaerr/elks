@@ -16,7 +16,7 @@ void INITPROC chr_dev_init(void)
     mem_dev_init();
 #endif
 
-#ifdef CONFIG_AUDIO_SB
+#ifdef CONFIG_CHAR_DEV_DSP
     dsp_init();
 #endif
 

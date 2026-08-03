@@ -135,12 +135,8 @@ ifdef CONFIG_AUDIO
   OBJS += audio-8254.o
 endif
 
-ifdef CONFIG_AUDIO_SB
-  OBJS += audio-sb.o
-endif
-
-ifdef CONFIG_AUDIO_MAD
-  OBJS += audio-mad.o
+ifdef CONFIG_CHAR_DEV_DSP
+  OBJS += audio-sb.o audio-mad.o
 endif
 
 ifdef CONFIG_ARCH_IBMPC

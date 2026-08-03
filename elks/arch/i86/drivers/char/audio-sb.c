@@ -41,6 +41,7 @@
  * terms as the ELKS kernel.
  */
 
+#include <linuxmt/config.h>     /* CONFIG_BLK_DEV_MFMHD, below */
 #include <linuxmt/major.h>
 #include <linuxmt/fs.h>
 #include <linuxmt/kernel.h>
@@ -366,7 +367,6 @@ static int FARPROC sb_dsp_start(unsigned int len)
      */
     if (dsp_cmd(DSP_SET_RATE) < 0 || dsp_cmd(sb_timeconst) < 0)
         return -EIO;
-#ifdef CONFIG_AUDIO_MAD
     /*
      * The 929's SB engine rewrites the codec format register to mu-law
      * whenever it maps a rate, and the rate is resent for every block
@@ -375,7 +375,6 @@ static int FARPROC sb_dsp_start(unsigned int len)
      */
     if (sb_mad16_route)
         mad16_codec_fix_fmt();
-#endif
     if (dsp_cmd(DSP_DMA_OUT_8) < 0 ||
         dsp_cmd((unsigned char)(n & 0xFF)) < 0 ||
         dsp_cmd((unsigned char)(n >> 8)) < 0)
@@ -850,10 +849,8 @@ static int FARPROC sb_open_impl(struct inode *inode, struct file *file)
     if (sb_opened)
         return -EBUSY;
 
-#ifdef CONFIG_AUDIO_MAD
     /* something else may have moved the SB personality since we set it up */
     mad16_restore_profile();
-#endif
     (void)dsp_cmd(DSP_SPEAKER_ON);
     sb_mixer_program();         /* a DSP reset may have undone all of it */
     sb_play_underruns = 0;
@@ -1150,7 +1147,6 @@ void INITPROC dsp_init(void)
     }
     sb_dma_addr_cache(phys);
 
-#ifdef CONFIG_AUDIO_MAD
     /*
      * An OPTi 82C929 is not a second sound card, it is this one wearing a
      * different hat: the chip does not answer DSP commands at all until its
@@ -1177,7 +1173,6 @@ void INITPROC dsp_init(void)
         else
             printk("sb: mad16 82c929 not detected\n");
     }
-#endif
 
     if (sb_reset() < 0) {
         printk("sb: no card at 0x%x\n", sb_base);

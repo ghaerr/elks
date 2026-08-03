@@ -54,7 +54,7 @@
 /* the sb= route, parsed in init/main.c */
 extern struct isa_conf sb_conf;
 
-/* audio-mad.c, only linked when CONFIG_AUDIO_MAD is set */
+/* audio-mad.c, called only when sb= sets ISAF_MAD16 */
 extern int  INITPROC mad16_early_init(unsigned int port, int irq, int dma);
 extern void FARPROC mad16_restore_profile(void);
 extern void FARPROC mad16_codec_fix_fmt(void);
