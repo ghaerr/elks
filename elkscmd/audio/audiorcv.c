@@ -70,6 +70,7 @@ static void usage(void)
         " otherwise one stream is played\n");
     fprintf(stderr, "       raw unsigned 8-bit mono PCM, %ld-%ld Hz,"
         " default %ld, port %d\n", MIN_RATE, MAX_RATE, DEFAULT_RATE, DEF_PORT);
+    fprintf(stderr, "G Keet, 2026\n");
     exit(1);
 }
 

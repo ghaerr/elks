@@ -39,6 +39,7 @@ static void usage(void)
     fprintf(stderr, "usage: play [-r rate] [-b bytes] [file]\n");
     fprintf(stderr, "       raw unsigned 8-bit mono PCM, %ld-%ld Hz,"
         " default %ld\n", MIN_RATE, MAX_RATE, DEFAULT_RATE);
+    fprintf(stderr, "G Keet, 2026\n");
     exit(1);
 }
 
