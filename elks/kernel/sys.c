@@ -19,6 +19,7 @@
 #include <arch/segment.h>
 #include <arch/system.h>
 #include <arch/io.h>
+#include <arch/mfmhd.h>
 
 /*
  * reboot doesn't sync: do that yourself before calling this.
@@ -30,6 +31,9 @@ int sys_reboot(unsigned int magic, unsigned int magic_too, int flag)
 
 #ifdef CONFIG_BLK_DEV_BHD
     bios_disk_park_all();
+#endif
+#ifdef CONFIG_BLK_DEV_MFMHD
+    mfmhd_park_all();
 #endif
     switch(flag) {
     case RB_REBOOT:
