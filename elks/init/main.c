@@ -37,7 +37,12 @@ struct isa_conf ul0_conf = { ULTRA_IRQ, ULTRA_PORT, ULTRA_RAM, ULTRA_FLAGS };
 struct isa_conf le0_conf = { LANCE_IRQ, LANCE_PORT, 0,      LANCE_FLAGS };
 struct isa_conf mfm_conf = { MFM_IRQ,   MFM_PORT,   0,      MFM_FLAGS };
 struct isa_conf sb_conf =  { SB_IRQ,    SB_PORT,    SB_DMA, SB_FLAGS };
+#ifdef CONFIG_CONSOLE_AMSTRAD_IGA
 int iga_opts;                   /* CONFIG_CONSOLE_AMSTRAD_IGA iga= options */
+#endif
+#ifdef CONFIG_VIDEO_V7
+int v7_opts;                    /* CONFIG_VIDEO_V7 v7= options */
+#endif
 
 /* internal non-driver declarations */
 #define ENV             1       /* allow environ variables as bootopts*/
@@ -265,6 +270,9 @@ static void INITPROC kernel_init(void)
     serial_init();                  /* must init serial before console for ser console */
 #endif
     set_console(boot_console);      /* change to /bootopts console= or default */
+#ifdef CONFIG_VIDEO_V7
+    v7_early_init();                /* v7= mode set must precede the console */
+#endif
     console_init();                 /* init direct, bios or headless console */
 
     inode_init();
@@ -701,10 +709,18 @@ static int INITPROC parse_options(void)
             ata_mode = (int)simple_strtol(line+6, 10);
             continue;
         }
+#ifdef CONFIG_CONSOLE_AMSTRAD_IGA
         if (!strncmp(line,"iga=",4)) {
             iga_opts = (int)simple_strtol(line+4, 10);
             continue;
         }
+#endif
+#ifdef CONFIG_VIDEO_V7
+        if (!strncmp(line,"v7=",3)) {
+            v7_opts = (int)simple_strtol(line+3, 10);
+            continue;
+        }
+#endif
         if (!strncmp(line,"heap=",5)) {
 #ifndef CONFIG_286_PMODE
             heapsize = (unsigned int)simple_strtol(line+5, 10);

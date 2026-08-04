@@ -105,6 +105,9 @@ sys_utils/console               :sysutil                :1200k
 sys_utils/beep                  :sysutil                :1200k
 audio/play                      :sysutil                :1200k
 audio/audiomix                  :sysutil                :1200k
+v7/v7info                       :sysutil
+v7/v7mode                       :sysutil
+v7/v7show                       :sysutil
 sys_utils/decomp                :sysutil         :360c              :1440k
 sys_utils/sysctl                :sysutil                :1200k
 sys_utils/dmesg                 :sysutil                :1232c      :1440k

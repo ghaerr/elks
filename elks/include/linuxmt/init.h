@@ -27,6 +27,8 @@ struct drive_infot;
 extern void INITPROC pm_init(void);
 extern int  INITPROC buffer_init(void);
 extern void INITPROC console_init(void);
+extern void INITPROC v7_init(void);
+extern void INITPROC v7_early_init(void);
 extern void INITPROC inode_init(void);
 extern void INITPROC irq_init(void);
 extern void save_timer_irq(void);

@@ -1,0 +1,104 @@
+ELKS Video Seven VEGA VGA driver
+================================
+
+The CONFIG_VIDEO_V7 driver identifies a Video Seven VEGA VGA and reaches the
+parts of the board the standard VGA register set cannot: which chip is fitted,
+how much display memory it has, and how it is strapped.  It can also put the
+card into VGA text mode as the machine boots.
+
+The card works as a plain VGA without this driver; the console drives it
+either way.  Nothing here replaces the console driver, and no drawing is done
+in the kernel.
+
+Identification
+--------------
+
+BIOS call 6F00 answers with 'V7' in BX on any Video Seven adapter, which says
+the family but not the part.  The chip version word at extension registers
+8F:8E settles it, and 8000h or above is the VEGA, the original two chip VGA.
+The later Headland single chip parts (HT208, HT216) share the BIOS interface
+and much of the extension register set but are not identical, so they are
+reported and otherwise left alone.
+
+The extension registers live behind sequencer index 06: writing EA unlocks
+them and AE locks them again.  The driver opens that gate only around each
+access and closes it afterwards, as the manual asks.  An extension index the
+board does not implement reads FF and discards writes, which on a VEGA is what
+the switch and interface registers do, so values that read FF are not decoded
+rather than decoded wrongly.
+
+Configuration
+-------------
+
+Enable "Video Seven VEGA VGA adapter" under character device drivers.  It is
+offered only when the Amstrad PEGA console driver is not selected: the PEGA and
+the VEGA are alternative adapters, so a kernel compiles in one and pays for
+one.  The VEGA is driven by the direct or BIOS console.
+
+/bootopts
+---------
+
+The "v7=" option is a bit mask.  Bit 0 (v7=1) puts the card into VGA text mode
+3 while the kernel starts.  It is done there rather than later because
+console_init() reads the display width out of the BIOS data area once as it
+starts and does not look again, so a mode set made after the console is running
+changes the picture without the console knowing.  With no v7= option the driver
+makes no BIOS calls before the console exists.
+
+Monitor class
+-------------
+
+BIOS call 6F01 reports the display the board detected, and its low resolution
+bit means 200 lines or fewer: an EGA, CGA or MDA class monitor.  The driver
+records this and names it on the boot line.  v7mode and v7show refuse a mode
+taller than that, because such a mode does not sync at all rather than merely
+look wrong, and a blank screen on a machine in another room is a poor way to
+find out.  -F overrides the refusal for a board whose strap is misreported.
+
+Dipswitches 1-3 select the monitor type but the manual records them as ignored
+by the shipping BIOS, and on a VEGA the switch readback register is not
+implemented, so the BIOS answer is the only one available.
+
+MDA and Hercules
+----------------
+
+The board has one analog video connector.  Its MDA, CGA and Hercules support
+is emulation of those register and memory interfaces on that one output, not a
+second output, so it cannot drive a mono monitor while a VGA one is live.
+
+The emulation is controlled by extension register EB: bit 7 traps writes to the
+monochrome and CGA registers, and bit 6 forces a Hercules bitmap decode at
+B0000.  Both need the Video Seven IOU chip, which is not fitted to every board.
+Where it is absent EB reads FF and the card never claims B0000, which leaves
+that space free for a real MDA or Hercules adapter to drive a second screen
+alongside the VEGA.  v7info -d shows EB so this can be checked before trying.
+
+User tools
+----------
+
+v7info reports the chip version, display memory, monitor strap and current
+mode, and dumps the raw extension registers with -d.
+
+v7mode sets any text or graphics mode the card offers, from 80x25 to 132x43 and
+800x600, and drives the extensions the board implements: cursor attributes,
+extended underline attributes, scan doubling and the 16 bit interface.  A mode
+set here does not move the kernel console, which keeps the geometry it started
+with, so anything other than 80x25 is for a program that draws the whole screen
+itself.  -r puts the extension registers back to their reset state.
+
+v7show displays an image and can read display memory back to check every byte
+of it arrived, which is also a memory test of the card.  Images are prepared on
+the host by elkscmd/v7/host/mkv7i.py.
+
+References
+----------
+
+V7 VGA Technical Reference Manual, June 1988, for the BIOS 6Fh interface, the
+extension gate and the extension registers:
+
+  http://www.bitsavers.org/components/video7/700-0242_V7_VGA_Technical_Reference_Manual_Jun88.pdf
+
+The VGADOC4b Video 7 chipset notes were also used, for which registers are
+common across the family and where the version word divides the parts.  No URL
+is given: the original is long gone and everything still reachable is somebody
+else's copy of it.

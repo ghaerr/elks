@@ -8,7 +8,7 @@ mainmenu_option next_comment
 	choice 'Select console driver'			\
 		"Direct         CONFIG_CONSOLE_DIRECT	\
 		 BIOS           CONFIG_CONSOLE_BIOS	\
-		 Amstrad	CONFIG_CONSOLE_AMSTRAD_IGA 	\
+		 Amstrad-PEGA	CONFIG_CONSOLE_AMSTRAD_IGA 	\
 		 8018x		CONFIG_CONSOLE_8018X 	\
 		 NECV25		CONFIG_CONSOLE_NECV25 	\
 		 Headless       CONFIG_CONSOLE_HEADLESS"	Direct
@@ -54,5 +54,16 @@ mainmenu_option next_comment
 
 	if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
 		bool 'Sound Blaster /dev/dsp driver'	CONFIG_CHAR_DEV_DSP	  n
+		#
+		# Video adapter.  The Amstrad PEGA is selected by picking its
+		# console driver above, since driving the screen is all the
+		# support it has; a VEGA is driven by the direct or BIOS
+		# console and adds this.  Offering the VEGA only when the PEGA
+		# console is not chosen keeps the two mutually exclusive, so a
+		# machine compiles in one adapter and pays for one.
+		#
+		if [ "$CONFIG_CONSOLE_AMSTRAD_IGA" != "y" ]; then
+			bool 'Video Seven VEGA VGA adapter'	CONFIG_VIDEO_V7	  n
+		fi
 	fi
 endmenu

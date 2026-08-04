@@ -18,6 +18,7 @@ IA16DIRS =       \
 	advent      \
 	ash         \
 	audio       \
+	v7          \
 	basic       \
 	bc          \
 	busyelks    \

@@ -12,6 +12,10 @@ void INITPROC chr_dev_init(void)
     cgatext_init();
 #endif
 
+#ifdef CONFIG_VIDEO_V7
+    v7_init();
+#endif
+
 #ifdef CONFIG_CHAR_DEV_MEM
     mem_dev_init();
 #endif

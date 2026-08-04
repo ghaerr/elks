@@ -135,6 +135,18 @@ ifdef CONFIG_AUDIO
   OBJS += audio-8254.o
 endif
 
+# The PEGA console and the VEGA are alternatives, so never link both.  The
+# nested test is not redundant: config.in stops offering the VEGA once the
+# PEGA console is picked, but a .config carried over from a VEGA build keeps
+# its old CONFIG_VIDEO_V7=y line, and this Makefile reads .config rather than
+# autoconf.h.  Without this the driver would be linked into a PEGA kernel that
+# never calls it.
+ifdef CONFIG_VIDEO_V7
+ifndef CONFIG_CONSOLE_AMSTRAD_IGA
+  OBJS += video-v7.o
+endif
+endif
+
 ifdef CONFIG_CHAR_DEV_DSP
   OBJS += audio-sb.o audio-mad.o
 endif
