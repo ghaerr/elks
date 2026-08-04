@@ -39,9 +39,9 @@
 #include "eth-msgs.h"
 
 /* runtime configuration set automatically by PCI, unless le0= set in /bootopts */
-#define net_irq     (netif_parms[ETH_LANCE].irq)
-#define net_port    (netif_parms[ETH_LANCE].port)
-#define net_flags   (netif_parms[ETH_LANCE].flags)
+#define net_irq     (le0_conf.irq)
+#define net_port    (le0_conf.port)
+#define net_flags   (le0_conf.flags)
 
 /* I/O port offsets (16-bit WIO mode) */
 #define PCNET_APROM     0       /* MAC address PROM, bytes 0-5 */
@@ -496,7 +496,7 @@ static void pcnet_release(struct inode *inode, struct file *file)
     }
 }
 
-struct file_operations pcnet_fops =
+static struct file_operations pcnet_fops =
 {
     NULL,           /* lseek */
     pcnet_read,
@@ -560,6 +560,7 @@ void INITPROC pcnet_drv_init(void)
     unsigned int u;
     byte_t *mac = netif_stat.mac_addr;
 
+    eths[ETH_LANCE].ops = &pcnet_fops;
     printk("eth: ");
     if (!net_port && pcnet_pci_find() < 0)
         return;

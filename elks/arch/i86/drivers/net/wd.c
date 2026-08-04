@@ -70,10 +70,10 @@
 #include "8390.h"
 
 /* runtime configuration set in /bootopts or defaults in ports.h */
-#define net_irq		(netif_parms[ETH_WD].irq)
-#define net_port	(netif_parms[ETH_WD].port)
-#define net_ram		(netif_parms[ETH_WD].ram)
-#define net_flags	(netif_parms[ETH_WD].flags)
+#define net_irq		(wd0_conf.irq)
+#define net_port	(wd0_conf.port)
+#define net_ram		(wd0_conf.ram)
+#define net_flags	(wd0_conf.flags)
 
 #define WD_STAT_RX	0x0001	/* packet received */
 #define WD_STAT_TX	0x0002	/* packet sent */
@@ -651,7 +651,7 @@ static void wd_release(struct inode *inode, struct file *file)
  * Ethernet operations
  */
 
-struct file_operations wd_fops =
+static struct file_operations wd_fops =
 {
 	NULL,         /* lseek */
 	wd_read,
@@ -734,12 +734,8 @@ void INITPROC wd_drv_init(void)
 	word_t hw_addr[6];
 	byte_t *mac_addr = (byte_t *)&netif_stat.mac_addr;
 
-	if (!net_port) {
-		printk("eth: %s ignored\n", dev_name);
-		return;
-	}
-	printk("eth: %s at 0x%x, irq %d, ram 0x%x",
-		dev_name, net_port, net_irq, net_ram);
+	eths[ETH_WD].ops = &wd_fops;
+	printk("eth: %s at 0x%x, irq %d, ram 0x%x", dev_name, net_port, net_irq, net_ram);
 	if (wd_probe()) {
 		printk(" not found\n");
 	} else {

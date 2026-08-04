@@ -32,9 +32,9 @@
 #define CHK8390_FULL     0  /* perform more robust 8390 chip detect in NIC probe */
 
 /* runtime configuration set in /bootopts or defaults in ports.h */
-#define net_irq     (netif_parms[ETH_NE2K].irq)
-#define NET_PORT    (netif_parms[ETH_NE2K].port)
-#define net_flags   (netif_parms[ETH_NE2K].flags)
+#define net_irq     (ne0_conf.irq)
+#define NET_PORT    (ne0_conf.port)
+#define net_flags   (ne0_conf.flags)
 int net_port;	    /* required for ne2k-asm.S */
 
 
@@ -358,7 +358,7 @@ static void ne2k_release(struct inode *inode, struct file *file)
  * Ethernet operations
  */
 
-struct file_operations ne2k_fops =
+static struct file_operations ne2k_fops =
 {
     NULL,         /* lseek */
     ne2k_read,
@@ -436,6 +436,8 @@ void INITPROC ne2k_drv_init(void)
 				 * If bytes 14 & 15 == 0x57, this is a ne2k clone.
 				 */
 	byte_t *cprom, *mac_addr;
+
+	eths[ETH_NE2K].ops = &ne2k_fops;
 
 	netif_stat.oflow_keep = 0;	/* Default - clear buffer if overflow.
 					 * Testing indicates 0 means faster recovery under heavy

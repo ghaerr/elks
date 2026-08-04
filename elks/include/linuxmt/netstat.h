@@ -1,9 +1,9 @@
 #ifndef __LINUXMT_NETSTAT_H
 #define __LINUXMT_NETSTAT_H
 
-#define MAX_ETHS	5	/* max NICs */
+#define MAX_ETHS	5	/* max # of ethernet device minor numbers (=max NICs) */
 
-/* Enumeration for the netif_parms array */
+/* Indices of the eths[] array, must match minor device numbers */
 #define ETH_NE2K	0	/* Novell NE & compatibles, including 8bit versions */
 #define ETH_WD		1	/* Western Digital 8003 and 8013, compatibles */
 #define ETH_EL3		2	/* 3Com 3C503 Etherlink III */
@@ -14,8 +14,13 @@
 
 #include <arch/ports.h>	/* struct isa_conf */
 
+/* /bootopts-parsed port, irq, ram and flags */
 /* Should put this into the eths struct */
-extern struct isa_conf netif_parms[MAX_ETHS];
+extern struct isa_conf ne0_conf;
+extern struct isa_conf wd0_conf;
+extern struct isa_conf el0_conf;
+extern struct isa_conf ul0_conf;
+extern struct isa_conf le0_conf;
 
 struct eth {
     struct file_operations *ops;
