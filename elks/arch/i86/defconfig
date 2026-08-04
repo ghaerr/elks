@@ -133,6 +133,7 @@ CONFIG_CHAR_DEV_RS=y
 # CONFIG_CHAR_DEV_LP is not set
 CONFIG_CHAR_DEV_MEM=y
 CONFIG_PSEUDO_TTY=y
+# CONFIG_CHAR_DEV_DSP is not set
 
 #
 # Network device drivers

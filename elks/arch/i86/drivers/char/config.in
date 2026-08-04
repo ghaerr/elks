@@ -51,4 +51,8 @@ mainmenu_option next_comment
 	#fi
 
 	bool 'Pseudo tty device driver'		CONFIG_PSEUDO_TTY	  y
+
+	if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
+		bool 'Sound Blaster /dev/dsp driver'	CONFIG_CHAR_DEV_DSP	  n
+	fi
 endmenu

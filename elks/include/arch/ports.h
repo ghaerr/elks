@@ -12,8 +12,10 @@
  *  4   Com1    (/dev/ttyS0) CONFIG_CHAR_DEV_RS     Optional
  *  5*  Com3    (/dev/ttyS2) CONFIG_CHAR_DEV_RS     Optional
  *  5*  HW IDE hard drive    CONFIG_BLK_DEV_HD      Non-working directhd.c
+ *  5*  Sound Blaster (dsp)  CONFIG_CHAR_DEV_DSP    Optional, avoid if a HD is fitted
  *  6   HW floppy drive      CONFIG_BLK_DEV_FD      Optional
  *  7   Unused (LPT, Com4)
+ *  7*  Sound Blaster (dsp)  CONFIG_CHAR_DEV_DSP    Optional, also gets PIC spurious IRQs
  *  8   Unused (RTC)
  *  9*  3C509/EL3 (/dev/3c0) CONFIG_ETH_EL3         Optional
  * 10*  WD 80x3   (/dev/wd0) CONFIG_ETH_WD          Optional
@@ -27,6 +29,9 @@
  * Edit settings below to change port address or IRQ:
  *   Change I/O port and driver IRQ number to match your hardware
  */
+
+#ifndef __ARCH_PORTS_H
+#define __ARCH_PORTS_H
 
 #ifdef CONFIG_ARCH_IBMPC
 /* timer, timer-8254.c*/
@@ -151,6 +156,37 @@
 #define LANCE_IRQ       9
 #define LANCE_FLAGS     0x80
 
+/* /bootopts parms for an ISA card: irq,port,ram,flags.  NICs use all four,
+ * audio cards carry the 8-bit DMA channel in ram, and any driver private
+ * flags are defined by the driver itself.  A port of -1 means the card was
+ * turned off with "off" in /bootopts and the driver is to skip it.
+ */
+
+#ifndef __ASSEMBLER__
+struct isa_conf {
+    int irq;
+    int port;
+    unsigned int ram;
+    unsigned int flags;
+};
+#endif
+
+/* Sound Blaster /dev/dsp, audio-sb.c: override with sb=irq,port,dma,flags in
+ * /bootopts, flag bits are the ISAF_ defines in arch/audio-sb.h
+ */
+#define SB_PORT         0x220
+#define SB_IRQ          5               /* use IRQ 7 with DMA 1 on an XT with a hard disk */
+#define SB_DMA          1               /* 8-bit DMA channel, 1 or 3 */
+#define SB_FLAGS        0
+#define SB_BUFSIZE      4096            /* one playback DMA block, two are buffered */
+
+/* XT MFM hard disk, mfmhd.c: override with mfm=irq,port,,flags in /bootopts,
+ * flag bits are MFMF_ in the driver
+ */
+#define MFM_PORT        0x320           /* W4 jumper selects 0x320 or 0x324 */
+#define MFM_IRQ         5               /* PC/XT fixed disk interrupt */
+#define MFM_FLAGS       0
+
 /* bioshd.c*/
 #define FDC_DOR         0x3F2           /* floppy digital output register*/
 
@@ -163,3 +199,5 @@
 
 /* direct floppy driver, directfd.c */
 #define FLOPPY_IRQ      6
+
+#endif
