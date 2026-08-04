@@ -16,6 +16,10 @@ void INITPROC chr_dev_init(void)
     mem_dev_init();
 #endif
 
+#ifdef CONFIG_CHAR_DEV_DSP
+    dsp_init();
+#endif
+
 #ifdef CONFIG_INET
     tcpdev_init();
 #endif

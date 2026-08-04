@@ -1,32 +1,31 @@
 #ifndef __LINUXMT_NETSTAT_H
 #define __LINUXMT_NETSTAT_H
 
-#define MAX_ETHS	5	/* max NICs */
+#define MAX_ETHS	5	/* max # of ethernet device minor numbers (=max NICs) */
 
-/* Enumeration for the netif_parms array */
-#define ETH_NE2K	0	/* Novell NE & compatibles, including 8bit versions */
-#define ETH_WD		1	/* Western Digital 8003 and 8013, compatibles */
+/* Indices of the eths[] array, must match minor device numbers */
+#define ETH_NE0 	0	/* Novell NE & compatibles, including 8bit versions */
+#define ETH_WD0 	1	/* Western Digital 8003 and 8013, compatibles */
 #define ETH_EL3		2	/* 3Com 3C503 Etherlink III */
-#define ETH_ULTRA	3	/* SMC Ultra/UltraChip 83C790 ISA */
-#define ETH_LANCE	4	/* AMD PCnet-PCI 79C970 and LANCE/79C960/NE1500/NE2100 */
+#define ETH_UL0		3	/* SMC Ultra/UltraChip 83C790 ISA */
+#define ETH_LE0		4	/* AMD PCnet-PCI 79C970 and LANCE/79C960/NE1500/NE2100 */
 
 #ifndef __ASSEMBLER__
 
-/* /bootopts parms for each NIC */
-struct netif_parms {
-	int	irq;
-	int	port;
-	unsigned int ram;
-	unsigned int flags;
-};
+#include <arch/ports.h>	/* struct isa_conf */
 
+/* /bootopts-parsed port, irq, ram and flags */
 /* Should put this into the eths struct */
-extern struct netif_parms netif_parms[MAX_ETHS];
+extern struct isa_conf ne0_conf;
+extern struct isa_conf wd0_conf;
+extern struct isa_conf el3_conf;
+extern struct isa_conf ul0_conf;
+extern struct isa_conf le0_conf;
 
 struct eth {
     struct file_operations *ops;
-    struct netif_stat  *stats;
 };
+extern struct eth eths[];
 
 /* status for each NIC, returned through ioctl */
 struct netif_stat {

@@ -38,7 +38,6 @@ mainmenu_option next_comment
 		define_bool CONFIG_BLK_DEV_MFMHD n
 	fi
 	if [ "$CONFIG_BLK_DEV_MFMHD" == "y" ]; then
-		hex '  MFM controller I/O port' CONFIG_MFMHD_PORT 0x320
 		bool '  Seagate ST11/FileCard controller profile' CONFIG_MFMHD_SEAGATE n
 	fi
 

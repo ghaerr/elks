@@ -25,7 +25,9 @@
 /* current implementation requires no other XMS allocations other than XMS buffers */
 static ramdesc_t     xms_ram_base;      /* ramdisk XMS memory start address */
 static unsigned  int xms_ram_size;      /* ramdisk size in Kbytes */
+#ifdef CONFIG_286_PMODE
 static segment_s *   xms_seg;           /* saved segment_s for PM dealloc */
+#endif
 
 /* initialize SSD device */
 sector_t ssddev_init(void)

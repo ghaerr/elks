@@ -88,6 +88,7 @@ CONSOLE="-serial stdio"
 # HOSTFWD="-net user,hostfwd=tcp:127.0.0.1:8080-10.0.2.15:80"
 
 # Simultaneous telnet, http and ftp forwarding
+# Port 4950 is the audiorcv default, so a host audio sender can reach it
 FWD="\
 hostfwd=tcp:127.0.0.1:8080-10.0.2.15:80,\
 hostfwd=tcp:127.0.0.1:2323-10.0.2.15:23,\
@@ -103,7 +104,8 @@ hostfwd=tcp::8047-:49827,\
 hostfwd=tcp::8048-:49828,\
 hostfwd=tcp::8049-:49829,\
 hostfwd=tcp::49152-:49152,\
-hostfwd=tcp::49153-:49153"
+hostfwd=tcp::49153-:49153,\
+hostfwd=tcp::4950-:4950"
 
 # new style
 #NET="-net nic,model=ne2k_isa -net user,$FWD"

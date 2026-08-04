@@ -164,6 +164,11 @@ endif
 	$(MKDEV) /dev/psaux c 4 32
 
 ##############################################################################
+# Sound Blaster DSP
+
+	$(MKDEV) /dev/dsp	c 5 0 1 1 0666
+
+##############################################################################
 # Parallel devices, as detected by the ROM BIOS.
 
 	$(MKDEV) /dev/lp	c 6 0

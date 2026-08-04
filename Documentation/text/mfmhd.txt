@@ -13,22 +13,29 @@ Hardware resources
 
 One controller with up to two drives is supported.  The controller normally
 occupies I/O ports 0x320 through 0x323; jumper W4 can select 0x324 instead
-(set CONFIG_MFMHD_PORT to match).
+(set mfm= in /bootopts to match).
 
 Command, status, sense, and controller-parameter bytes use programmed I/O.
 Sector payloads use 8237 DMA channel 3, the standard IBM XT hard-disk DMA
 channel.  The driver reserves a fixed 1024-byte buffer below the first 64 KiB
 physical boundary, so an 8237 transfer cannot wrap.  Normal transfers are
 therefore limited to two 512-byte sectors per command.  The controller IRQ is
-kept masked and completion is polled; the driver is fully synchronous.  DMA
-channel 3 must not be shared with another active device.
+kept masked and completion polled unless flag 8 asks for the interrupt; the
+driver is synchronous either way.  DMA channel 3 must not be shared with
+another active device.
 
 Configuration
 -------------
 
 Enable "XT MFM hard drive support" under block device drivers and set the
-controller I/O port and profile.  The controller exposes /dev/mfma and
-/dev/mfmb; partition minors follow each whole-disk minor.
+controller profile.  The controller exposes /dev/mfma and /dev/mfmb;
+partition minors follow each whole-disk minor.
+
+The port, IRQ and flags come from "mfm=irq,port,,flags" in /bootopts, in the
+form used by the ISA network and audio cards; the third field is the card RAM
+and is unused here, but has to be present to reach the flags.  Trailing fields
+may be left out and keep the MFM_ default from elks/include/arch/ports.h, so
+"mfm=5,0x324" only moves the port.  "mfm=off" skips the driver entirely.
 
 Less common tunables are source defines at the top of
 elks/arch/i86/drivers/block/mfmhd.c rather than .config options:
@@ -49,20 +56,23 @@ Booting and recovery
 --------------------
 
 Use "root=mfma" (or mfmb) in /bootopts to mount a whole device, or use the
-normal partition device name for a partition.  The "mfm=" option is a small
-bit mask: bit 0 (mfm=1) selects conservative controller deadlines and bit 1
-(mfm=2) moves sector payloads over programmed I/O instead of DMA channel 3;
-mfm=3 selects both.  PIO is required on machines whose chipset does not
-service DRQ3 like a true IBM XT (the Amstrad PC1512/PC1640 among them); the
-driver also switches itself to PIO after a failed DMA transfer.  Bit 2
-(mfm=4) enables driver request tracing to the console.  Bit 3 (mfm=8)
-selects interrupt-driven command completion on IRQ 5, the XT fixed-disk
-line, instead of polling the status port for the whole transfer.  Bit 4
-(mfm=16) sets the 8237 DMA controller's Extended Write strobe, needed on
-machines such as the Amstrad PC1512/1640 whose DMA write pulse is shorter
-than 8-bit cards expect.  The driver retries failed commands, recalibrates
-the affected unit, and falls back to single-sector transfers after repeated
-errors.
+normal partition device name for a partition.  The flags field of "mfm=" is a
+small bit mask:
+
+  1   conservative controller deadlines
+  2   sector payloads over programmed I/O instead of DMA channel 3
+  4   driver request tracing to the console
+  8   interrupt-driven command completion instead of polling the status
+      port for the whole transfer
+  16  8237 DMA controller Extended Write strobe
+
+PIO is required on machines whose chipset does not service DRQ3 like a true
+IBM XT (the Amstrad PC1512/PC1640 among them); the driver also switches itself
+to PIO after a failed DMA transfer.  Extended Write is needed on machines such
+as the Amstrad PC1512/1640 whose DMA write pulse is shorter than 8-bit cards
+expect.  So "mfm=5,0x320,,18" polls over PIO with the strobe widened.  The
+driver retries failed commands, recalibrates the affected unit, and falls back
+to single-sector transfers after repeated errors.
 
 Maintenance ioctls, including format and long-sector commands, are optional
 and disabled by default.  Formatting destroys data and should be enabled only
