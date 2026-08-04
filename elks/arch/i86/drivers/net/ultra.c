@@ -47,10 +47,10 @@
 #define ULTRA_INT_MAXLOOP       20
 
 /* runtime configuration set in /bootopts or defaults in ports.h */
-#define net_irq		(netif_parms[ETH_ULTRA].irq)
-#define net_port	(netif_parms[ETH_ULTRA].port)
-#define net_ram		(netif_parms[ETH_ULTRA].ram)
-#define net_flags	(netif_parms[ETH_ULTRA].flags)
+#define net_irq		(ul0_conf.irq)
+#define net_port	(ul0_conf.port)
+#define net_ram		(ul0_conf.ram)
+#define net_flags	(ul0_conf.flags)
 
 #define ULTRA_STAT_RX	0x0001	/* packet received */
 #define ULTRA_STAT_TX	0x0002	/* packet sent */
@@ -146,8 +146,6 @@ static void NICPROC ultra_mem_off(void)
 {
 	outb(0, net_port);
 }
-
-extern struct eth eths[];
 
 /*
  * Get MAC
@@ -778,7 +776,7 @@ static void ultra_release(struct inode *inode, struct file *file)
  * Ethernet operations
  */
 
-struct file_operations ultra_fops =
+static struct file_operations ultra_fops =
 {
 	NULL,         /* lseek */
 	ultra_read,
@@ -892,10 +890,7 @@ void INITPROC ultra_drv_init(void)
 	word_t hw_addr[6];
 	byte_t *mac_addr = (byte_t *)&netif_stat.mac_addr;
 
-	if (!net_port) {
-		printk("eth: %s ignored\n", dev_name);
-		return;
-	}
+	eths[ETH_UL0].ops = &ultra_fops;
 	printk("eth: %s at 0x%x, irq %d, ram 0x%x",
 		dev_name, net_port, net_irq, net_ram);
 	if (ultra_probe()) {
@@ -918,7 +913,6 @@ void INITPROC ultra_drv_init(void)
 		printk(", using irq %d ram 0x%x", net_irq, net_ram);
 		if (verbose) printk(", type 0x%x", inb(net_port+0xe)&0xff);
 		printk(", flags 0x%x\n", net_flags);
-		eths[ETH_ULTRA].stats = &netif_stat;
 	}
 }
 

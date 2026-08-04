@@ -70,10 +70,10 @@
 #include "8390.h"
 
 /* runtime configuration set in /bootopts or defaults in ports.h */
-#define net_irq		(netif_parms[ETH_WD].irq)
-#define net_port	(netif_parms[ETH_WD].port)
-#define net_ram		(netif_parms[ETH_WD].ram)
-#define net_flags	(netif_parms[ETH_WD].flags)
+#define net_irq		(wd0_conf.irq)
+#define net_port	(wd0_conf.port)
+#define net_ram		(wd0_conf.ram)
+#define net_flags	(wd0_conf.flags)
 
 #define WD_STAT_RX	0x0001	/* packet received */
 #define WD_STAT_TX	0x0002	/* packet sent */
@@ -145,8 +145,6 @@ static word_t NICPROC wd_tx_stat(void);
 static void wd_int(int irq, struct pt_regs * regs);
 static void NICPROC fmemcpy(void *, seg_t, void *, seg_t, size_t, int);
 static void NICPROC wd_stop(void);
-
-extern struct eth eths[];
 
 /*
  * Get MAC
@@ -651,7 +649,7 @@ static void wd_release(struct inode *inode, struct file *file)
  * Ethernet operations
  */
 
-struct file_operations wd_fops =
+static struct file_operations wd_fops =
 {
 	NULL,         /* lseek */
 	wd_read,
@@ -734,12 +732,8 @@ void INITPROC wd_drv_init(void)
 	word_t hw_addr[6];
 	byte_t *mac_addr = (byte_t *)&netif_stat.mac_addr;
 
-	if (!net_port) {
-		printk("eth: %s ignored\n", dev_name);
-		return;
-	}
-	printk("eth: %s at 0x%x, irq %d, ram 0x%x",
-		dev_name, net_port, net_irq, net_ram);
+	eths[ETH_WD0].ops = &wd_fops;
+	printk("eth: %s at 0x%x, irq %d, ram 0x%x", dev_name, net_port, net_irq, net_ram);
 	if (wd_probe()) {
 		printk(" not found\n");
 	} else {
@@ -753,8 +747,6 @@ void INITPROC wd_drv_init(void)
 		if (verbose) printk(", type 0x%x", inb(net_port+0xe)&0xff);
 		printk(", flags 0x%x\n", net_flags);
 	}
-	eths[ETH_WD].stats = &netif_stat;
-	return;
 }
 
 /* Using this wrapper saves 44 bytes of RAM */

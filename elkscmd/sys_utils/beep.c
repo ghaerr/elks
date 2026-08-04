@@ -11,12 +11,12 @@
  * Happy Birthday example: beep -f1059 -l300 -n -f1059 -l200 -n -f1188 -l500 -n -f1059 -l500 -n -f1413 -l500 -n -f1334 -l950 -n -f1059 -l300 -n -f1059 -l200 -n -f1188 -l500 -n -f1059 -l500 -n -f1587 -l500 -n -f1413 -l950 -n -f1059 -l300 -n -f1059 -l200 -n -f2118 -l500 -n -f1781 -l500 -n -f1413 -l500 -n -f1334 -l500 -n -f1188 -l500 -n -f1887 -l300 -n -f1887 -l200 -n -f1781 -l500 -n -f1413 -l500 -n -f1587 -l500 -n -f1413 -l900
  */
 #include <autoconf.h>           /* for CONFIG_ options */
-#include "stdio.h"
-#include "stdlib.h"
-#include "unistd.h"
-#include "signal.h"
-#include "arch/io.h"
-#include "arch/ports.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <signal.h>
+#include <arch/io.h>
+#include <arch/ports.h>
 
 static void beep(long freq)
 {

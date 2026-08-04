@@ -1,3 +1,6 @@
+/*
+ * Kernel startup and /bootopts configuration
+ */
 #include <linuxmt/config.h>
 #include <linuxmt/init.h>
 #include <linuxmt/mm.h>
@@ -25,8 +28,18 @@
 #include <arch/io.h>
 
 /*
- *  System variable setups
+ * Device driver options settable via /bootopts
  */
+struct isa_conf ne0_conf = { NE2K_IRQ,  NE2K_PORT,  0,      NE2K_FLAGS };
+struct isa_conf wd0_conf = { WD_IRQ,    WD_PORT,    WD_RAM, WD_FLAGS };
+struct isa_conf el3_conf = { EL3_IRQ,   EL3_PORT,   0,      EL3_FLAGS }; /* uses 3c0= */
+struct isa_conf ul0_conf = { ULTRA_IRQ, ULTRA_PORT, ULTRA_RAM, ULTRA_FLAGS };
+struct isa_conf le0_conf = { LANCE_IRQ, LANCE_PORT, 0,      LANCE_FLAGS };
+struct isa_conf mfm_conf = { MFM_IRQ,   MFM_PORT,   0,      MFM_FLAGS };
+struct isa_conf sb_conf =  { SB_IRQ,    SB_PORT,    SB_DMA, SB_FLAGS };
+int iga_opts;                   /* CONFIG_CONSOLE_AMSTRAD_IGA iga= options */
+
+/* internal non-driver declarations */
 #define ENV             1       /* allow environ variables as bootopts*/
 #define DEBUG           0       /* display parsing at boot*/
 
@@ -37,22 +50,6 @@
 
 #define ARRAYLEN(a)     (sizeof(a)/sizeof(a[0]))
 
-/* external driver options */
-struct isa_conf netif_parms[MAX_ETHS] = {
-    /* NOTE:  The order must match the defines in netstat.h:
-     * ETH_NE2K, ETH_WD, ETH_EL3, ETH_ULTRA, ETH_LANCE */
-    { NE2K_IRQ, NE2K_PORT, 0, NE2K_FLAGS },
-    { WD_IRQ, WD_PORT, WD_RAM, WD_FLAGS },
-    { EL3_IRQ, EL3_PORT, 0, EL3_FLAGS },
-    { ULTRA_IRQ, ULTRA_PORT, ULTRA_RAM, ULTRA_FLAGS },
-    { LANCE_IRQ, LANCE_PORT, 0, LANCE_FLAGS },
-};
-struct isa_conf mfm_conf = { MFM_IRQ, MFM_PORT, 0, MFM_FLAGS }; /* XT MFM disk */
-int iga_opts;                   /* CONFIG_CONSOLE_AMSTRAD_IGA iga= options */
-/* the one audio card: ram holds the 8-bit DMA channel, flags are ISAF_ bits */
-struct isa_conf sb_conf = { SB_IRQ, SB_PORT, SB_DMA, SB_FLAGS };
-
-/* internal non-driver globals */
 seg_t kernel_cs, kernel_ds;     /* always segment values even in PM */
 int root_mountflags;
 int tracing;
@@ -510,7 +507,7 @@ static void INITPROC parse_isaopts(char *line, struct isa_conf *parms)
 {
     char *p;
 
-    if (!strcmp(line, "off")) {          /* exact, so "offxxx" is not "off" */
+    if (!strcmp(line, "off")) {
         parms->port = -1;
         return;
     }
@@ -651,23 +648,31 @@ static int INITPROC parse_options(void)
             continue;
         }
         if (!strncmp(line,"ne0=",4)) {
-            parse_isaopts(line+4, &netif_parms[ETH_NE2K]);
+            parse_isaopts(line+4, &ne0_conf);
             continue;
         }
         if (!strncmp(line,"wd0=",4)) {
-            parse_isaopts(line+4, &netif_parms[ETH_WD]);
+            parse_isaopts(line+4, &wd0_conf);
             continue;
         }
         if (!strncmp(line,"3c0=",4)) {
-            parse_isaopts(line+4, &netif_parms[ETH_EL3]);
+            parse_isaopts(line+4, &el3_conf);
             continue;
         }
         if (!strncmp(line,"ul0=",4)) {
-            parse_isaopts(line+4, &netif_parms[ETH_ULTRA]);
+            parse_isaopts(line+4, &ul0_conf);
             continue;
         }
         if (!strncmp(line,"le0=",4)) {
-            parse_isaopts(line+4, &netif_parms[ETH_LANCE]);
+            parse_isaopts(line+4, &le0_conf);
+            continue;
+        }
+        if (!strncmp(line,"mfm=",4)) {
+            parse_isaopts(line+4, &mfm_conf);
+            continue;
+        }
+        if (!strncmp(line,"sb=",3)) {
+            parse_isaopts(line+3, &sb_conf);
             continue;
         }
         if (!strncmp(line,"debug=", 6)) {
@@ -696,16 +701,8 @@ static int INITPROC parse_options(void)
             ata_mode = (int)simple_strtol(line+6, 10);
             continue;
         }
-        if (!strncmp(line,"mfm=",4)) {
-            parse_isaopts(line+4, &mfm_conf);
-            continue;
-        }
         if (!strncmp(line,"iga=",4)) {
             iga_opts = (int)simple_strtol(line+4, 10);
-            continue;
-        }
-        if (!strncmp(line,"sb=",3)) {
-            parse_isaopts(line+3, &sb_conf);
             continue;
         }
         if (!strncmp(line,"heap=",5)) {
@@ -863,5 +860,5 @@ void INITPROC dmesg_init(void)
         q = _MK_FP(dmesg_seg, 0); 
         q->size = (dmesg << 10) - offsetof(struct dmesg_queue, base);
         q->len = q->head = 0;
-    }   
-}      
+    }
+}

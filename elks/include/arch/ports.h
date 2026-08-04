@@ -1,3 +1,6 @@
+#ifndef __ARCH_PORTS_H
+#define __ARCH_PORTS_H
+
 /*
  * ELKS I/O port and IRQ mappings
  *
@@ -29,9 +32,6 @@
  * Edit settings below to change port address or IRQ:
  *   Change I/O port and driver IRQ number to match your hardware
  */
-
-#ifndef __ARCH_PORTS_H
-#define __ARCH_PORTS_H
 
 #ifdef CONFIG_ARCH_IBMPC
 /* timer, timer-8254.c*/

@@ -447,20 +447,6 @@ CONFIG_CHAR_DEV_DSP
   See Documentation/text/soundblaster.txt for the details, including why
   an XT-class machine with a hard disk must use IRQ 7 with DMA 1.
 
-CONFIG_AUDIO_SB_LPTOFF
-  Disable the LPT1 printer interrupt when the sound card is on IRQ 7.
-
-  IRQ 7 belongs to LPT1 as well as the sound card, and the printer port
-  powers up with its interrupt enabled.  A floating or strobed ACK line
-  then fires the sound card's interrupt handler part way through a
-  transfer, which is audible as distortion.  The ELKS printer driver
-  polls and never asks for IRQ 7, so with this set the driver writes
-  LPT1's control register once at boot with the interrupt bit clear.
-
-  Nothing is done unless the card is actually on IRQ 7, so this is
-  harmless on a machine using IRQ 5.  Say N only if something else on
-  the machine drives LPT1 from its interrupt.
-
 Enable meta device driver
 CONFIG_DEV_META
   Include meta driver to provide support for userspace device drivers.
