@@ -112,8 +112,6 @@ static struct {
     addr_t lin;                 /* physical address for the descriptor */
 } txbuf[TX_RING_SIZE];
 
-extern struct eth eths[];
-
 static void pcnet_int(int irq, struct pt_regs *regs);
 
 /* ------------------------------------------------------------------ */
@@ -426,8 +424,7 @@ static int pcnet_ioctl(struct inode *inode, struct file *file,
         err = verified_memcpy_tofs((char *)arg, netif_stat.mac_addr, 6U);
         break;
     case IOCTL_ETH_GETSTAT:
-        err = verified_memcpy_tofs((char *)arg, &netif_stat,
-                                   sizeof(netif_stat));
+        err = verified_memcpy_tofs((char *)arg, &netif_stat, sizeof(netif_stat));
         break;
     default:
         err = -EINVAL;
@@ -560,7 +557,7 @@ void INITPROC pcnet_drv_init(void)
     unsigned int u;
     byte_t *mac = netif_stat.mac_addr;
 
-    eths[ETH_LANCE].ops = &pcnet_fops;
+    eths[ETH_LE0].ops = &pcnet_fops;
     printk("eth: ");
     if (!net_port && pcnet_pci_find() < 0)
         return;
@@ -574,5 +571,4 @@ void INITPROC pcnet_drv_init(void)
     for (u = 1; u < 6; u++)
         printk(":%02X", mac[u]);
     printk(", flags 0x%x\n", net_flags);
-    eths[ETH_LANCE].stats = &netif_stat;
 }

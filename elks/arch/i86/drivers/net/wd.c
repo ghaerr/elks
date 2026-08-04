@@ -146,8 +146,6 @@ static void wd_int(int irq, struct pt_regs * regs);
 static void NICPROC fmemcpy(void *, seg_t, void *, seg_t, size_t, int);
 static void NICPROC wd_stop(void);
 
-extern struct eth eths[];
-
 /*
  * Get MAC
  */
@@ -734,7 +732,7 @@ void INITPROC wd_drv_init(void)
 	word_t hw_addr[6];
 	byte_t *mac_addr = (byte_t *)&netif_stat.mac_addr;
 
-	eths[ETH_WD].ops = &wd_fops;
+	eths[ETH_WD0].ops = &wd_fops;
 	printk("eth: %s at 0x%x, irq %d, ram 0x%x", dev_name, net_port, net_irq, net_ram);
 	if (wd_probe()) {
 		printk(" not found\n");
@@ -749,8 +747,6 @@ void INITPROC wd_drv_init(void)
 		if (verbose) printk(", type 0x%x", inb(net_port+0xe)&0xff);
 		printk(", flags 0x%x\n", net_flags);
 	}
-	eths[ETH_WD].stats = &netif_stat;
-	return;
 }
 
 /* Using this wrapper saves 44 bytes of RAM */

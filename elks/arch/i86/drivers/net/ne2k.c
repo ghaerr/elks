@@ -50,7 +50,6 @@ static byte_t dev_name[] = "ne0";
 extern int ne2k_next_pk;
 extern word_t ne2k_flags;
 extern word_t ne2k_has_data;
-extern struct eth eths[];
 
 /*
  * Read a complete packet from the NIC buffer
@@ -437,7 +436,7 @@ void INITPROC ne2k_drv_init(void)
 				 */
 	byte_t *cprom, *mac_addr;
 
-	eths[ETH_NE2K].ops = &ne2k_fops;
+	eths[ETH_NE0].ops = &ne2k_fops;
 
 	netif_stat.oflow_keep = 0;	/* Default - clear buffer if overflow.
 					 * Testing indicates 0 means faster recovery under heavy
@@ -522,5 +521,4 @@ void INITPROC ne2k_drv_init(void)
 		break;
 	}
 	ne2k_has_data = 0;
-	eths[ETH_NE2K].stats = &netif_stat;
 }

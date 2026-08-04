@@ -107,16 +107,15 @@ void el3_sendpk(int, char *, int);
 void el3_insw(int, char *, int);
 
 extern void el3_mdelay(int);
-extern struct eth eths[];
 
 /* Maximum events (Rx packets, etc.) to handle at each interrupt. */
 static int max_interrupt_work = 5;
 
 /* runtime configuration set in /bootopts or defaults in ports.h */
-#define net_irq     (el0_conf.irq)
-#define net_port    (el0_conf.port)
-#define net_ram     (el0_conf.ram)
-#define net_flags   (el0_conf.flags)
+#define net_irq     (el3_conf.irq)
+#define net_port    (el3_conf.port)
+#define net_ram     (el3_conf.ram)
+#define net_flags   (el3_conf.flags)
 static int ioaddr;	// FIXME  remove later
 static word_t el3_id_port;
 static unsigned char found;
@@ -145,12 +144,11 @@ static struct file_operations el3_fops =
 void INITPROC el3_drv_init(void)
 {
 	eths[ETH_EL3].ops = &el3_fops;
-	ioaddr = net_port;		// temporary
 
+	ioaddr = net_port;		// temporary
 	verbose = (net_flags&ETHF_VERBOSE);
 	if (el3_isa_probe() == 0) {
 		found++;
-		eths[ETH_EL3].stats = &netif_stat;
 		/* The EL3 will grab and hold its default IRQ line
 		 * unless we tell it not to. */
 		EL3WINDOW(0);

@@ -32,7 +32,7 @@
  */
 struct isa_conf ne0_conf = { NE2K_IRQ,  NE2K_PORT,  0,      NE2K_FLAGS };
 struct isa_conf wd0_conf = { WD_IRQ,    WD_PORT,    WD_RAM, WD_FLAGS };
-struct isa_conf el0_conf = { EL3_IRQ,   EL3_PORT,   0,      EL3_FLAGS };
+struct isa_conf el3_conf = { EL3_IRQ,   EL3_PORT,   0,      EL3_FLAGS }; /* uses 3c0= */
 struct isa_conf ul0_conf = { ULTRA_IRQ, ULTRA_PORT, ULTRA_RAM, ULTRA_FLAGS };
 struct isa_conf le0_conf = { LANCE_IRQ, LANCE_PORT, 0,      LANCE_FLAGS };
 struct isa_conf mfm_conf = { MFM_IRQ,   MFM_PORT,   0,      MFM_FLAGS };
@@ -656,7 +656,7 @@ static int INITPROC parse_options(void)
             continue;
         }
         if (!strncmp(line,"3c0=",4)) {
-            parse_isaopts(line+4, &el0_conf);
+            parse_isaopts(line+4, &el3_conf);
             continue;
         }
         if (!strncmp(line,"ul0=",4)) {

@@ -99,7 +99,7 @@ void INITPROC eth_init(void)
     if (wd0_conf.port != -1) wd_drv_init();
 #endif
 #ifdef CONFIG_ETH_EL3
-    if (el0_conf.port != -1) el3_drv_init();
+    if (el3_conf.port != -1) el3_drv_init();
 #endif
 #ifdef CONFIG_ETH_ULTRA
     if (ul0_conf.port != -1) ultra_drv_init();
