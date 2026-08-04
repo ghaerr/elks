@@ -180,6 +180,13 @@ struct isa_conf {
 #define SB_FLAGS        0
 #define SB_BUFSIZE      4096            /* one playback DMA block, two are buffered */
 
+/* XT MFM hard disk, mfmhd.c: override with mfm=irq,port,,flags in /bootopts,
+ * flag bits are MFMF_ in the driver
+ */
+#define MFM_PORT        0x320           /* W4 jumper selects 0x320 or 0x324 */
+#define MFM_IRQ         5               /* PC/XT fixed disk interrupt */
+#define MFM_FLAGS       0
+
 /* bioshd.c*/
 #define FDC_DOR         0x3F2           /* floppy digital output register*/
 
