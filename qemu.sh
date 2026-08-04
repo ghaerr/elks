@@ -12,11 +12,11 @@
 # Select disk image to use
 # MINIX or FAT .config build
 #IMAGE="-fda image/fd2880.img"
-#IMAGE="-fda image/fd1440.img"
+IMAGE="-fda image/fd1440.img"
 #IMAGE="-fda image/fd1200.img"
 #IMAGE="-fda image/fd720.img"
 #IMAGE="-fda image/fd360.img"
-IMAGE="-hda image/hd.img"
+#IMAGE="-hda image/hd.img"
 #IMAGE="-boot order=a -fda image/fd1440.img -drive file=image/hd32-minix.img,format=raw,if=ide"
 
 # FAT package manager build
@@ -88,6 +88,7 @@ CONSOLE="-serial stdio"
 # HOSTFWD="-net user,hostfwd=tcp:127.0.0.1:8080-10.0.2.15:80"
 
 # Simultaneous telnet, http and ftp forwarding
+# Port 4950 is the audiorcv default, so a host audio sender can reach it
 FWD="\
 hostfwd=tcp:127.0.0.1:8080-10.0.2.15:80,\
 hostfwd=tcp:127.0.0.1:2323-10.0.2.15:23,\
@@ -103,7 +104,8 @@ hostfwd=tcp::8047-:49827,\
 hostfwd=tcp::8048-:49828,\
 hostfwd=tcp::8049-:49829,\
 hostfwd=tcp::49152-:49152,\
-hostfwd=tcp::49153-:49153"
+hostfwd=tcp::49153-:49153,\
+hostfwd=tcp::4950-:4950"
 
 # new style
 #NET="-net nic,model=ne2k_isa -net user,$FWD"

@@ -95,11 +95,6 @@
 #define MFM_CTL_PIO_POLLED      MFMHD_CTL_PIO_POLLED
 #define MFM_CTL_VALID_MASK      (MFM_CTL_DRQEN | MFM_CTL_IRQEN)
 
-/* IRQ 5 is the PC/XT fixed-disk interrupt, as used by the WD1002 and clones. */
-#ifndef MFMHD_IRQ
-# define MFMHD_IRQ              5
-#endif
-
 /* Command-status byte bits. */
 #define MFM_CSB_ERROR           0x02
 #define MFM_CSB_LUN             0x20
@@ -128,20 +123,21 @@
 #define MFMHD_CTRL_SEAGATE      1
 
 /*
- * Source-configurable defaults.  Rarely-used tunables live here rather than
- * in .config; edit and rebuild for non-default hardware.  The two genuinely
- * board-level choices remain menuconfig options: CONFIG_MFMHD_PORT and
- * CONFIG_MFMHD_SEAGATE.
+ * Port, IRQ and flags come from mfm= in /bootopts, defaulting to the MFM_
+ * settings in ports.h.  The rarely-used tunables below live here rather than
+ * in .config; edit and rebuild for non-default hardware.  The one genuinely
+ * board-level choice remains a menuconfig option: CONFIG_MFMHD_SEAGATE.
  */
+#define mfm_irq                 (mfm_conf.irq)
+#define mfm_port                (mfm_conf.port)
+#define mfm_flags               (mfm_conf.flags)
 
-/* Controller base I/O port; W4 jumper selects 0x320 (pins 2-3) or 0x324. */
-#ifndef MFMHD_PORT
-# ifdef CONFIG_MFMHD_PORT
-#  define MFMHD_PORT            CONFIG_MFMHD_PORT
-# else
-#  define MFMHD_PORT            0x320
-# endif
-#endif
+/* mfm= flags field, each explained at the variable it sets. */
+#define MFMF_SLOW               1       /* conservative controller deadlines */
+#define MFMF_PIO                2       /* sector payloads over PIO, not DMA */
+#define MFMF_TRACE              4       /* request tracing to the console */
+#define MFMF_IRQ                8       /* interrupt-driven command completion */
+#define MFMF_EXTWRITE           16      /* 8237 Extended Write strobe */
 
 /* Controller command profile: WD1002A-WX1 or Seagate ST11M/R/FileCard. */
 #ifdef CONFIG_MFMHD_SEAGATE
@@ -465,29 +461,29 @@ static int access_count[MFM_MAX_DRIVES];
 static unsigned char mfmhd_control_shadow;
 static int mfmhd_quiet_probe;
 static char *mfmhd_bounce;
-extern int mfm_opts;        /* /bootopts mfm= options */
-int mfmhd_slow_profile;     /* mfm= bit 0 selects slow timing */
+extern struct isa_conf mfm_conf;    /* /bootopts mfm=irq,port,,flags */
+static int mfmhd_slow_profile;      /* MFMF_SLOW selects slow timing */
 /*
- * mfm= bit 1 moves sector payloads over programmed I/O instead of
+ * MFMF_PIO moves sector payloads over programmed I/O instead of
  * 8237 DMA channel 3.  Machines whose chipset does not service DRQ3 the way
  * a true IBM XT does (the Amstrad PC1512/PC1640 among them) need this; the
  * driver also sets it by itself after a failed DMA transfer.
  */
-int mfmhd_pio;
+static int mfmhd_pio;
 /*
- * mfm= bit 2.  Tracing is off unless explicitly requested: these
+ * MFMF_TRACE.  Tracing is off unless explicitly requested: these
  * printks go to the console, which is the only diagnostic channel that
  * survives a hard lock-up (the dmesg ring is lost with the machine, and the
  * one serial port is taken by the SerDrive root disk).  Whatever printed last
  * before a freeze stays on screen.
  */
-int mfmhd_trace;
+static int mfmhd_trace;
 /*
- * mfm= bit 3 requests interrupt-driven command completion on IRQ 5, the XT
- * fixed-disk line.  The controller has always been able to do this - bit 1 of
- * the port+3 mask register (MFM_CTL_IRQEN) asserts IRQ on command completion -
- * but the driver only ever wrote MFM_CTL_PIO_POLLED and span on the status
- * port instead, which burns the CPU for the whole of every transfer.
+ * MFMF_IRQ requests interrupt-driven command completion on mfm_conf.irq, the
+ * XT fixed-disk line.  The controller has always been able to do this - bit 1
+ * of the port+3 mask register (MFM_CTL_IRQEN) asserts IRQ on command
+ * completion - but the driver only ever wrote MFM_CTL_PIO_POLLED and span on
+ * the status port instead, which burns the CPU for the whole of every transfer.
  *
  * It is opt-in rather than default because this is the driver the system boots
  * from: if the board does not actually drive the line, or the line is shared,
@@ -495,9 +491,9 @@ int mfmhd_trace;
  * the polled behaviour exactly.  The poll loop is retained underneath as a
  * backstop, so a missing interrupt costs latency rather than a hang.
  */
-int mfmhd_irq_mode;
+static int mfmhd_irq_mode;
 /*
- * mfm= bit 4 sets the 8237's Extended Write mode (command register bit 5).
+ * MFMF_EXTWRITE sets the 8237's Extended Write mode (command register bit 5).
  * The command register bit picks the write-strobe timing: 0 is Late Write,
  * 1 is Extended Write, which asserts the strobe a clock earlier and so holds
  * it for longer.  It exists for peripherals that cannot meet the short pulse.
@@ -515,7 +511,7 @@ int mfmhd_irq_mode;
  * Off by default: machines with standard timing have no reason to alter a
  * working controller, and the setting is harmless where enabled unnecessarily.
  */
-int mfmhd_extwrite;
+static int mfmhd_extwrite;
 static struct wait_queue mfmhd_wait;
 static volatile unsigned char mfmhd_irq_seen;
 static unsigned char mfmhd_irq_armed;
@@ -781,14 +777,14 @@ mfmhd_init_ports(void)
      * WD1002 BIOS ROMs may leave the adapter in interrupt/DMA mode; put the
      * controller into the polled-PIO state before the first command.
      */
-    mfmhd_write_control(MFMHD_PORT, MFM_CTL_PIO_POLLED);
+    mfmhd_write_control(mfm_port, MFM_CTL_PIO_POLLED);
 
     if (mfmhd_controller_is_seagate())
         printk("mfmhd: Seagate ST11M/R/FileCard profile, port 0x%x\n",
-            MFMHD_PORT);
+            mfm_port);
     else
         printk("mfmhd: WD1002A-WX1 profile, BIOS table=%s, port 0x%x\n",
-            mfmhd_bios_name(), MFMHD_PORT);
+            mfmhd_bios_name(), mfm_port);
     if (mfmhd_slow_profile)
         printk("mfmhd: slow timing profile enabled\n");
 }
@@ -2013,7 +2009,7 @@ mfmhd_rw_chunk(int drive, sector_t lba, unsigned int sectors, char *buffer,
                     'a' + (unsigned char)drive, retry,
                     write ? "write" : "read", (unsigned long)lba, rw.unit,
                     sectors);
-            mfmhd_recalibrate_unit(MFMHD_PORT, drive, rw.unit);
+            mfmhd_recalibrate_unit(mfm_port, drive, rw.unit);
         }
 
         mfmhd_build_command(mfmhd_cmdblk,
@@ -2022,7 +2018,7 @@ mfmhd_rw_chunk(int drive, sector_t lba, unsigned int sectors, char *buffer,
             (unsigned char)rw.sector, (unsigned char)sectors,
             mfmhd_drive_cmd_control(drive));
 
-        if (!mfmhd_cmd(MFMHD_PORT, mfmhd_cmdblk,
+        if (!mfmhd_cmd(mfm_port, mfmhd_cmdblk,
                 write ? NULL : (unsigned char *)buffer,
                 write ? 0 : sectors * MFM_SECTOR_BYTES,
                 write ? (unsigned char *)buffer : NULL,
@@ -2066,21 +2062,21 @@ mfmhd_probe_drive(int drive)
     int fat_vbr;
     char *secbuf2;
 
-    mfmhd_debug_set(50, drive, MFMHD_PORT, 0);
-    if (mfmhd_probe_controller(MFMHD_PORT, drive)) {
-        mfmhd_debug_set(51, drive, MFMHD_PORT, -1);
+    mfmhd_debug_set(50, drive, mfm_port, 0);
+    if (mfmhd_probe_controller(mfm_port, drive)) {
+        mfmhd_debug_set(51, drive, mfm_port, -1);
         return -1;
     }
 
     if (!mfmhd_set_geometry_from_user(drive)) {
         if (mfmhd_controller_is_seagate()) {
-            if (!mfmhd_set_geometry_from_seagate(drive, MFMHD_PORT) &&
+            if (!mfmhd_set_geometry_from_seagate(drive, mfm_port) &&
                     !mfmhd_set_geometry_from_filecard20(drive)) {
                 printk("mfmhd: /dev/mfm%c has no Seagate geometry\n",
                     'a' + (unsigned char)drive);
             }
         } else {
-            mfmhd_set_wd1002_geometry_by_jumper(drive, MFMHD_PORT);
+            mfmhd_set_wd1002_geometry_by_jumper(drive, mfm_port);
         }
     }
 
@@ -2088,12 +2084,12 @@ mfmhd_probe_drive(int drive)
             drive_info[drive].heads, drive_info[drive].sectors, 0)) {
         printk("mfmhd: /dev/mfm%c has unusable geometry\n",
             'a' + (unsigned char)drive);
-        mfmhd_debug_set(52, drive, MFMHD_PORT, -1);
+        mfmhd_debug_set(52, drive, mfm_port, -1);
         return -1;
     }
 
     /* Read sector 0 before any WD sector-0 geometry fallback. */
-    mfmhd_recalibrate_drive(MFMHD_PORT, drive);
+    mfmhd_recalibrate_drive(mfm_port, drive);
 
     secbuf = (char *)heap_alloc(MFM_SECTOR_BYTES, HEAP_TAG_DRVR);
     if (!secbuf) {
@@ -2115,13 +2111,13 @@ mfmhd_probe_drive(int drive)
         }
         if (mfmhd_probe_expired())
             break;
-        mfmhd_recalibrate_drive(MFMHD_PORT, drive);
+        mfmhd_recalibrate_drive(mfm_port, drive);
     }
 
     if (!read_ok) {
         printk("mfmhd: /dev/mfm%c unable to read sector 0\n",
             'a' + (unsigned char)drive);
-        mfmhd_debug_set(54, drive, MFMHD_PORT, -1);
+        mfmhd_debug_set(54, drive, mfm_port, -1);
         heap_free(secbuf2);
         heap_free(secbuf);
         return -1;
@@ -2160,10 +2156,10 @@ mfmhd_probe_drive(int drive)
     }
 
     if (!mfmhd_controller_is_seagate()) {
-        if (mfmhd_set_drive_parameters(MFMHD_PORT, drive)) {
+        if (mfmhd_set_drive_parameters(mfm_port, drive)) {
             printk("mfmhd: /dev/mfm%c unable to program WD1002 parameters\n",
                 'a' + (unsigned char)drive);
-            mfmhd_debug_set(56, drive, MFMHD_PORT, -1);
+            mfmhd_debug_set(56, drive, mfm_port, -1);
             heap_free(secbuf2);
             heap_free(secbuf);
             return -1;
@@ -2171,12 +2167,12 @@ mfmhd_probe_drive(int drive)
         printk("mfmhd: /dev/mfm%c programmed WD1002 parameters %u/%u/%u\n",
             'a' + (unsigned char)drive, drive_info[drive].cylinders,
             drive_info[drive].heads, drive_info[drive].sectors);
-        mfmhd_recalibrate_drive(MFMHD_PORT, drive);
+        mfmhd_recalibrate_drive(mfm_port, drive);
     }
 
     heap_free(secbuf2);
     heap_free(secbuf);
-    mfmhd_debug_set(55, drive, MFMHD_PORT, 0);
+    mfmhd_debug_set(55, drive, mfm_port, 0);
     return 0;
 }
 
@@ -2188,16 +2184,17 @@ struct gendisk * INITPROC mfmhd_init(void)
     int hdmax;
     sector_t sectors;
 
-    if (dev_disabled(DEV_MFMA)) {
+    /* mfm=off in /bootopts leaves the port at -1 */
+    if (mfm_port < 0 || dev_disabled(DEV_MFMA)) {
         printk("mfmhd: disabled\n");
         return NULL;
     }
 
-    mfmhd_slow_profile = mfm_opts & 1;  /* bit 0: slow controller timing */
-    mfmhd_pio = (mfm_opts >> 1) & 1;    /* bit 1: PIO sector transfers */
-    mfmhd_trace = (mfm_opts >> 2) & 1;  /* bit 2: driver request tracing */
-    mfmhd_irq_mode = (mfm_opts >> 3) & 1; /* bit 3: interrupt-driven completion */
-    mfmhd_extwrite = (mfm_opts >> 4) & 1; /* bit 4: 8237 Extended Write strobe */
+    mfmhd_slow_profile = mfm_flags & MFMF_SLOW;
+    mfmhd_pio = mfm_flags & MFMF_PIO;
+    mfmhd_trace = mfm_flags & MFMF_TRACE;
+    mfmhd_irq_mode = mfm_flags & MFMF_IRQ;
+    mfmhd_extwrite = mfm_flags & MFMF_EXTWRITE;
 
     /* Set once here, before any transfer is programmed. */
     if (mfmhd_extwrite) {
@@ -2206,7 +2203,7 @@ struct gendisk * INITPROC mfmhd_init(void)
     }
 
     mfmhd_init_ports();
-    mfmhd_debug_set(10, -1, MFMHD_PORT, 0);
+    mfmhd_debug_set(10, -1, mfm_port, 0);
     memset(&mfmhd_part[0], 0xff, sizeof(mfmhd_part));
     for (i = 0; i < (MFM_MAX_DRIVES << MFM_MINOR_SHIFT); i++) {
         mfmhd_part[i].start_sect = NOPART;
@@ -2252,7 +2249,7 @@ struct gendisk * INITPROC mfmhd_init(void)
 
     if (!hdcnt) {
         printk("mfmhd: no XT MFM drives found\n");
-        mfmhd_debug_set(90, -1, MFMHD_PORT, -1);
+        mfmhd_debug_set(90, -1, mfm_port, -1);
         return NULL;
     }
 
@@ -2275,17 +2272,17 @@ struct gendisk * INITPROC mfmhd_init(void)
     mfmhd_initialized = 1;
 
     if (mfmhd_irq_mode) {
-        if (request_irq(MFMHD_IRQ, mfmhd_interrupt, INT_GENERIC))
-            printk("mfmhd: irq %d busy, staying polled\n", MFMHD_IRQ);
+        if (request_irq(mfm_irq, mfmhd_interrupt, INT_GENERIC))
+            printk("mfmhd: irq %d busy, staying polled\n", mfm_irq);
         else
             mfmhd_irq_armed = 1;
     }
 
-    printk("mfmhd: found %d hard drive%c at port 0x%x, %s %s%s\n",
-        hdcnt, hdcnt == 1 ? ' ' : 's', MFMHD_PORT,
-        mfmhd_irq_armed ? "irq 5" : "polled",
+    printk("mfmhd: found %d hard drive%c at port 0x%x irq %d, %s %s%s\n",
+        hdcnt, hdcnt == 1 ? ' ' : 's', mfm_port, mfm_irq,
+        mfmhd_irq_armed ? "interrupt" : "polled",
         mfmhd_pio ? "pio" : "dma=3", mfmhd_extwrite ? " xw" : "");
-    mfmhd_debug_set(91, -1, MFMHD_PORT, 0);
+    mfmhd_debug_set(91, -1, mfm_port, 0);
     return &mfmhd_gendisk;
 }
 

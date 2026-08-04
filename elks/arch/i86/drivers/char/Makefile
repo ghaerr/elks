@@ -135,6 +135,10 @@ ifdef CONFIG_AUDIO
   OBJS += audio-8254.o
 endif
 
+ifdef CONFIG_CHAR_DEV_DSP
+  OBJS += audio-sb.o audio-mad.o
+endif
+
 ifdef CONFIG_ARCH_IBMPC
   OBJS += mouse-ps2.o
 endif

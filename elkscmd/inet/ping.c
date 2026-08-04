@@ -116,7 +116,7 @@ static int ping_via_ktcp(ipaddr_t target, char *hostname, int count, int interva
 				if (reply.status == ICMP_ECHO_REPLY_SUCCESS) {
 					unsigned long now = get_ms();
 					recv++;
-					rtt = now - ntohl(reply.timestamp);
+					rtt = now - tstart;     /* ignore received timestamp */
 					if (rtt < min_rtt) min_rtt = rtt;
 					if (rtt > max_rtt) max_rtt = rtt;
 					total_rtt += rtt;

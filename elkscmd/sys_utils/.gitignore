@@ -11,6 +11,7 @@ init
 kill
 knl
 login
+logout
 makeboot
 man
 meminfo
