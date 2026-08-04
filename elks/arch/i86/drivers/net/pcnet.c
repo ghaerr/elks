@@ -39,9 +39,9 @@
 #include "eth-msgs.h"
 
 /* runtime configuration set automatically by PCI, unless le0= set in /bootopts */
-#define net_irq     (netif_parms[ETH_LANCE].irq)
-#define net_port    (netif_parms[ETH_LANCE].port)
-#define net_flags   (netif_parms[ETH_LANCE].flags)
+#define net_irq     (le0_conf.irq)
+#define net_port    (le0_conf.port)
+#define net_flags   (le0_conf.flags)
 
 /* I/O port offsets (16-bit WIO mode) */
 #define PCNET_APROM     0       /* MAC address PROM, bytes 0-5 */
@@ -111,8 +111,6 @@ static struct {
     segment_s *seg;
     addr_t lin;                 /* physical address for the descriptor */
 } txbuf[TX_RING_SIZE];
-
-extern struct eth eths[];
 
 static void pcnet_int(int irq, struct pt_regs *regs);
 
@@ -426,8 +424,7 @@ static int pcnet_ioctl(struct inode *inode, struct file *file,
         err = verified_memcpy_tofs((char *)arg, netif_stat.mac_addr, 6U);
         break;
     case IOCTL_ETH_GETSTAT:
-        err = verified_memcpy_tofs((char *)arg, &netif_stat,
-                                   sizeof(netif_stat));
+        err = verified_memcpy_tofs((char *)arg, &netif_stat, sizeof(netif_stat));
         break;
     default:
         err = -EINVAL;
@@ -496,7 +493,7 @@ static void pcnet_release(struct inode *inode, struct file *file)
     }
 }
 
-struct file_operations pcnet_fops =
+static struct file_operations pcnet_fops =
 {
     NULL,           /* lseek */
     pcnet_read,
@@ -560,6 +557,7 @@ void INITPROC pcnet_drv_init(void)
     unsigned int u;
     byte_t *mac = netif_stat.mac_addr;
 
+    eths[ETH_LE0].ops = &pcnet_fops;
     printk("eth: ");
     if (!net_port && pcnet_pci_find() < 0)
         return;
@@ -573,5 +571,4 @@ void INITPROC pcnet_drv_init(void)
     for (u = 1; u < 6; u++)
         printk(":%02X", mac[u]);
     printk(", flags 0x%x\n", net_flags);
-    eths[ETH_LANCE].stats = &netif_stat;
 }

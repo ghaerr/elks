@@ -166,9 +166,7 @@ endif
 ##############################################################################
 # Sound Blaster DSP
 
-ifdef CONFIG_CHAR_DEV_DSP
 	$(MKDEV) /dev/dsp	c 5 0 1 1 0666
-endif
 
 ##############################################################################
 # Parallel devices, as detected by the ROM BIOS.
