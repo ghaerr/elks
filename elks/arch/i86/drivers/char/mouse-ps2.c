@@ -17,8 +17,6 @@
 #include <arch/io.h>
 #include <arch/irq.h>
 
-#ifdef CONFIG_MOUSE_PS2
-
 #define IRQ_MOUSE       12          /* mouse interrupt, may conflict with networking */
 #define MAX_RETRIES     60
 
@@ -177,4 +175,3 @@ struct tty_ops ps2_mouse_ops = {
     ps2_ioctl,
     NULL
 };
-#endif

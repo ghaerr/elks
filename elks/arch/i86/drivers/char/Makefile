@@ -35,63 +35,39 @@ include $(BASEDIR)/Makefile-rules
 #########################################################################
 # Objects to be compiled.
 
-OBJS  = init.o mem.o ntty.o tcpdev.o pty.o lp.o
+OBJS  = init.o ntty.o
+OBJS += pty.o                               # CONFIG_PSEUDO_TTY
+OBJS += mem.o                               # CONFIG_CHAR_DEV_MEM
+OBJS += lp.o                                # CONFIG_CHAR_DEV_LP
+OBJS += eth.o                               # CONFIG_ETH
+OBJS += tcpdev.o                            # CONFIG_INET
+OBJS += audio-sb.o audio-mad.o              # CONFIG_AUDIO_SB
+OBJS += mouse-ps2.o                         # CONFIG_MOUSE_PS2
 
-ifeq ($(CONFIG_ETH), y)
-    OBJS += eth.o
-endif
-
-ifeq ($(CONFIG_ARCH_IBMPC), y)
-	CONIO = bios
-	SERIAL = 8250
-endif
-
-ifeq ($(CONFIG_ARCH_PC98), y)
-	SERIAL = pc98
-endif
-
-ifeq ($(CONFIG_ARCH_8018X), y)
-	CONIO = 8018x
-	SERIAL = template
-endif
-
-ifeq ($(CONFIG_ARCH_NECV25), y)
-	CONIO = necv25
-	SERIAL = template
-endif
-
-ifeq ($(CONFIG_ARCH_SWAN), y)
-	CONIO = swan
-	SERIAL = swan
-endif
-
-ifeq ($(CONFIG_ARCH_SOLO86), y)
-	CONIO = solo86
-    SERIAL = template
-endif
-
-ifdef CONFIG_CONSOLE_BIOS
-OBJS += console-bios.o console-bios-asm.o bell-8254.o
-endif
-
-ifdef CONFIG_CONSOLE_8018X
-OBJS += console-serial-8018x.o
-endif
-
-ifdef CONFIG_CONSOLE_NECV25
-OBJS += console-serial-necv25.o serfast.o
-endif
-
+#
+# Platform-dependent consoles
+#
 ifdef CONFIG_ARCH_IBMPC
   ifdef CONFIG_CONSOLE_DIRECT
     OBJS += console-direct.o bell-8254.o
   endif
+  ifdef CONFIG_CONSOLE_BIOS
+    OBJS += console-bios.o console-bios-asm.o bell-8254.o
+  endif
   ifdef CONFIG_CONSOLE_AMSTRAD_IGA
     OBJS += console-direct-amstrad.o bell-8254.o
   endif
-  ifdef CONFIG_CONSOLE_DUAL
-    OBJS += crtc-6845.o
+  ifdef CONFIG_CONSOLE_HEADLESS
+    OBJS += console-headless.o
   endif
+  ifdef CONFIG_KEYBOARD_SCANCODE
+    OBJS += kbd-scancode.o
+  else
+    OBJS += kbd-poll.o conio-bios.o
+  endif
+OBJS += crtc-6845.o                         # CONFIG_CONSOLE_DUAL
+OBJS += audio-8254.o                        # CONFIG_AUDIO
+OBJS += serial-8250.o serfast.o             # CONFIG_CHAR_DEV_RS
 endif
 
 ifdef CONFIG_ARCH_PC98
@@ -99,52 +75,28 @@ ifdef CONFIG_ARCH_PC98
     OBJS += console-direct-pc98.o
   endif
 OBJS += conio-pc98.o conio-pc98-asm.o kbd-poll-pc98.o
+OBJS += serial-pc98.o
+endif
+
+ifdef CONFIG_ARCH_SOLO86
+OBJS += console-headless.o conio-solo86.o kbd-poll.o
+endif
+
+ifdef CONFIG_CONSOLE_8018X
+OBJS += console-serial-8018x.o conio-8018x.o
+endif
+
+ifdef CONFIG_CONSOLE_NECV25
+OBJS += conio-necv25.o
+OBJS += console-serial-necv25.o serfast.o
 endif
 
 ifdef CONFIG_ARCH_SWAN
   ifdef CONFIG_CONSOLE_DIRECT
     OBJS += console-direct-swan.o console-font-4x8-swan.o console-font-8x8-swan.o
   endif
-OBJS += kbd-poll.o conio-$(CONIO).o bell-swan.o
-endif
-
-ifdef CONFIG_ARCH_SOLO86
-OBJS += kbd-poll.o conio-$(CONIO).o
-endif
-
-ifdef CONFIG_ARCH_IBMPC
-  ifdef CONFIG_KEYBOARD_SCANCODE
-    OBJS += kbd-scancode.o
-  else
-    OBJS += kbd-poll.o conio-$(CONIO).o
-  endif
-endif
-
-ifdef CONFIG_CONSOLE_HEADLESS
-OBJS += console-headless.o
-endif
-
-ifdef CONFIG_CHAR_DEV_RS
-	OBJS += serial-$(SERIAL).o
-	ifdef CONFIG_ARCH_IBMPC
-		OBJS += serfast.o
-	endif
-endif
-
-ifdef CONFIG_AUDIO
-  OBJS += audio-8254.o
-endif
-
-ifdef CONFIG_CHAR_DEV_DSP
-  OBJS += audio-sb.o audio-mad.o
-endif
-
-ifdef CONFIG_ARCH_IBMPC
-  OBJS += mouse-ps2.o
-endif
-
-ifdef CONFIG_CHAR_DEV_CGATEXT
-	OBJS += cgatext.o
+OBJS += kbd-poll.o conio-swan.o bell-swan.o
+OBJS += serial-swan.o
 endif
 
 #########################################################################

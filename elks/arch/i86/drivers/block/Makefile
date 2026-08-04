@@ -33,69 +33,42 @@ include $(BASEDIR)/Makefile-rules
 #########################################################################
 # Objects to be compiled.
 
-OBJS  = init.o genhd.o ll_rw_blk.o
+OBJS  = init.o ll_rw_blk.o genhd.o hdinfo.o
+OBJS += bioshd.o bios.o             # CONFIG_BLK_DEV_BFD / CONFIG_BLK_DEV_BHD
+OBJS += ata.o ata-cf.o              # CONFIG_BLK_DEV_ATA_CF
+OBJS += rd.o                        # CONFIG_BLK_DEV_RAM
+OBJS += idequery.o                  # CONFIG_IDE_PROBE
+OBJS += romflash.o                  # CONFIG_ROMFS_FS
 
-# BIOS floppy and/or hard drive support
-ifeq ($(CONFIG_BLK_DEV_BFD), y)
-OBJS += bioshd.o bios.o
+ifdef CONFIG_ASYNCIO
+OBJS += directfd.o                  # CONFIG_BLK_DEV_FD
 endif
 
-ifeq ($(CONFIG_BLK_DEV_BHD), y)
-  ifneq ($(CONFIG_BLK_DEV_BFD), y)
-    OBJS += bioshd.o bios.o
-  endif
-  ifeq ($(CONFIG_IDE_PROBE), y)
-    OBJS += idequery.o
-  endif
+ifdef CONFIG_ARCH_IBMPC
+OBJS += mfmhd.o                     # CONFIG_BLK_DEV_MFMHD
 endif
 
-# direct fd support
-ifeq ($(CONFIG_BLK_DEV_FD), y)
-OBJS += directfd.o
-endif
-
-ifeq ($(CONFIG_BLK_DEV_RAM), y)
-OBJS += rd.o
-endif
-
-ifeq ($(CONFIG_ROMFS_FS), y)
-OBJS += romflash.o
-endif
-
-ifeq ($(CONFIG_FS_XMS), y)
-  ifeq ($(CONFIG_FS_XMS_RAMDISK), y)
+ifdef CONFIG_FS_XMS
+  ifdef CONFIG_FS_XMS_RAMDISK
     OBJS += ssd.o ssd-xms.o
   endif
 endif
 
-ifeq ($(CONFIG_BLK_DEV_SSD_TEST), y)
+ifdef CONFIG_BLK_DEV_SSD_TEST
 OBJS += ssd.o ssd-test.o
 endif
 
-ifeq ($(CONFIG_BLK_DEV_SSD_SD), y)
-  ifeq ($(CONFIG_ARCH_NECV25), y)
-    ifeq ($(CONFIG_HW_SPI), y)
+ifdef CONFIG_BLK_DEV_SSD_SD
+  ifdef CONFIG_ARCH_NECV25
+    ifdef CONFIG_HW_SPI
       OBJS += ssd.o ssd-sd.o spi-hw-necv25.o
     else
       OBJS += ssd.o ssd-sd.o spi-necv25.o
     endif
   endif
-  ifeq ($(CONFIG_ARCH_8018X), y)
+  ifdef CONFIG_ARCH_8018X
     OBJS += ssd.o ssd-sd.o spi-8018x.o
   endif
-endif
-
-ifeq ($(CONFIG_BLK_DEV_ATA_CF), y)
-OBJS += ata.o ata-cf.o
-endif
-
-ifeq ($(CONFIG_BLK_DEV_MFMHD), y)
-OBJS += mfmhd.o
-endif
-
-# experimental (and not working) direct hd support
-ifeq ($(CONFIG_BLK_DEV_HD), y)
-OBJS += directhd.o
 endif
 
 #########################################################################
