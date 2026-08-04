@@ -1,0 +1,63 @@
+.TH sudo 1
+.SH NAME
+sudo \- execute a command as superuser
+.SH SYNOPSIS
+.B sudo
+.I command
+.RI [ args " ...]"
+.SH DESCRIPTION
+.B Sudo
+executes
+.I command
+with the privileges of the superuser (root).  It is intended for users who
+are permitted to administer the system but do not run every session as
+root.
+.PP
+The caller must be a member of the
+.B wheel
+group, as listed in
+.BR /etc/group .
+If the caller is already root,
+.B sudo
+executes
+.I command
+directly without further checks.
+.PP
+If the root account has no password, privileges are assumed immediately.
+Otherwise
+.B sudo
+prompts for the root password and verifies it against the hash stored in
+.BR /etc/passwd .
+The command is then executed with a real and effective user id of zero.
+.SH OPTIONS
+.TP 15
+.BI command " " [ args "...]"
+The command to execute, with optional arguments.
+.SH EXIT STATUS
+.TP
+.I 0
+.I Command
+executed successfully.
+.TP
+.I 1
+An error occurred: usage error, the caller is not in the
+.B wheel
+group, no root entry exists in
+.BR /etc/passwd ,
+an incorrect password was supplied, or
+.I command
+could not be found.
+.SH FILES
+.PD 0
+.TP
+.B /etc/passwd
+User database, consulted for the root entry and password hash.
+.TP
+.B /etc/group
+Group database, consulted for
+.B wheel
+group membership.
+.PD
+.SH "SEE ALSO"
+.BR passwd (1),
+.BR login (1).
