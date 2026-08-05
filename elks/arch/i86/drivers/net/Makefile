@@ -25,7 +25,7 @@ NOINDENT	=
 include $(BASEDIR)/Makefile-rules
 
 #########################################################################
-# Specific rules.
+# Objects to be compiled.
 
 OBJS =
 OBJS += ne2k-asm.o ne2k.o           # CONFIG_ETH_NE2K

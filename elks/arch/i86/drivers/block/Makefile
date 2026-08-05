@@ -48,6 +48,9 @@ ifdef CONFIG_ARCH_IBMPC
 OBJS += mfmhd.o                     # CONFIG_BLK_DEV_MFMHD
 endif
 
+#
+# SSD driver
+#
 ifdef CONFIG_FS_XMS
   ifdef CONFIG_FS_XMS_RAMDISK
     OBJS += ssd.o ssd-xms.o

@@ -45,7 +45,7 @@ OBJS += audio-sb.o audio-mad.o              # CONFIG_AUDIO_SB
 OBJS += mouse-ps2.o                         # CONFIG_MOUSE_PS2
 
 #
-# Platform-dependent consoles
+# Platform-dependent console, keyboard and serial
 #
 ifdef CONFIG_ARCH_IBMPC
   ifdef CONFIG_CONSOLE_DIRECT
