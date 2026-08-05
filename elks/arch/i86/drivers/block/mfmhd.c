@@ -61,8 +61,7 @@
 #include <arch/segment.h>
 #include <arch/system.h>
 #include <arch/divmod.h>
-
-#include "mfmhd.h"
+#include <arch/mfmhd.h>
 
 #define MAJOR_NR        MFMHD_MAJOR
 #include "blk.h"
@@ -75,7 +74,7 @@
 #define MFM_HD_JUMPER           2
 #define MFM_HD_CONTROL          3
 
-/* Hardware status register bits, mirrored in mfmhd.h for user tools. */
+/* Hardware status register bits, mirrored in arch/mfmhd.h for user tools. */
 #define MFM_STAT_READY          MFMHD_STAT_READY
 #define MFM_STAT_INPUT          MFMHD_STAT_INPUT
 #define MFM_STAT_COMMAND        MFMHD_STAT_COMMAND
@@ -103,6 +102,7 @@
 #define MFM_CMD_TEST_DRIVE_READY        MFMHD_CMD_TEST_DRIVE_READY
 #define MFM_CMD_RECALIBRATE             MFMHD_CMD_RECALIBRATE
 #define MFM_CMD_SENSE                   MFMHD_CMD_READ_STATUS
+#define MFM_CMD_SEEK                    MFMHD_CMD_SEEK
 #define MFM_CMD_READ_SECTORS            MFMHD_CMD_READ_SECTORS
 #define MFM_CMD_WRITE_SECTORS           MFMHD_CMD_WRITE_SECTORS
 #define MFM_CMD_INIT_DRIVE_PARAMETERS   MFMHD_CMD_INIT_DRIVE_PARAMETERS
@@ -1112,6 +1112,7 @@ mfmhd_command_wait_ticks(unsigned char op)
 {
     switch (op) {
     case MFM_CMD_RECALIBRATE:
+    case MFM_CMD_SEEK:              /* a park is a full stroke, 3ms a step */
     case MFM_CMD_READ_SECTORS:
     case MFM_CMD_WRITE_SECTORS:
     case MFM_CMD_INIT_DRIVE_PARAMETERS:
@@ -1699,6 +1700,15 @@ mfmhd_recalibrate_drive(unsigned int port, int drive)
     mfmhd_recalibrate_unit(port, drive, (unsigned int)drive & 1U);
 }
 
+static void
+mfmhd_seek_unit(unsigned int port, int drive, unsigned int unit,
+    unsigned short cylinder)
+{
+    mfmhd_build_command(mfmhd_cmdblk, MFM_CMD_SEEK, (unsigned char)unit,
+        0, cylinder, 0, 0, mfmhd_drive_cmd_control(drive));
+    (void)mfmhd_cmd(port, mfmhd_cmdblk, NULL, 0, NULL, 0);
+}
+
 static int
 mfmhd_reset_controller(unsigned int port)
 {
@@ -2284,6 +2294,42 @@ struct gendisk * INITPROC mfmhd_init(void)
         mfmhd_pio ? "pio" : "dma=3", mfmhd_extwrite ? " xw" : "");
     mfmhd_debug_set(91, -1, mfm_port, 0);
     return &mfmhd_gendisk;
+}
+
+/*
+ * Park heads before the machine stops.  The last cylinder is the landing
+ * zone on an ST-506 drive, which is where an unpowered head should settle.
+ * This goes out as the controller's own SEEK, so it works with the option
+ * ROM strapped off, which is the case CONFIG_BLK_DEV_MFMHD exists for, and
+ * leaves the driver free of BIOS calls for the protected mode kernel.
+ * Errors are ignored, there being nothing left to retry against.
+ */
+void mfmhd_park_all(void)
+{
+    int drive;
+
+    if (!mfmhd_initialized)
+        return;
+
+    for (drive = 0; drive < MFMHD_DRIVES; drive++) {
+        if (!drive_info[drive].heads || !drive_info[drive].cylinders)
+            continue;
+
+        /*
+         * A FileCard 20 is one drive spread over both controller units,
+         * each with an actuator of its own, so park the pair.
+         */
+        if (drive == 0 && drive_info[drive].source == MFM_GEO_SRC_FILECARD20) {
+            mfmhd_seek_unit(MFMHD_PORT, drive, 0,
+                MFM_FILECARD20_UNIT_CYLINDERS - 1);
+            mfmhd_seek_unit(MFMHD_PORT, drive, 1,
+                MFM_FILECARD20_UNIT_CYLINDERS - 1);
+            continue;
+        }
+
+        mfmhd_seek_unit(MFMHD_PORT, drive, (unsigned int)drive & 1U,
+            drive_info[drive].cylinders - 1);    /* cylinders are zero based */
+    }
 }
 
 static int
