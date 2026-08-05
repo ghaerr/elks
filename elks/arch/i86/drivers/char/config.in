@@ -43,7 +43,6 @@ mainmenu_option next_comment
 		define_bool CONFIG_CHAR_DEV_RS y
 	fi
 	bool 'Parallel device driver'		CONFIG_CHAR_DEV_LP	  y
-	#bool 'CGA text mode videobuffer'	CONFIG_CHAR_DEV_CGATEXT	  n
 	bool 'Memory character devices'		CONFIG_CHAR_DEV_MEM	  y
 	#if [ "$CONFIG_CHAR_DEV_MEM" = "y" ]; then
 		#bool '  Port read'	CONFIG_CHAR_DEV_MEM_PORT_READ	n

@@ -45,7 +45,6 @@ struct hw_params crtc_params[N_DEVICETYPES] = {
 /* Check to see if this CRTC is present */
 int INITPROC crtc_probe(unsigned short crtc_base)
 {
-    int i;
     unsigned char test = 0x55;
     unsigned char original, value;
 

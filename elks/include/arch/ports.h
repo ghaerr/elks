@@ -14,7 +14,7 @@
  *  3   Com2    (/dev/ttyS1) CONFIG_CHAR_DEV_RS     Optional
  *  4   Com1    (/dev/ttyS0) CONFIG_CHAR_DEV_RS     Optional
  *  5*  Com3    (/dev/ttyS2) CONFIG_CHAR_DEV_RS     Optional
- *  5*  HW IDE hard drive    CONFIG_BLK_DEV_HD      Non-working directhd.c
+ *  5*  HW IDE hard drive
  *  5*  Sound Blaster (dsp)  CONFIG_CHAR_DEV_DSP    Optional, avoid if a HD is fitted
  *  6   HW floppy drive      CONFIG_BLK_DEV_FD      Optional
  *  7   Unused (LPT, Com4)
@@ -26,8 +26,8 @@
  * 12*  NE2K      (/dev/ne0) CONFIG_ETH_NE2K        Optional
  * 12*  Unused (Mouse)                              No driver
  * 13   Unused (Math coproc)                        No driver
- * 14   AT HD IDE (/dev/hda) CONFIG_BLK_DEV_HD      Non-working hd.c
- * 15   AT HD IDE (/dev/hdb) CONFIG_BLK_DEV_HD      Non-working hd.c
+ * 14   AT IDE hard drive
+ * 15   AT IDE hard drive
  *
  * Edit settings below to change port address or IRQ:
  *   Change I/O port and driver IRQ number to match your hardware
@@ -190,14 +190,11 @@ struct isa_conf {
 /* bioshd.c*/
 #define FDC_DOR         0x3F2           /* floppy digital output register*/
 
-/* obsolete - experimental IDE hard drive, directhd.c (broken)*/
-#define HD1_PORT        0x1f0
-#define HD2_PORT        0x170
-#define HD_IRQ          5               /* missing request_irq call*/
-#define HD1_AT_IRQ      14              /* missing request_irq call*/
-#define HD2_AT_IRQ      15              /* missing request_irq call*/
-
 /* direct floppy driver, directfd.c */
 #define FLOPPY_IRQ      6
+
+/* idequery.c */
+#define HD1_PORT        0x1f0
+#define HD2_PORT        0x170
 
 #endif

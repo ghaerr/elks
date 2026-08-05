@@ -21,7 +21,7 @@ unsigned char arch_cpu; /* CPU type from cputype.S */
 
 unsigned int INITPROC setup_arch(void)
 {
-    unsigned int heapofs, heapsegs;
+    unsigned int heapofs;
 
     /*
      * Set membase to beginning of available main memory.

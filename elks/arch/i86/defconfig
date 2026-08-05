@@ -90,7 +90,6 @@ CONFIG_TRACK_CACHE=y
 CONFIG_BLK_DEV_BHD=y
 CONFIG_IDE_PROBE=y
 CONFIG_BLK_DEV_FD=y
-# CONFIG_BLK_DEV_HD is not set
 
 #
 # Additional block devices
