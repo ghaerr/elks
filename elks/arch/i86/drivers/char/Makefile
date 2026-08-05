@@ -54,9 +54,6 @@ ifdef CONFIG_ARCH_IBMPC
   ifdef CONFIG_CONSOLE_BIOS
     OBJS += console-bios.o console-bios-asm.o bell-8254.o
   endif
-  ifdef CONFIG_CONSOLE_AMSTRAD_IGA
-    OBJS += console-direct-amstrad.o bell-8254.o
-  endif
   ifdef CONFIG_CONSOLE_HEADLESS
     OBJS += console-headless.o
   endif
@@ -110,9 +107,7 @@ chr_drv.a: $(OBJS)
 KeyMaps/keymaps.h:
 	$(MAKE) -C KeyMaps keymaps.h
 
-console-direct.o: console.c
-
-console-direct-amstrad.o: console.c
+console-direct.o: console.c direct-ibmpc.c direct-amstrad.c
 
 console-direct-pc98.o: console.c
 
