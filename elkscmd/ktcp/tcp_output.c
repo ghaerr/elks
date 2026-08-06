@@ -481,14 +481,9 @@ void tcp_output(struct tcpcb_s *cb)
 	__u8 *options = th->options;
 	unsigned int mss = MTU - 40;
 
-	/*
-	 * Advertise the segment size we can actually accept, not the one the
-	 * link could carry. ktcp has no out-of-order queue and drops any
-	 * segment that will not fit the receive ring (see tcp_established),
-	 * with no fast retransmit to recover it - so promising a peer 1460
-	 * while holding a smaller ring costs a retransmit timeout per segment.
-	 * Only matters once a socket asks for a small SO_RCVBUF.
-	 */
+	/* advertise what we can accept, not what the link carries. there is no
+	 * out of order queue, so promising more than the ring holds costs a
+	 * retransmit timeout per segment */
 	if (cb->buf_size && mss > cb->buf_size)
 	    mss = cb->buf_size;
 

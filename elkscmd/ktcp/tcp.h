@@ -10,31 +10,18 @@
 #include <arpa/inet.h>
 
 /*
- * Buffer sizes. These three are independent of each other and none of them is
- * derived from CB_NORMAL_BUFSIZ - that is the per-connection receive ring and
- * has nothing to do with how big a packet or a tcpdev message can be. Chaining
- * them off the ring size (as this header used to) made ipbuf, tcpbuf and
- * tcpdev's sbuf ~4.4K each, about 9K more BSS than any of them can ever use.
+ * buffer sizes. these three are independent, none is derived from
+ * CB_NORMAL_BUFSIZ which is the receive ring. chaining them off the ring
+ * size wasted about 9k of bss.
  */
 
-/*
- * /dev/tcpdev scratch buffer. Used for messages in both directions, so it has
- * to hold the larger of:
- *   kernel -> ktcp:  TCPDEV_OUTBUFFERSIZE  (sizeof(struct tdb_write))
- *   ktcp -> kernel:  sizeof(struct tdb_return_data) + TCPDEV_MAXREAD, which is
- *                    exactly TCPDEV_INBUFFERSIZE by construction
- * The kernel rejects a write longer than TCPDEV_INBUFFERSIZE and silently
- * truncates a read shorter than the pending message, so this has no slack.
- */
+/* tcpdev scratch, used both directions so it holds the larger of the two.
+ * no slack here, the kernel truncates a short read silently */
 #define TCPDEV_BUFSIZ   (TCPDEV_INBUFFERSIZE > TCPDEV_OUTBUFFERSIZE? \
                          TCPDEV_INBUFFERSIZE: TCPDEV_OUTBUFFERSIZE)
 
-/*
- * Wire buffer, including room for the link layer header at the front. Bounded
- * by the link MTU and never by the receive window: ktcp does no IP reassembly
- * (see ip.c), so a received IP packet cannot exceed the MTU, and a transmitted
- * segment cannot exceed the MSS. ktcp clamps -m MTU against this.
- */
+/* wire buffer with room for the link header. bounded by the mtu, not by
+ * the receive window, there is no ip reassembly */
 #define IP_LL_HDRSIZ    14      /* sizeof(struct ip_ll); deveth.h can't be included
                                  * here, so ip.c asserts these agree */
 #define IP_BUFSIZ       MAX_PACKET_ETH
@@ -43,19 +30,10 @@
 #define TCP_BUFSIZ      (IP_BUFSIZ - IP_LL_HDRSIZ - sizeof(iphdr_t))
 
 /*
- * Per-connection receive ring, and therefore the advertised window -
- * tcp_calc_rcv_window() hands out CB_BUF_SPACE() directly. This is pure heap:
- * every connection costs sizeof(struct tcpcb_list_s) + this.
- *
- * Two MSS rather than the old three. One MSS would mean a single segment in
- * flight - the window closes on every segment and reopens only once the
- * application reads, serialising the receive path - while three buys only a
- * few percent more, because ktcp's per-segment processing rather than the
- * bandwidth-delay product is the limit on this hardware. Two is the knee.
- *
- * Sockets that want something else say so with SO_RCVBUF: bulk receivers
- * (ftpd data, audiorecv, vidrecv) ask for more, servers holding many mostly
- * idle clients ask for less.
+ * per connection receive ring, and the advertised window. pure heap, every
+ * connection costs this plus the control block. two mss not three, one would
+ * serialise the receive path and three only buys a few percent. sockets that
+ * want different say so with SO_RCVBUF.
  */
 #define CB_NORMAL_BUFSIZ    2920    /* 2 * (ETH_MTU - IP_HDRSIZ) */
 #define USE_SWS             0       /* =1 to use silly window algorithm */
@@ -71,12 +49,8 @@
 /* timeout values - unit is set by 'Now' in ktcp.c, currently 60ms */
 #define TIMEOUT_ENTER_WAIT  (4<<4)  /* TIME_WAIT state (was 30, then 10, now 4 secs) */
 #define TIMEOUT_CLOSE_WAIT  (10<<4) /* CLOSING/LAST_ACK/FIN_WAIT states (10 secs) */
-#define TIMEOUT_UNACCEPTED  (30<<4) /* SYN_RECEIVED / established-but-never-accepted.
-                                     * These had no timeout at all, so a control block
-                                     * the application never accepted lived forever and
-                                     * a port scan leaked them permanently until the
-                                     * heap ran out and every TCP service died with it.
-                                     * Long enough not to punish a slow accept loop. */
+#define TIMEOUT_UNACCEPTED  (30<<4) /* never accepted. had no timeout at all so
+                                     * a port scan leaked control blocks forever */
                                     /* Initial RTT & RTO values are not important,
                                      * as they get adjusted automatically as soon
                                      * as the connection is up and running. Recommended

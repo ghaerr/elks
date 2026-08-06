@@ -1,12 +1,8 @@
 #ifndef UDP_H
 #define UDP_H
 
-/*
- * UDP for ktcp. This was a four-entry callback table that existed only so DHCP
- * could work, with its own header saying "Not accessible through sockets". It
- * is now a real demultiplexer backing SOCK_DGRAM, while keeping the callback
- * form so dhcp.c is unchanged.
- */
+/* was a four entry callback table for dhcp only, now a real demultiplexer
+ * backing SOCK_DGRAM. callback form kept so dhcp.c is unchanged */
 
 #define PROTO_UDP       0x11
 
@@ -16,24 +12,10 @@
 
 #define MAX_UDP_SOCKS   8       /* internal (DHCP) + socket-backed, machine wide */
 
-/*
- * Receive queue limits. Datagrams are lost rather than retransmitted, so a
- * deep queue only converts loss into latency - which is the wrong trade for
- * the media receivers this exists for. Four covers a duplicate or late reply
- * plus one scheduling hiccup.
- *
- * The byte cap is the load-bearing one: per-socket counts alone would allow
- * 8 x 4 x 1482 = 47424 bytes, more than ktcp's entire heap.
- *
- * It must be sized in FULL-SIZE datagrams, not in bytes that merely look
- * generous. At 2048 a single 1027-byte datagram plus its 10-byte queue header
- * fitted but a second did not, so any sender emitting two back to back - which
- * is exactly what a video stream with separate audio and picture datagrams
- * does - lost one of every pair before the application ever looked. 6144 holds
- * four 1482-byte datagrams and their headers. That is worst case, reached only
- * while an application is actually behind; against a 49152-byte heap it costs
- * less than three TCP control blocks, and nothing at all when the queue drains.
- */
+/* receive queue limits. a deep queue only turns loss into latency so keep it
+ * shallow. the byte cap is the real limit and must hold four full size
+ * datagrams, at 2048 a sender emitting two back to back lost one of each
+ * pair */
 #define UDP_RCVQ_MAX    4       /* datagrams queued per socket */
 #define UDP_RCVQ_MAXMEM 6144    /* bytes queued across all UDP sockets */
 

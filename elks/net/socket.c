@@ -530,12 +530,8 @@ int sys_socket(int family, int type, int protocol)
     if (!(sock = sock_alloc()))
 	return -ENOSR;
 
-    /*
-     * There is no sock->type field, and adding one would grow every inode.
-     * SF_DGRAM is bit 7 of the existing flags byte, which was free - so the
-     * datagram/stream distinction costs nothing. It must be set before
-     * ->create() so the family can reject what it does not support.
-     */
+    /* no sock->type field and adding one grows every inode, so SF_DGRAM is
+     * bit 7 of the existing flags. must be set before ->create() */
     if (type == SOCK_DGRAM)
 	sock->flags |= SF_DGRAM;
     sock->ops = ops;
@@ -616,21 +612,10 @@ int sys_getsocknam(int fd, struct sockaddr *usockaddr, int *usockaddr_len, int p
     return sock->ops->getname(sock, usockaddr, usockaddr_len, peer);
 }
 
-/*
- * sendto/recvfrom, minus the addrlen argument. POSIX passes six; an ELKS
- * syscall carries at most five (bx,cx,dx,di,si), so the length is dropped and
- * fixed at sizeof(struct sockaddr_in) - AF_INET is the only family that
- * implements these. libc puts the POSIX signature back, the same way
- * getsocknam already backs getsockname/getpeername.
- *
- * These reuse the send/recv slots in proto_ops, which were dead code: no
- * caller existed anywhere in the kernel, because there were no syscalls.
- */
-/*
- * sendto and recvfrom differ only in the direction of the two verify_area
- * checks and which proto_ops slot is used, so they share a body. It lives in
- * far text because the kernel's near text is essentially full.
- */
+/* sendto/recvfrom without addrlen. posix passes six args, an elks syscall
+ * carries five, so the length is fixed at sizeof(struct sockaddr_in) and libc
+ * puts the posix signature back. reuses the dead send/recv proto_ops slots */
+/* both directions share a body, far text as near text is full */
 static int FARPROC sock_sendrecv(int fd, void *buf, size_t len, int flags,
                                  struct sockaddr *uaddr, int recving)
 {

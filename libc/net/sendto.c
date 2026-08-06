@@ -1,12 +1,6 @@
-/*
- * sendto/send over the 5-argument _sendto syscall.
- *
- * An ELKS syscall carries at most five arguments (bx,cx,dx,di,si), and POSIX
- * sendto takes six. The kernel entry therefore drops addrlen and assumes
- * sizeof(struct sockaddr_in) - AF_INET is the only family implementing it.
- * This restores the POSIX shape, exactly as getsocknam.c does for
- * getsockname/getpeername.
- */
+/* an elks syscall carries five args and posix sendto takes six, so the
+ * kernel drops addrlen and assumes sizeof(struct sockaddr_in). this puts the
+ * posix shape back, same as getsocknam.c does */
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <errno.h>

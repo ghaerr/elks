@@ -1,11 +1,7 @@
 /*
- * UDP for ktcp.
- *
- * Originally a four-entry callback table serving DHCP only, demultiplexing on
- * the destination port alone and never validating a length. It now backs
- * SOCK_DGRAM sockets: address+port demultiplexing with BSD precedence, a
- * bounded per-socket receive queue, and ICMP error delivery - while keeping
- * udp_register()/udp_unregister() so dhcp.c did not have to change.
+ * UDP for ktcp. was a four entry callback table for dhcp only, now backs
+ * SOCK_DGRAM as well. udp_register/udp_unregister kept so dhcp.c is
+ * unchanged.
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -49,14 +45,8 @@ static struct udp_sock *udp_find_by_port(__u16 port)
     return NULL;
 }
 
-/*
- * Demultiplex, most specific first: a connected socket (both remote address
- * and port set) wins outright, otherwise the first wildcard bound to the port
- * takes it. Standard BSD precedence, in one pass.
- *
- * localaddr 0 means INADDR_ANY, which also makes loopback work: ip_route()
- * loops 127.x internally and the arriving daddr is 127.0.0.1.
- */
+/* most specific first, connected socket wins, else the first wildcard on
+ * the port. localaddr 0 is INADDR_ANY */
 static struct udp_sock *udp_lookup(ipaddr_t daddr, __u16 dport,
                                    ipaddr_t saddr, __u16 sport)
 {
@@ -111,12 +101,8 @@ struct udp_sock *udp_sock_find(void *sock)
     return NULL;
 }
 
-/*
- * Bind. *port is the requested port in host order, 0 to allocate. The
- * ephemeral range is kept separate from TCP's, and the upper bound closes the
- * wrap hole tcpdev_bind() has (a __u16 rolling 65535->0 escapes a "< 1024"
- * guard on every increment but one).
- */
+/* *port is host order, 0 to allocate. own ephemeral range, and the upper
+ * bound closes the wrap hole tcpdev_bind() has */
 struct udp_sock *udp_sock_new(void *sock, ipaddr_t localaddr, __u16 *port)
 {
     struct udp_sock *us;
@@ -129,9 +115,7 @@ struct udp_sock *udp_sock_new(void *sock, ipaddr_t localaddr, __u16 *port)
         do {
             if (++udp_next_port < 1024 || udp_next_port > 60000)
                 udp_next_port = 1024;
-            /* at most MAX_UDP_SOCKS ports are taken, so one free candidate
-             * must appear within that many consecutive probes. (int is 16-bit
-             * here, so a large bound would never be reached.) */
+            /* at most MAX_UDP_SOCKS are taken so one must be free */
             if (++tries > MAX_UDP_SOCKS + 1)
                 return NULL;
         } while (udp_find_by_port(udp_next_port));
@@ -231,11 +215,8 @@ static void udp_queue(struct udp_sock *us, ipaddr_t saddr, __u16 sport,
 {
     struct udp_dgram *d, *tail;
 
-    /*
-     * Tail-drop the newest. Dropping the head instead would let a flood starve
-     * an application that is making forward progress. No ICMP is sent: the
-     * port IS bound, so RFC 1122 does not want a port-unreachable here.
-     */
+    /* tail drop, dropping the head would let a flood starve an app that is
+     * getting on with it. no icmp, the port is bound */
     if (us->rcvcount >= UDP_RCVQ_MAX ||
         udp_rcvq_memory + (int)sizeof(struct udp_dgram) + len > UDP_RCVQ_MAXMEM) {
         netstats.udpdropcnt++;
@@ -262,11 +243,7 @@ static void udp_queue(struct udp_sock *us, ipaddr_t saddr, __u16 sport,
     udp_rcvq_memory += sizeof(struct udp_dgram) + len;
 }
 
-/*
- * ICMP destination-unreachable for a datagram we sent. Only a connected socket
- * can be blamed - for an unconnected one the error cannot be attributed to any
- * particular peer, which is what BSD does too.
- */
+/* only a connected socket can be blamed, same as bsd */
 void udp_icmp_error(ipaddr_t laddr, __u16 lport, __u16 rport, int err)
 {
     struct udp_sock *us;
@@ -327,11 +304,8 @@ void udp_process(struct iphdr_s *iph, unsigned char *packet, int iplen)
     unsigned char *data;
     int datalen;
 
-    /*
-     * Validate the UDP length against the IP payload we actually received.
-     * This was never checked: a peer claiming a short or oversized length
-     * produced a negative datalen that flowed straight into memcpy.
-     */
+    /* never checked before, a bad length gave a negative datalen straight
+     * into memcpy */
     udplen = ntohs(udp->len);
     if (udplen < sizeof(struct udphdr_s) || udplen > (unsigned int)iplen) {
         netstats.ipbadhdr++;

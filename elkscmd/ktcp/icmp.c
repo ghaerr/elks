@@ -179,13 +179,9 @@ void icmp_process(struct iphdr_s *iph, unsigned char *packet)
 	printf("icmp: destination unreachable code %d from %s\n",
 		dp->code, in_ntoa(iph->saddr));
 
-	/*
-	 * The embedded header was cast to a TCP header and looked up in the
-	 * TCP control blocks WITHOUT checking the protocol, so an ICMP error
-	 * about a UDP datagram could tear down an unrelated TCP connection
-	 * whose 3-tuple happened to match. The first 8 bytes of the quoted
-	 * datagram are a full UDP header, so both ports are available here.
-	 */
+	/* the embedded header was looked up in the tcp control blocks without
+	 * checking the protocol, so an icmp error about a udp datagram could
+	 * tear down an unrelated tcp connection */
 	if (dpip->protocol == PROTO_UDP) {
 	    struct udphdr_s *dpudp = (struct udphdr_s *)(dp->iphdr + len);
 

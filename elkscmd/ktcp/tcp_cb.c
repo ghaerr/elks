@@ -286,18 +286,9 @@ void tcpcb_expire_timeouts(void)
 		}
 		break;
 	    default:
-		/*
-		 * Embryonic connections - SYN_RECEIVED, or established but
-		 * never accept()ed - had no timeout of any kind, so they lived
-		 * until ktcp restarted. A port scan therefore leaked one
-		 * control block per probe, permanently, and an application
-		 * that stopped calling accept() leaked one per connection.
-		 * Once the heap was gone, every TCP service on the machine
-		 * died with it.
-		 *
-		 * unaccepted is only ever set on a cloned CB (see tcp_listen),
-		 * so LISTEN/CLOSED/SYN_SENT blocks are not touched here.
-		 */
+		/* never accepted connections had no timeout at all, so a port
+		 * scan leaked a control block per probe until the heap went.
+		 * unaccepted is only set on a cloned cb */
 		if (n->tcpcb.unaccepted &&
 		    TIME_GT(Now - TIMEOUT_UNACCEPTED, n->tcpcb.time_wait_exp)) {
 		    debug_tune("tcp: reaping unaccepted cb port %u from %s\n",
@@ -320,17 +311,8 @@ void tcpcb_push_data(void)
 	    notify_data_avail(&n->tcpcb);
 }
 
-/*
- * Ring copies. These were byte-at-a-time loops with a wrap test and a memory
- * increment of buf_used per byte - around 180 clocks per byte on an 8088,
- * against 12.5 for a word-at-a-time block move. They run on every received
- * segment and every application read, which made them the largest single cost
- * in the receive path. Split at the wrap point and let memcpy do the work.
- *
- * Callers guarantee the space: tcp_established() checks CB_BUF_SPACE before
- * writing, netconf_capture_packet() does the same, and tcpdev_read() clamps
- * to bytes_to_push.
- */
+/* were byte at a time loops with a wrap test per byte. split at the wrap
+ * point and let memcpy do it. callers guarantee the space */
 
 /* There must be free space greater-equal than len */
 void tcpcb_buf_write(struct tcpcb_s *cb, unsigned char *data, int len)

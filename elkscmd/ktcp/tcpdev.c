@@ -28,9 +28,8 @@
 static __u16	next_port;
 static unsigned char sbuf[TCPDEV_BUFSIZ];
 
-/* sbuf carries traffic both ways: it must hold the largest command the kernel
- * can send us, and the largest reply we can send back. The kernel truncates a
- * short read without erroring, so getting this wrong fails silently. */
+/* sbuf goes both ways so it holds the larger of command and reply. a short
+ * read is truncated without an error, so getting this wrong fails silently */
 typedef char __tcpdev_bufsiz_ok[
     (TCPDEV_BUFSIZ >= (int)TCPDEV_OUTBUFFERSIZE &&
      TCPDEV_BUFSIZ >= (int)sizeof(struct tdb_return_data) + TCPDEV_MAXREAD)? 1: -1];
@@ -266,12 +265,8 @@ static void tcpdev_connect(void)
 
     n = tcpcb_find_by_sock(db->sock);
     if (!n || n->tcpcb.state != TS_CLOSED) {
-	/*
-	 * Same trap as the read path: returning without answering leaves
-	 * inet_connect() spinning on SF_CONNECT forever. It does not hold
-	 * rwlock, so this hangs only the calling process rather than the whole
-	 * machine, but it should still be told.
-	 */
+	/* same trap as the read path, returning without answering leaves
+	 * inet_connect() spinning forever */
 	debug_tcp("tcp: connect on socket with no control block\n");
 	notify_sock(db->sock, TDT_CONNECT, -ECONNREFUSED);
 	return;
@@ -321,20 +316,9 @@ static void tcpdev_read(void)
 
     n = tcpcb_find_by_sock(sock);
     if (!n || n->tcpcb.state == TS_CLOSED) {
-	/*
-	 * The control block is gone - the peer reset, or the socket was
-	 * released while this read was in flight.
-	 *
-	 * This used to print and return WITHOUT answering the socket, which
-	 * wedged the whole machine: inet_read() is asleep in
-	 *     down(&rwlock); ... while (bufin_sem == 0) interruptible_sleep_on();
-	 * so with no reply it sleeps forever holding rwlock - and rwlock is the
-	 * single global lock serialising every inet_read/inet_write on every
-	 * socket. The symptom is that connections still get accepted while
-	 * telnetd, ftpd and everything else fall silent, because the cause is
-	 * below all of them. The write path already answers -EPIPE here; do the
-	 * same rather than leaving a reader stranded.
-	 */
+	/* control block gone. used to return without answering, which left
+	 * inet_read() asleep holding the global rwlock and wedged every socket
+	 * on the machine. the write path already answers -EPIPE here */
 	debug_tune("tcp: read on socket with no control block\n");
 	retval_to_sock(sock, -EPIPE);
 	return;

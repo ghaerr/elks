@@ -31,12 +31,8 @@
 
 static unsigned char ipbuf[IP_BUFSIZ];
 
-/*
- * These buffer sizes used to be chained off CB_NORMAL_BUFSIZ, so they were
- * right by accident and enormous. Now that each is sized from what it actually
- * holds, enforce the couplings the comments used to describe. ip.c is the one
- * file that sees both tcp.h and deveth.h.
- */
+/* the sizes used to be chained off CB_NORMAL_BUFSIZ so they were right by
+ * accident. this is the one file that sees both tcp.h and deveth.h */
 typedef char __ip_ll_hdrsiz_ok[(IP_LL_HDRSIZ == sizeof(struct ip_ll))? 1: -1];
 typedef char __ip_bufsiz_ok[
     (IP_BUFSIZ >= IP_LL_HDRSIZ + (int)sizeof(iphdr_t) + TCP_BUFSIZ)? 1: -1];
@@ -142,14 +138,9 @@ void ip_recvpacket(unsigned char *packet, int size)
 	return;
     }
 
-    /*
-     * tot_len is taken on trust by everything downstream: icmp_process() uses
-     * it to size the echo reply it builds in ipbuf, and tcp_process() uses it
-     * as the checksum length. It was never checked against the frame actually
-     * received, so a peer claiming tot_len 0xffff walked those buffers off the
-     * end. Believe the wire length, not the header. Frames shorter than 60
-     * bytes are padded by ethernet, so size may legitimately exceed tot_len.
-     */
+    /* tot_len is trusted downstream but was never checked against the frame
+     * we got, so tot_len 0xffff walked off the end. believe the wire length.
+     * short frames are padded so size can exceed tot_len */
     totlen = ntohs(iphdr->tot_len);
     if (totlen > (unsigned int)size || totlen < (unsigned int)len) {
 	debug_ip("IP: bad tot_len %u (frame %d, hdr %d)\n", totlen, size, len);

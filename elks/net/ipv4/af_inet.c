@@ -135,11 +135,7 @@ static int inet_release(struct socket *sock, struct socket *peer)
     return (ret >= 0 ? 0 : ret);
 }
 
-/*
- * Core of bind, taking the address already in kernel space. Split out so the
- * datagram path can bind an ephemeral port itself (inet_autobind) without
- * having to fake a user-space pointer.
- */
+/* bind with the address already in kernel space, for inet_autobind */
 static int FARPROC inet_bind_kernel(register struct socket *sock, struct sockaddr_in *addr)
 {
     register struct tdb_bind *cmd;
@@ -201,16 +197,8 @@ static int inet_connect(struct socket *sock, struct sockaddr *uservaddr,
     if (get_user(&(((struct sockaddr_in *)uservaddr)->sin_family)) != AF_INET)
         return -EINVAL;
 
-    /*
-     * connect() on a datagram socket is purely local: it records the peer so
-     * send()/write() need no address and so ktcp will filter arriving
-     * datagrams to that source. No packets, no handshake, and re-connecting
-     * to a different peer is allowed.
-     *
-     * Note ELKS cannot implement the BSD "connect to AF_UNSPEC to dissolve
-     * the association" idiom, because AF_INET is 0 - there is no distinct
-     * AF_UNSPEC to test for.
-     */
+    /* just records the peer, no packets. cannot dissolve the association
+     * the bsd way as AF_INET is 0, there is no AF_UNSPEC to test for */
     if (sock->flags & SF_DGRAM) {
         struct sockaddr_in kaddr;
         int ret;
@@ -332,17 +320,8 @@ static int inet_read(struct socket *sock, char *ubuf, int size, int nonblock)
         if (sock->flags & SF_CLOSING)
             return 0;
 
-        /*
-         * O_NONBLOCK was accepted and then ignored here: the flag was only
-         * forwarded to ktcp further down, which is reached after data has
-         * already arrived. So a nonblocking read on a quiet connected socket
-         * slept anyway, and a single silent peer - a port scanner, a paused
-         * client - parked the whole process. A server polling its clients
-         * could therefore never come back to run its own timeouts, never reap
-         * dead connections, and every connection it held on to kept its
-         * control block alive in ktcp until the heap ran out and every TCP
-         * service on the machine died with it.
-         */
+        /* O_NONBLOCK was ignored here, so a nonblocking read on a quiet
+         * socket slept anyway and one silent peer parked the process */
         if (nonblock)
             return -EAGAIN;
 
@@ -441,13 +420,8 @@ static int inet_write(register struct socket *sock, char *ubuf, int size,
 
         if (ret < 0) {
             if (ret == -ERESTARTSYS) {
-                /*
-                 * ktcp is flow-controlling us (retransmit memory or the
-                 * congestion window). Same bug as the read path: O_NONBLOCK
-                 * was ignored, so a nonblocking write on a congested socket
-                 * span here at 10Hz forever instead of failing. Report the
-                 * bytes already accepted, or EAGAIN if none.
-                 */
+                /* ktcp is flow controlling us. same O_NONBLOCK bug as the
+                 * read path, it span here at 10Hz instead of failing */
                 if (nonblock)
                     return (count < size)? size - count: -EAGAIN;
 
@@ -473,12 +447,8 @@ static int inet_select(register struct socket *sock, int sel_type)
     debug_net("INET(%P) select sock %04x wait %04x type %d avail %u\n",
          sock, sock->wait, sel_type, sock->avail_data);
 
-    /*
-     * Datagram sockets are handled first and never consult sock->state. The
-     * TCP rule below ("readable unless SS_CONNECTED") would make an
-     * unconnected datagram socket permanently readable, and unconnected is
-     * the normal case here.
-     */
+    /* datagrams first, the tcp rule below would call an unconnected
+     * socket permanently readable */
     if (sock->flags & SF_DGRAM) {
         if (sel_type == SEL_IN) {
             if (sock->avail_data)       /* a datagram is queued in ktcp */
@@ -503,12 +473,8 @@ static int inet_select(register struct socket *sock, int sel_type)
     return 0;
 }
 
-/*
- * Give an unbound datagram socket an ephemeral port before any data moves.
- * Doing it here rather than in ktcp means ktcp always holds a udp_sock for a
- * handle before it sees traffic for it, and getsockname() works on a socket
- * that only ever called sendto().
- */
+/* ephemeral port before any data moves, so ktcp always has a udp_sock for
+ * the handle before traffic arrives */
 static int FARPROC inet_autobind(struct socket *sock)
 {
     struct sockaddr_in addr;
@@ -521,10 +487,7 @@ static int FARPROC inet_autobind(struct socket *sock)
     return inet_bind_kernel(sock, &addr);
 }
 
-/*
- * Record the peer with ktcp so arriving datagrams can be filtered to it. No
- * packet goes on the wire; ktcp answers immediately from its UDP table.
- */
+/* record the peer with ktcp, nothing goes on the wire */
 static int FARPROC inet_dgram_connect(struct socket *sock, struct sockaddr_in *addr)
 {
     register struct tdb_connect *cmd;
@@ -611,10 +574,7 @@ static int FARPROC inet_dgram_recv(register struct socket *sock, char *ubuf, int
         size = TCPDEV_MAXDGRAM;
 
     for (;;) {
-        /*
-         * No SF_CLOSING/EOF test here: a datagram socket has no end of
-         * stream. Non-blocking returns without troubling ktcp at all.
-         */
+        /* no EOF test, a datagram socket has no end of stream */
         while (sock->avail_data == 0) {
             if (nonblock || (flags & MSG_DONTWAIT))
                 return -EAGAIN;
@@ -645,8 +605,7 @@ static int FARPROC inet_dgram_recv(register struct socket *sock, char *ubuf, int
                 from.sin_port = r->sport;
                 memcpy_tofs(uaddr, &from, sizeof(from));
             }
-            /* ktcp tells us what is still queued, so a second recv can go
-             * straight out without waiting to be told again */
+            /* ktcp tells us what is still queued */
             down(&sock->sem);
             sock->avail_data = r->avail_next;
             up(&sock->sem);
@@ -654,11 +613,8 @@ static int FARPROC inet_dgram_recv(register struct socket *sock, char *ubuf, int
         tcpdev_clear_data_avail();
         up(&rwlock);
 
-        /*
-         * avail_data can be stale: two processes sharing the fd after fork()
-         * can both see it set and race for one datagram. ktcp is the
-         * authority, so the loser simply goes back to sleep.
-         */
+        /* avail_data can be stale after fork, ktcp is the authority so the
+         * loser goes back to sleep */
         if (ret == -EAGAIN && !nonblock && !(flags & MSG_DONTWAIT)) {
             down(&sock->sem);
             sock->avail_data = 0;

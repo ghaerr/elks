@@ -260,14 +260,9 @@ int main(int argc,char **argv)
     }
     MTU = mtu ? mtu : (linkprotocol == LINK_ETHER ? ETH_MTU : SLIP_MTU);
 
-    /*
-     * Clamp -m to what the static packet buffers can actually hold. ipbuf is
-     * IP_BUFSIZ bytes with sizeof(struct ip_ll) reserved at the front for the
-     * link header; slip's receive buffer is sized from SLIP_MTU. Neither was
-     * checked, so an oversized -m (net.cfg exposes it as mtu=) silently
-     * overran them. Clamp rather than exit: a mistyped MTU should not take
-     * the network down at boot.
-     */
+    /* clamp -m to what the packet buffers hold. it was never checked, so an
+     * oversized mtu= in net.cfg overran them. clamp not exit, a typo should
+     * not take the network down at boot */
     maxmtu = (linkprotocol == LINK_ETHER)? IP_BUFSIZ - sizeof(struct ip_ll): SLIP_MTU;
     if (MTU > maxmtu) {
 	printf("ktcp: MTU %u too large, using %u\n", MTU, maxmtu);

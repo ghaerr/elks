@@ -15,12 +15,8 @@
 
 #define TCPDEV_INBUFFERSIZE	1500	/* max data writable to tcpdev from ktcp*/
 
-/*
- * Largest kernel->ktcp message. Both tdb_write and tdb_sendto embed
- * data[TDB_WRITE_MAX]; tdb_sendto is the larger because it also carries a
- * destination address, so it sets the size. Note TDB_WRITE_MAX must not be
- * added on top - doing so oversized tdout_buf by exactly one payload.
- */
+/* largest kernel->ktcp message. tdb_sendto is the bigger of the two as it
+ * also carries an address. do not add TDB_WRITE_MAX on top, it is embedded */
 #define TCPDEV_OUTBUFFERSIZE	(sizeof(struct tdb_sendto) > sizeof(struct tdb_write)? \
 				 sizeof(struct tdb_sendto): sizeof(struct tdb_write))
 
@@ -62,10 +58,7 @@ struct tdb_listen {
 struct tdb_bind {
     unsigned char cmd;
     unsigned char proto;	/* 0 = SOCK_STREAM, 1 = SOCK_DGRAM. Uses the pad
-				 * byte that already sat here for alignment, so
-				 * the struct does not grow. Needed only at bind:
-				 * it is the one point where ktcp must choose
-				 * which table the socket comes from. */
+				 * byte that was already here for alignment */
     struct socket *sock;
     int reuse_addr;
     int rcv_bufsiz;
@@ -75,11 +68,7 @@ struct tdb_bind {
 #define TDB_PROTO_STREAM	0
 #define TDB_PROTO_DGRAM		1
 
-/*
- * Datagram send. A datagram is atomic, so unlike TDC_WRITE there is no
- * chunking loop - the payload is bounded by TDB_WRITE_MAX and anything larger
- * is refused with -EMSGSIZE rather than truncated.
- */
+/* datagram send. atomic, so no chunking loop, oversize is -EMSGSIZE */
 struct tdb_sendto {
     unsigned char cmd;
     unsigned char msgflags;	/* MSG_* (was padding) */
@@ -155,17 +144,10 @@ struct tdb_bind_ret {
     __u16 addr_port;
 };
 
-/*
- * Datagram delivery. The first four members are deliberately laid out
- * identically to struct tdb_return_data (type@0, ret_value@2, sock@4, size@6)
- * so inet_process_tcpdev() can keep dereferencing ->sock and switching on
- * ->type without knowing which reply it has.
- *
- * avail_next carries the size of the NEXT queued datagram in this same reply.
- * ktcp must not follow up with an unsolicited TDT_AVAIL_DATA here: down() on
- * the shared buffer is an uninterruptible sleep_on, so a second write from
- * ktcp would stall the whole stack until an application process drained it.
- */
+/* first four members match struct tdb_return_data so inet_process_tcpdev
+ * can switch on ->type without knowing which reply it has. avail_next is the
+ * size of the next queued datagram, ktcp must not send a separate
+ * TDT_AVAIL_DATA or it stalls the stack on the shared buffer */
 struct tdb_recvfrom_ret {
     char type;			/*  0 */
     char trunc;			/*  1  datagram was longer than the buffer */

@@ -5,13 +5,9 @@
 #define CSLIP		0	/* compile in CSLIP support*/
 #define VERBOSE         0       /* =1 compile in more verbose status messages */
 
-/*
- * UDP checksums. Off: generating and verifying one over every datagram in both
- * directions is pure added work where there was none, and a zero checksum is
- * legal for IPv4 UDP (RFC 768). With it off a corrupted datagram reaches the
- * application instead of being dropped - only the IP header checksum stands
- * between the wire and the payload. Turn on for a marginal link.
- */
+/* udp checksums off. a zero checksum is legal for ipv4 udp and computing one
+ * over every datagram both ways is work we did not have before. with it off
+ * only the ip header checksum protects the payload */
 #define UDP_CHECKSUM    0
 
 /* turn these on for ELKS debugging*/

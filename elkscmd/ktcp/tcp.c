@@ -190,17 +190,8 @@ static void tcp_listen(struct iptcp_s *iptcp, struct tcpcb_s *lcb)
     if (h->flags & TF_ACK)
 	debug_tcp("tcp: ACK in listen not implemented\n");
 
-    /*
-     * Clone the listen CB, giving the new connection the receive ring the
-     * listening socket asked for with SO_RCVBUF. This used to be hardcoded to
-     * CB_NORMAL_BUFSIZ, so SO_RCVBUF reached the listener - which never
-     * receives anything - and never reached the connections that do. A server
-     * therefore had no way to trade window size for connection count, which is
-     * exactly the trade a machine with a 48K stack heap needs to make.
-     *
-     * lcb->buf_size is what tcpdev_bind() allocated: the SO_RCVBUF value, or
-     * CB_NORMAL_BUFSIZ if the socket never set one.
-     */
+    /* give the new connection the ring SO_RCVBUF asked for. was hardcoded,
+     * so SO_RCVBUF only reached the listener which never receives anything */
     n = tcpcb_clone(lcb, lcb->buf_size);    /* copy lcb into linked list*/
     if (!n)
 	return;		     /* no memory for new connection*/
@@ -291,13 +282,8 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
 	/* check if buffer space for received packet*/
 	if (datasize > CB_BUF_SPACE(cb)) {
-	    /*
-	     * Was an unconditional printf to /dev/console. One CGA scroll costs
-	     * milliseconds here, and this fires once per dropped packet - so the
-	     * smaller the receive ring, the more time the machine spends
-	     * reporting drops instead of draining them, which causes more drops.
-	     * netstats.tcpdropcnt still counts every one; netstat reports it.
-	     */
+	    /* was an unconditional printf, one per dropped packet, which made
+	     * the drops worse. netstat still counts them */
 	    debug_tune("tcp: dropping packet, no buffer space: %u > %d\n",
 		datasize, CB_BUF_SPACE(cb));
 	    netstats.tcpdropcnt++;
@@ -517,13 +503,9 @@ void tcp_reject(struct iphdr_s *iph) {
 	debug_tcp("tcp: refusing packet from %s:%u to :%u fl 0x%02x\n",
 	    in_ntoa(iph->saddr), ntohs(tcph->sport), ntohs(tcph->dport), tcph->flags);
 
-	/*
-	 * Dummy up a control block on the STACK and send RST to shut the sender
-	 * down. This used to malloc one from the same heap that connections come
-	 * out of, which meant that once the heap was exhausted ktcp could no
-	 * longer even refuse a connection - exactly when refusing matters most,
-	 * and exactly the condition a port scan creates. 82 bytes of a 3072-byte
-	 * stack, and it saves a malloc/free per rejected packet as well.
+	/* control block on the stack, not the heap. mallocing one meant ktcp
+	 * could not refuse a connection once the heap was gone, which is
+	 * exactly when it needs to.
 	 *
 	 * buf_size stays 0: RST carries no data and needs no window, and
 	 * add_for_retrans() returns early on TF_RST so nothing is queued.
