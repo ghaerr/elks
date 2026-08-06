@@ -49,7 +49,25 @@ memcpy:
 		     // n = CX already
 #endif
 
+	// Copy words, then the odd trailing byte if there is one.
+	//
+	// REP MOVSB moves one byte per 17 clocks on an 8088; REP MOVSW moves
+	// two per 25, so words are ~26% cheaper and there is no misalignment
+	// penalty on an 8088 (the bus is 8 bits wide either way). On a real
+	// 8086 an aligned word move is cheaper still and a misaligned one
+	// costs the same as two bytes, so this never loses.
+	//
+	// SHR puts the odd-length bit in CF; REP MOVSW leaves flags alone and
+	// ends with CX = 0; RCL then reconstitutes CX = 0 or 1. This is the
+	// same sequence the kernel has used in memcpy_fromfs/memcpy_tofs
+	// (elks/arch/i86/mm/memcpyfs.S) for years. n = 0 falls through both
+	// REPs without copying.
+
 	cld
+	shr	$1,%cx			// copy words
+	rep
+	movsw
+	rcl	$1,%cx			// then possibly final byte
 	rep
 	movsb
 
