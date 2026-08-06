@@ -25,24 +25,14 @@ NOINDENT	=
 include $(BASEDIR)/Makefile-rules
 
 #########################################################################
-# Specific rules.
+# Objects to be compiled.
 
 OBJS =
-ifeq ($(CONFIG_ETH_NE2K), y)
-OBJS += ne2k-asm.o ne2k.o
-endif
-ifeq ($(CONFIG_ETH_WD), y)
-OBJS += wd.o
-endif
-ifeq ($(CONFIG_ETH_EL3), y)
-OBJS += el3-asm.o el3.o
-endif
-ifeq ($(CONFIG_ETH_ULTRA), y)
-OBJS += ultra.o
-endif
-ifeq ($(CONFIG_ETH_PCNET), y)
-OBJS += pcnet.o pcnet-asm.o
-endif
+OBJS += ne2k-asm.o ne2k.o           # CONFIG_ETH_NE2K
+OBJS += wd.o                        # CONFIG_ETH_WD
+OBJS += el3-asm.o el3.o             # CONFIG_ETH_EL3
+OBJS += ultra.o                     # CONFIG_ETH_ULTRA
+OBJS += pcnet.o pcnet-asm.o         # CONFIG_ETH_PCNET
 
 all: net_drv.a
 

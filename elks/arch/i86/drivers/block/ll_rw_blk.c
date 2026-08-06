@@ -367,10 +367,6 @@ void INITPROC blk_dev_init(void)
     rd_init();          /* RAMDISK block device*/
 #endif
 
-#ifdef CONFIG_BLK_DEV_HD
-    struct gendisk *hddisk = directhd_init();
-#endif
-
 #ifdef CONFIG_BLK_DEV_MFMHD
     struct gendisk *mfmdisk = mfmhd_init();
 #endif

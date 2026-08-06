@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 
-#ifndef _I86_DRIVERS_BLOCK_MFMHD_H
-#define _I86_DRIVERS_BLOCK_MFMHD_H
+#ifndef __ARCH_MFMHD_H
+#define __ARCH_MFMHD_H
 
 /* Current ELKS port: G Keet <gatekeeper@xt-emporium.com>, 2026. */
 
@@ -144,4 +144,8 @@ struct mfmhd_ioc_buffer {
     unsigned char sense[4];
 };
 
-#endif /* _I86_DRIVERS_BLOCK_MFMHD_H */
+#ifdef __KERNEL__
+void mfmhd_park_all(void);      /* seek the heads to the landing zone */
+#endif
+
+#endif /* __ARCH_MFMHD_H */
