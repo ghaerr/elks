@@ -14,6 +14,7 @@
 #include <linuxmt/config.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/socket.h>
+#include <linuxmt/string.h>
 #include <linuxmt/fs.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/stat.h>
@@ -23,6 +24,7 @@
 #include <linuxmt/in.h>
 #include <linuxmt/tcpdev.h>
 #include <linuxmt/debug.h>
+#include <linuxmt/init.h>
 #include <arch/irq.h>
 
 #include "af_inet.h"
@@ -37,7 +39,16 @@ extern char *get_tdout_buf(void);
 
 static sem_t rwlock;    /* global inet_read/write semaphore*/
 
-int inet_process_tcpdev(register char *buf, int len)
+/* datagram helpers, defined below */
+static int FARPROC inet_bind_kernel(struct socket *sock, struct sockaddr_in *addr);
+static int FARPROC inet_autobind(struct socket *sock);
+static int FARPROC inet_dgram_connect(struct socket *sock, struct sockaddr_in *addr);
+static int FARPROC inet_dgram_send(struct socket *sock, char *ubuf, int size,
+                           int nonblock, unsigned int flags, struct sockaddr *uaddr);
+static int FARPROC inet_dgram_recv(struct socket *sock, char *ubuf, int size,
+                           int nonblock, unsigned int flags, struct sockaddr *uaddr);
+
+int FARPROC inet_process_tcpdev(register char *buf, int len)
 {
     register struct socket *sock;
 
@@ -80,6 +91,7 @@ int inet_process_tcpdev(register char *buf, int len)
     case TDT_RETURN:
     case TDT_ACCEPT:
     case TDT_BIND:
+    case TDT_RECVFROM:
         debug_net("INET(%P) retval %d bufin %d\n",
             ((struct tdb_return_data *)buf)->ret_value, bufin_sem);
         /* tcpdev_clear_data_avail() called by woken process */
@@ -123,26 +135,24 @@ static int inet_release(struct socket *sock, struct socket *peer)
     return (ret >= 0 ? 0 : ret);
 }
 
-static int inet_bind(register struct socket *sock, struct sockaddr *addr,
-                     size_t sockaddr_len)
+/*
+ * Core of bind, taking the address already in kernel space. Split out so the
+ * datagram path can bind an ephemeral port itself (inet_autobind) without
+ * having to fake a user-space pointer.
+ */
+static int FARPROC inet_bind_kernel(register struct socket *sock, struct sockaddr_in *addr)
 {
     register struct tdb_bind *cmd;
     int ret;
 
-    debug_net("INET(%P) bind sock %x\n", sock);
-
-    if (!sockaddr_len || sockaddr_len > sizeof(struct sockaddr_in))
-        return -EINVAL;
-
-    /* TODO : Check if the user has permision to bind the port */
-
     down(&rwlock);
     cmd = (struct tdb_bind *)get_tdout_buf();
     cmd->cmd = TDC_BIND;
+    cmd->proto = (sock->flags & SF_DGRAM)? TDB_PROTO_DGRAM: TDB_PROTO_STREAM;
     cmd->sock = sock;
     cmd->reuse_addr = sock->flags & SF_REUSE_ADDR;
     cmd->rcv_bufsiz = sock->rcv_bufsiz;
-    memcpy_fromfs(&cmd->addr, addr, sockaddr_len);
+    memcpy(&cmd->addr, addr, sizeof(struct sockaddr_in));
 
     tcpdev_inetwrite(cmd, sizeof(struct tdb_bind));
 
@@ -160,6 +170,24 @@ static int inet_bind(register struct socket *sock, struct sockaddr *addr,
     return (ret >= 0 ? 0 : ret);
 }
 
+static int inet_bind(register struct socket *sock, struct sockaddr *addr,
+                     size_t sockaddr_len)
+{
+    struct sockaddr_in kaddr;
+
+    debug_net("INET(%P) bind sock %x\n", sock);
+
+    if (!sockaddr_len || sockaddr_len > sizeof(struct sockaddr_in))
+        return -EINVAL;
+
+    /* TODO : Check if the user has permision to bind the port */
+
+    memset(&kaddr, 0, sizeof(kaddr));
+    memcpy_fromfs(&kaddr, addr, sockaddr_len);
+
+    return inet_bind_kernel(sock, &kaddr);
+}
+
 static int inet_connect(struct socket *sock, struct sockaddr *uservaddr,
                         size_t sockaddr_len, int flags)
 {
@@ -172,6 +200,29 @@ static int inet_connect(struct socket *sock, struct sockaddr *uservaddr,
 
     if (get_user(&(((struct sockaddr_in *)uservaddr)->sin_family)) != AF_INET)
         return -EINVAL;
+
+    /*
+     * connect() on a datagram socket is purely local: it records the peer so
+     * send()/write() need no address and so ktcp will filter arriving
+     * datagrams to that source. No packets, no handshake, and re-connecting
+     * to a different peer is allowed.
+     *
+     * Note ELKS cannot implement the BSD "connect to AF_UNSPEC to dissolve
+     * the association" idiom, because AF_INET is 0 - there is no distinct
+     * AF_UNSPEC to test for.
+     */
+    if (sock->flags & SF_DGRAM) {
+        struct sockaddr_in kaddr;
+        int ret;
+
+        memcpy_fromfs(&kaddr, uservaddr, sizeof(struct sockaddr_in));
+        if ((ret = inet_autobind(sock)) < 0)
+            return ret;
+        sock->remaddr = kaddr.sin_addr.s_addr;
+        sock->remport = kaddr.sin_port;
+        sock->state = SS_CONNECTED;
+        return inet_dgram_connect(sock, &kaddr);
+    }
 
     if (sock->state == SS_CONNECTING)
         return -EINPROGRESS;
@@ -269,6 +320,9 @@ static int inet_read(struct socket *sock, char *ubuf, int size, int nonblock)
     debug_net("INET(%P) read sock %x size %d nonblock %d bufin %d\n",
            sock, size, nonblock, bufin_sem);
 
+    if (sock->flags & SF_DGRAM)         /* read() == recvfrom(NULL) */
+        return inet_dgram_recv(sock, ubuf, size, nonblock, 0, NULL);
+
     if (size > TCPDEV_MAXREAD)
         size = TCPDEV_MAXREAD;
 
@@ -277,6 +331,20 @@ static int inet_read(struct socket *sock, char *ubuf, int size, int nonblock)
         /* return EOF on socket remote closed*/
         if (sock->flags & SF_CLOSING)
             return 0;
+
+        /*
+         * O_NONBLOCK was accepted and then ignored here: the flag was only
+         * forwarded to ktcp further down, which is reached after data has
+         * already arrived. So a nonblocking read on a quiet connected socket
+         * slept anyway, and a single silent peer - a port scanner, a paused
+         * client - parked the whole process. A server polling its clients
+         * could therefore never come back to run its own timeouts, never reap
+         * dead connections, and every connection it held on to kept its
+         * control block alive in ktcp until the heap ran out and every TCP
+         * service on the machine died with it.
+         */
+        if (nonblock)
+            return -EAGAIN;
 
         debug_net("INET(%P) read waiting on sock->avail_data sock %x buf_in %d\n",
             sock, bufin_sem);
@@ -334,6 +402,9 @@ static int inet_write(register struct socket *sock, char *ubuf, int size,
     if (size <= 0)
         return 0;
 
+    if (sock->flags & SF_DGRAM)         /* write() == sendto(NULL), needs connect() */
+        return inet_dgram_send(sock, ubuf, size, nonblock, 0, NULL);
+
     if (sock->state == SS_DISCONNECTING)
         return -EPIPE;
 
@@ -370,6 +441,16 @@ static int inet_write(register struct socket *sock, char *ubuf, int size,
 
         if (ret < 0) {
             if (ret == -ERESTARTSYS) {
+                /*
+                 * ktcp is flow-controlling us (retransmit memory or the
+                 * congestion window). Same bug as the read path: O_NONBLOCK
+                 * was ignored, so a nonblocking write on a congested socket
+                 * span here at 10Hz forever instead of failing. Report the
+                 * bytes already accepted, or EAGAIN if none.
+                 */
+                if (nonblock)
+                    return (count < size)? size - count: -EAGAIN;
+
                 /* delay process 100ms*/
                 current->state = TASK_INTERRUPTIBLE;
                 current->timeout = jiffies() + (HZ / 10); /* 1/10 sec = 100ms*/
@@ -392,6 +473,24 @@ static int inet_select(register struct socket *sock, int sel_type)
     debug_net("INET(%P) select sock %04x wait %04x type %d avail %u\n",
          sock, sock->wait, sel_type, sock->avail_data);
 
+    /*
+     * Datagram sockets are handled first and never consult sock->state. The
+     * TCP rule below ("readable unless SS_CONNECTED") would make an
+     * unconnected datagram socket permanently readable, and unconnected is
+     * the normal case here.
+     */
+    if (sock->flags & SF_DGRAM) {
+        if (sel_type == SEL_IN) {
+            if (sock->avail_data)       /* a datagram is queued in ktcp */
+                return 1;
+            select_wait(sock->wait);
+            return 0;
+        }
+        if (sel_type == SEL_OUT)
+            return 1;                   /* TDC_SENDTO never queues in ktcp */
+        return 0;                       /* no OOB for UDP */
+    }
+
     if (sel_type == SEL_IN) {
         if (sock->avail_data || sock->state != SS_CONNECTED)
             return 1;
@@ -404,20 +503,190 @@ static int inet_select(register struct socket *sock, int sel_type)
     return 0;
 }
 
-static int inet_send(struct socket *sock, void *buff, int len, int nonblock,
-                     unsigned int flags)
+/*
+ * Give an unbound datagram socket an ephemeral port before any data moves.
+ * Doing it here rather than in ktcp means ktcp always holds a udp_sock for a
+ * handle before it sees traffic for it, and getsockname() works on a socket
+ * that only ever called sendto().
+ */
+static int FARPROC inet_autobind(struct socket *sock)
 {
-    if (flags != 0)
-        return -EINVAL;
+    struct sockaddr_in addr;
+
+    if (sock->localport)
+        return 0;
+    addr.sin_family = AF_INET;
+    addr.sin_port = 0;                  /* 0 = pick one */
+    addr.sin_addr.s_addr = INADDR_ANY;
+    return inet_bind_kernel(sock, &addr);
+}
+
+/*
+ * Record the peer with ktcp so arriving datagrams can be filtered to it. No
+ * packet goes on the wire; ktcp answers immediately from its UDP table.
+ */
+static int FARPROC inet_dgram_connect(struct socket *sock, struct sockaddr_in *addr)
+{
+    register struct tdb_connect *cmd;
+    int ret;
+
+    down(&rwlock);
+    cmd = (struct tdb_connect *)get_tdout_buf();
+    cmd->cmd = TDC_CONNECT;
+    cmd->sock = sock;
+    memcpy(&cmd->addr, addr, sizeof(struct sockaddr_in));
+    tcpdev_inetwrite(cmd, sizeof(struct tdb_connect));
+
+    while (bufin_sem == 0)
+        interruptible_sleep_on(sock->wait);
+    ret = ((struct tdb_return_data *)tdin_buf)->ret_value;
+    tcpdev_clear_data_avail();
+    up(&rwlock);
+    return (ret >= 0)? 0: ret;
+}
+
+static int FARPROC inet_dgram_send(register struct socket *sock, char *ubuf, int size,
+                           int nonblock, unsigned int flags, struct sockaddr *uaddr)
+{
+    register struct tdb_sendto *cmd;
+    struct sockaddr_in dest;
+    int ret;
+
+    if (flags & ~MSG_SUPPORTED)
+        return -EOPNOTSUPP;
+    if (size > TDB_WRITE_MAX)           /* no IP fragmentation exists in ktcp */
+        return -EMSGSIZE;
+
+    if (uaddr) {
+        memcpy_fromfs(&dest, uaddr, sizeof(struct sockaddr_in));
+        if (dest.sin_family != AF_INET)
+            return -EINVAL;
+    } else {
+        if (sock->state != SS_CONNECTED)
+            return -EDESTADDRREQ;       /* write() on an unconnected datagram */
+        dest.sin_addr.s_addr = sock->remaddr;
+        dest.sin_port = sock->remport;
+    }
+
+    if ((ret = inet_autobind(sock)) < 0)
+        return ret;
+
+    down(&rwlock);
+    cmd = (struct tdb_sendto *)get_tdout_buf();
+    cmd->cmd = TDC_SENDTO;
+    cmd->msgflags = (unsigned char)flags;
+    cmd->sock = sock;
+    cmd->daddr = dest.sin_addr.s_addr;
+    cmd->dport = dest.sin_port;
+    cmd->size = size;
+    cmd->nonblock = nonblock;
+    if (size)
+        memcpy_fromfs(cmd->data, ubuf, (size_t)size);
+
+    /* send only the header plus the payload, not the whole struct */
+    tcpdev_inetwrite(cmd, (unsigned)((char *)cmd->data - (char *)cmd) + size);
+
+    while (bufin_sem == 0)
+        interruptible_sleep_on(sock->wait);
+
+    ret = ((struct tdb_return_data *)tdin_buf)->ret_value;
+    tcpdev_clear_data_avail();
+    up(&rwlock);
+    return ret;
+}
+
+static int FARPROC inet_dgram_recv(register struct socket *sock, char *ubuf, int size,
+                           int nonblock, unsigned int flags, struct sockaddr *uaddr)
+{
+    register struct tdb_recvfrom *cmd;
+    struct tdb_recvfrom_ret *r;
+    struct sockaddr_in from;
+    int ret;
+
+    if (flags & ~MSG_SUPPORTED)
+        return -EOPNOTSUPP;
+    if ((ret = inet_autobind(sock)) < 0)
+        return ret;
+    if (size > (int)TCPDEV_MAXDGRAM)
+        size = TCPDEV_MAXDGRAM;
+
+    for (;;) {
+        /*
+         * No SF_CLOSING/EOF test here: a datagram socket has no end of
+         * stream. Non-blocking returns without troubling ktcp at all.
+         */
+        while (sock->avail_data == 0) {
+            if (nonblock || (flags & MSG_DONTWAIT))
+                return -EAGAIN;
+            interruptible_sleep_on(sock->wait);
+            if (current->signal)
+                return -EINTR;
+        }
+
+        down(&rwlock);
+        cmd = (struct tdb_recvfrom *)get_tdout_buf();
+        cmd->cmd = TDC_RECVFROM;
+        cmd->msgflags = (unsigned char)flags;
+        cmd->sock = sock;
+        cmd->size = size;
+        cmd->nonblock = nonblock;
+        tcpdev_inetwrite(cmd, sizeof(struct tdb_recvfrom));
+
+        while (bufin_sem == 0)
+            interruptible_sleep_on(sock->wait);
+
+        r = (struct tdb_recvfrom_ret *)tdin_buf;
+        ret = r->ret_value;
+        if (ret > 0) {
+            memcpy_tofs(ubuf, r->data, (size_t)r->size);
+            if (uaddr) {
+                from.sin_family = AF_INET;
+                from.sin_addr.s_addr = r->saddr;
+                from.sin_port = r->sport;
+                memcpy_tofs(uaddr, &from, sizeof(from));
+            }
+            /* ktcp tells us what is still queued, so a second recv can go
+             * straight out without waiting to be told again */
+            down(&sock->sem);
+            sock->avail_data = r->avail_next;
+            up(&sock->sem);
+        }
+        tcpdev_clear_data_avail();
+        up(&rwlock);
+
+        /*
+         * avail_data can be stale: two processes sharing the fd after fork()
+         * can both see it set and race for one datagram. ktcp is the
+         * authority, so the loser simply goes back to sleep.
+         */
+        if (ret == -EAGAIN && !nonblock && !(flags & MSG_DONTWAIT)) {
+            down(&sock->sem);
+            sock->avail_data = 0;
+            up(&sock->sem);
+            continue;
+        }
+        return ret;
+    }
+}
+
+static int inet_send(struct socket *sock, void *buff, int len, int nonblock,
+                     unsigned int flags, struct sockaddr *uaddr)
+{
+    if (sock->flags & SF_DGRAM)
+        return inet_dgram_send(sock, buff, len, nonblock, flags, uaddr);
+    if (flags != 0 || uaddr)
+        return -EOPNOTSUPP;
 
     return inet_write(sock, buff, len, nonblock);
 }
 
 static int inet_recv(struct socket *sock, void *buff, int len, int nonblock,
-                     unsigned int flags)
+                     unsigned int flags, struct sockaddr *uaddr)
 {
-    if (flags != 0)
-        return -EINVAL;
+    if (sock->flags & SF_DGRAM)
+        return inet_dgram_recv(sock, buff, len, nonblock, flags, uaddr);
+    if (flags != 0 || uaddr)
+        return -EOPNOTSUPP;
 
     return inet_read(sock, buff, len, nonblock);
 }

@@ -31,6 +31,16 @@
 
 static unsigned char ipbuf[IP_BUFSIZ];
 
+/*
+ * These buffer sizes used to be chained off CB_NORMAL_BUFSIZ, so they were
+ * right by accident and enormous. Now that each is sized from what it actually
+ * holds, enforce the couplings the comments used to describe. ip.c is the one
+ * file that sees both tcp.h and deveth.h.
+ */
+typedef char __ip_ll_hdrsiz_ok[(IP_LL_HDRSIZ == sizeof(struct ip_ll))? 1: -1];
+typedef char __ip_bufsiz_ok[
+    (IP_BUFSIZ >= IP_LL_HDRSIZ + (int)sizeof(iphdr_t) + TCP_BUFSIZ)? 1: -1];
+
 int ip_init(void)
 {
     return 0;
@@ -113,6 +123,7 @@ static void ip_print(struct iphdr_s *head, int size)
 void ip_recvpacket(unsigned char *packet, int size)
 {
     register struct iphdr_s *iphdr = (struct iphdr_s *)packet;
+    unsigned int totlen;
     int len;
     unsigned char *data;
 
@@ -131,10 +142,29 @@ void ip_recvpacket(unsigned char *packet, int size)
 	return;
     }
 
-    if (ip_calc_chksum((char *)iphdr, len)) {
-	printf("IP: BAD CHKSUM (%x) len %d\n", ip_calc_chksum((char *)iphdr, len), len);
-	netstats.ipbadchksum++;
+    /*
+     * tot_len is taken on trust by everything downstream: icmp_process() uses
+     * it to size the echo reply it builds in ipbuf, and tcp_process() uses it
+     * as the checksum length. It was never checked against the frame actually
+     * received, so a peer claiming tot_len 0xffff walked those buffers off the
+     * end. Believe the wire length, not the header. Frames shorter than 60
+     * bytes are padded by ethernet, so size may legitimately exceed tot_len.
+     */
+    totlen = ntohs(iphdr->tot_len);
+    if (totlen > (unsigned int)size || totlen < (unsigned int)len) {
+	debug_ip("IP: bad tot_len %u (frame %d, hdr %d)\n", totlen, size, len);
+	netstats.ipbadhdr++;
 	return;
+    }
+
+    {
+	__u16 sum = ip_calc_chksum((char *)iphdr, len);	/* compute once, not twice */
+
+	if (sum) {
+	    printf("IP: BAD CHKSUM (%x) len %d\n", sum, len);
+	    netstats.ipbadchksum++;
+	    return;
+	}
     }
 
     switch (iphdr->protocol) {
@@ -153,7 +183,7 @@ void ip_recvpacket(unsigned char *packet, int size)
 
     case PROTO_UDP:
 	data = packet + 4 * IP_HLEN(iphdr);
-	udp_process(iphdr, data);
+	udp_process(iphdr, data, (int)(totlen - (unsigned int)len));
 	netstats.udprcvcnt++;
 	break;
     }

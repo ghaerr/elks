@@ -2,6 +2,7 @@
 #define TCP_H
 
 #include <sys/types.h>
+#include <limits.h>		/* MAX_PACKET_ETH */
 #include "config.h"
 #include "timer.h"
 #include "ip.h"
@@ -9,23 +10,54 @@
 #include <arpa/inet.h>
 
 /*
- * /dev/tcpdev max read/write size
- * must be at least as big as CB_NORMAL_BUFSIZ
- * and at least as big as TCPDEV_INBUFFERSIZE in <linuxmt/tcpdev.h> (currently 1500)
+ * Buffer sizes. These three are independent of each other and none of them is
+ * derived from CB_NORMAL_BUFSIZ - that is the per-connection receive ring and
+ * has nothing to do with how big a packet or a tcpdev message can be. Chaining
+ * them off the ring size (as this header used to) made ipbuf, tcpbuf and
+ * tcpdev's sbuf ~4.4K each, about 9K more BSS than any of them can ever use.
  */
-#define TCPDEV_BUFSIZ	(CB_NORMAL_BUFSIZ + sizeof(struct tdb_return_data))
-
-/* max tcp buffer size (no ip header)*/
-#define TCP_BUFSIZ      (TCPDEV_BUFSIZ + sizeof(tcphdr_t) + TCP_OPT_MSS_LEN)
-
-/* max ip buffer size (with link layer frame)*/
-#define IP_BUFSIZ       (TCP_BUFSIZ + sizeof(iphdr_t) + sizeof(struct ip_ll))
 
 /*
- * control block input buffer size - max window size, doesn't have to be power of two
- * default will be (ETH_MTU - IP_HDRSIZ) * 3 = (1500-40) * 3 = 4380
+ * /dev/tcpdev scratch buffer. Used for messages in both directions, so it has
+ * to hold the larger of:
+ *   kernel -> ktcp:  TCPDEV_OUTBUFFERSIZE  (sizeof(struct tdb_write))
+ *   ktcp -> kernel:  sizeof(struct tdb_return_data) + TCPDEV_MAXREAD, which is
+ *                    exactly TCPDEV_INBUFFERSIZE by construction
+ * The kernel rejects a write longer than TCPDEV_INBUFFERSIZE and silently
+ * truncates a read shorter than the pending message, so this has no slack.
  */
-#define CB_NORMAL_BUFSIZ    4380    /* normal input buffer size*/
+#define TCPDEV_BUFSIZ   (TCPDEV_INBUFFERSIZE > TCPDEV_OUTBUFFERSIZE? \
+                         TCPDEV_INBUFFERSIZE: TCPDEV_OUTBUFFERSIZE)
+
+/*
+ * Wire buffer, including room for the link layer header at the front. Bounded
+ * by the link MTU and never by the receive window: ktcp does no IP reassembly
+ * (see ip.c), so a received IP packet cannot exceed the MTU, and a transmitted
+ * segment cannot exceed the MSS. ktcp clamps -m MTU against this.
+ */
+#define IP_LL_HDRSIZ    14      /* sizeof(struct ip_ll); deveth.h can't be included
+                                 * here, so ip.c asserts these agree */
+#define IP_BUFSIZ       MAX_PACKET_ETH
+
+/* max tcp buffer size (no ip or link layer header)*/
+#define TCP_BUFSIZ      (IP_BUFSIZ - IP_LL_HDRSIZ - sizeof(iphdr_t))
+
+/*
+ * Per-connection receive ring, and therefore the advertised window -
+ * tcp_calc_rcv_window() hands out CB_BUF_SPACE() directly. This is pure heap:
+ * every connection costs sizeof(struct tcpcb_list_s) + this.
+ *
+ * Two MSS rather than the old three. One MSS would mean a single segment in
+ * flight - the window closes on every segment and reopens only once the
+ * application reads, serialising the receive path - while three buys only a
+ * few percent more, because ktcp's per-segment processing rather than the
+ * bandwidth-delay product is the limit on this hardware. Two is the knee.
+ *
+ * Sockets that want something else say so with SO_RCVBUF: bulk receivers
+ * (ftpd data, audiorecv, vidrecv) ask for more, servers holding many mostly
+ * idle clients ask for less.
+ */
+#define CB_NORMAL_BUFSIZ    2920    /* 2 * (ETH_MTU - IP_HDRSIZ) */
 #define USE_SWS             0       /* =1 to use silly window algorithm */
 
 /* max outstanding send window size */
@@ -39,6 +71,12 @@
 /* timeout values - unit is set by 'Now' in ktcp.c, currently 60ms */
 #define TIMEOUT_ENTER_WAIT  (4<<4)  /* TIME_WAIT state (was 30, then 10, now 4 secs) */
 #define TIMEOUT_CLOSE_WAIT  (10<<4) /* CLOSING/LAST_ACK/FIN_WAIT states (10 secs) */
+#define TIMEOUT_UNACCEPTED  (30<<4) /* SYN_RECEIVED / established-but-never-accepted.
+                                     * These had no timeout at all, so a control block
+                                     * the application never accepted lived forever and
+                                     * a port scan leaked them permanently until the
+                                     * heap ran out and every TCP service died with it.
+                                     * Long enough not to punish a slow accept loop. */
                                     /* Initial RTT & RTO values are not important,
                                      * as they get adjusted automatically as soon
                                      * as the connection is up and running. Recommended
@@ -199,6 +237,7 @@ struct	tcp_retrans_list_s {
 extern int tcp_timeruse;        /* retrans timer active, call tcp_retrans */
 extern int cbs_in_time_wait;    /* time_wait timer active, call tcp_expire_timeouts */
 extern int cbs_in_user_timeout; /* fin_wait/closing/last_ack active, call " */
+extern int cbs_unaccepted;      /* embryonic CBs alive, call tcpcb_expire_timeouts */
 extern int tcpcb_need_push;     /* push required,tcpcb_push_data/call notify_data_avail */
 extern int tcp_retrans_memory;  /* total retransmit memory in use */
 

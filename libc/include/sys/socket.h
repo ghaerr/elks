@@ -20,4 +20,13 @@ int getsockname (int sock, struct sockaddr * restrict address,
 int getpeername (int sock, struct sockaddr * restrict address,
 	socklen_t * restrict address_len);
 
+/* datagram sockets. The kernel entries take five arguments (ELKS syscalls
+ * carry no more); these restore the POSIX six-argument shape. */
+int sendto (int sock, const void *buf, size_t len, int flags,
+	const struct sockaddr *address, socklen_t address_len);
+int recvfrom (int sock, void *buf, size_t len, int flags,
+	struct sockaddr * restrict address, socklen_t * restrict address_len);
+int send (int sock, const void *buf, size_t len, int flags);
+int recv (int sock, void *buf, size_t len, int flags);
+
 #endif

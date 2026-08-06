@@ -17,6 +17,7 @@
 
 #include <linuxmt/errno.h>
 #include <linuxmt/socket.h>
+#include <linuxmt/in.h>
 #include <linuxmt/net.h>
 #include <linuxmt/fs.h>
 #include <linuxmt/mm.h>
@@ -24,6 +25,7 @@
 #include <linuxmt/fcntl.h>
 #include <linuxmt/stat.h>
 #include <linuxmt/debug.h>
+#include <linuxmt/init.h>
 
 #include <arch/segment.h>
 #include <arch/irq.h>
@@ -379,6 +381,9 @@ int sys_listen(int fd, int backlog)
     if (!(sock = sockfd_lookup(fd, NULL)))
 	return -ENOTSOCK;
 
+    if (sock->flags & SF_DGRAM)		/* connectionless: nothing to listen for */
+	return -EOPNOTSUPP;
+
     if (sock->state != SS_UNCONNECTED)
 	return -EINVAL;
 
@@ -401,6 +406,9 @@ int sys_accept(int fd, struct sockaddr *upeer_sockaddr, int *upeer_addrlen)
 
     if (!(sock = sockfd_lookup(fd, &file)))
 	return -ENOTSOCK;
+
+    if (sock->flags & SF_DGRAM)
+	return -EOPNOTSUPP;
 
     if (sock->state != SS_UNCONNECTED)
 	return -EINVAL;
@@ -516,13 +524,20 @@ int sys_socket(int family, int type, int protocol)
     if (ops == NULL)
 	return -EINVAL;
 
-    if (type != SOCK_STREAM)
+    if (type != SOCK_STREAM && type != SOCK_DGRAM)
 	return -EINVAL;
 
     if (!(sock = sock_alloc()))
 	return -ENOSR;
 
-    //sock->type = type;
+    /*
+     * There is no sock->type field, and adding one would grow every inode.
+     * SF_DGRAM is bit 7 of the existing flags byte, which was free - so the
+     * datagram/stream distinction costs nothing. It must be set before
+     * ->create() so the family can reject what it does not support.
+     */
+    if (type == SOCK_DGRAM)
+	sock->flags |= SF_DGRAM;
     sock->ops = ops;
     if ((fd = sock->ops->create(sock, protocol)) < 0) {
 	sock_release(sock);
@@ -599,6 +614,54 @@ int sys_getsocknam(int fd, struct sockaddr *usockaddr, int *usockaddr_len, int p
 	return -EINVAL;
 
     return sock->ops->getname(sock, usockaddr, usockaddr_len, peer);
+}
+
+/*
+ * sendto/recvfrom, minus the addrlen argument. POSIX passes six; an ELKS
+ * syscall carries at most five (bx,cx,dx,di,si), so the length is dropped and
+ * fixed at sizeof(struct sockaddr_in) - AF_INET is the only family that
+ * implements these. libc puts the POSIX signature back, the same way
+ * getsocknam already backs getsockname/getpeername.
+ *
+ * These reuse the send/recv slots in proto_ops, which were dead code: no
+ * caller existed anywhere in the kernel, because there were no syscalls.
+ */
+/*
+ * sendto and recvfrom differ only in the direction of the two verify_area
+ * checks and which proto_ops slot is used, so they share a body. It lives in
+ * far text because the kernel's near text is essentially full.
+ */
+static int FARPROC sock_sendrecv(int fd, void *buf, size_t len, int flags,
+                                 struct sockaddr *uaddr, int recving)
+{
+    struct socket *sock;
+    struct file *file;
+    int err;
+
+    if (!(sock = sockfd_lookup(fd, &file)))
+	return -ENOTSOCK;
+    if (len && (err = verify_area(recving? VERIFY_WRITE: VERIFY_READ, buf, len)) < 0)
+	return err;
+    if (uaddr) {
+	err = recving
+	    ? verify_area(VERIFY_WRITE, uaddr, sizeof(struct sockaddr_in))
+	    : check_addr_to_kernel(uaddr, sizeof(struct sockaddr_in));
+	if (err < 0)
+	    return err;
+    }
+
+    return (recving? sock->ops->recv: sock->ops->send)
+	   (sock, buf, (int)len, file->f_flags & O_NONBLOCK, flags, uaddr);
+}
+
+int sys__sendto(int fd, void *buf, size_t len, int flags, struct sockaddr *uaddr)
+{
+    return sock_sendrecv(fd, buf, len, flags, uaddr, 0);
+}
+
+int sys__recvfrom(int fd, void *buf, size_t len, int flags, struct sockaddr *uaddr)
+{
+    return sock_sendrecv(fd, buf, len, flags, uaddr, 1);
 }
 
 #endif /* CONFIG_SOCKET */

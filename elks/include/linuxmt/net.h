@@ -74,6 +74,7 @@ struct proto_ops {
 #define SF_RST_ON_CLOSE	(1 << 4) /* inet */
 #define SF_REUSE_ADDR	(1 << 5) /* inet */
 #define SF_CONNECT	(1 << 6) /* inet */
+#define SF_DGRAM	(1 << 7) /* inet: SOCK_DGRAM socket (bit 7 was free) */
 
 struct net_proto {
     const char *name;		/* Protocol name */

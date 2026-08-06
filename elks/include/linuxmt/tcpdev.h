@@ -14,9 +14,20 @@
 #define	TDB_WRITE_MAX		512	/* max data in tdb_write packet to ktcp*/
 
 #define TCPDEV_INBUFFERSIZE	1500	/* max data writable to tcpdev from ktcp*/
-#define TCPDEV_OUTBUFFERSIZE	(TDB_WRITE_MAX + sizeof(struct tdb_write))
 
-#define TCPDEV_MAXREAD TCPDEV_INBUFFERSIZE - sizeof(struct tdb_return_data)
+/*
+ * Largest kernel->ktcp message. Both tdb_write and tdb_sendto embed
+ * data[TDB_WRITE_MAX]; tdb_sendto is the larger because it also carries a
+ * destination address, so it sets the size. Note TDB_WRITE_MAX must not be
+ * added on top - doing so oversized tdout_buf by exactly one payload.
+ */
+#define TCPDEV_OUTBUFFERSIZE	(sizeof(struct tdb_sendto) > sizeof(struct tdb_write)? \
+				 sizeof(struct tdb_sendto): sizeof(struct tdb_write))
+
+/* max datagram deliverable up to the kernel in one TDT_RECVFROM */
+#define TCPDEV_MAXDGRAM		(TCPDEV_INBUFFERSIZE - sizeof(struct tdb_recvfrom_ret))
+
+#define TCPDEV_MAXREAD		(TCPDEV_INBUFFERSIZE - sizeof(struct tdb_return_data))
 
 /* outgoing ops */
 #define TDC_BIND	1
@@ -24,6 +35,8 @@
 #define TDC_CONNECT	3
 #define TDC_LISTEN	4
 #define TDC_RELEASE	5
+#define TDC_SENDTO	6	/* datagram out, carries the destination */
+#define TDC_RECVFROM	7	/* datagram in, reply carries the source */
 #define TDC_READ	8
 #define TDC_WRITE	9
 
@@ -48,10 +61,42 @@ struct tdb_listen {
 
 struct tdb_bind {
     unsigned char cmd;
+    unsigned char proto;	/* 0 = SOCK_STREAM, 1 = SOCK_DGRAM. Uses the pad
+				 * byte that already sat here for alignment, so
+				 * the struct does not grow. Needed only at bind:
+				 * it is the one point where ktcp must choose
+				 * which table the socket comes from. */
     struct socket *sock;
     int reuse_addr;
     int rcv_bufsiz;
     struct sockaddr_in addr;
+};
+
+#define TDB_PROTO_STREAM	0
+#define TDB_PROTO_DGRAM		1
+
+/*
+ * Datagram send. A datagram is atomic, so unlike TDC_WRITE there is no
+ * chunking loop - the payload is bounded by TDB_WRITE_MAX and anything larger
+ * is refused with -EMSGSIZE rather than truncated.
+ */
+struct tdb_sendto {
+    unsigned char cmd;
+    unsigned char msgflags;	/* MSG_* (was padding) */
+    struct socket *sock;
+    __u32 daddr;		/* destination, network byte order */
+    __u16 dport;		/* destination port, network byte order */
+    int size;
+    int nonblock;
+    unsigned char data[TDB_WRITE_MAX];
+};
+
+struct tdb_recvfrom {
+    unsigned char cmd;
+    unsigned char msgflags;
+    struct socket *sock;
+    int size;			/* user buffer size */
+    int nonblock;
 };
 
 struct tdb_connect {
@@ -82,6 +127,7 @@ struct tdb_write {
 #define TDT_ACCEPT	4
 #define TDT_BIND	5
 #define TDT_CONNECT	6
+#define TDT_RECVFROM	7	/* datagram up, with its source address */
 
 struct tdb_return_data {
     char type;
@@ -109,7 +155,34 @@ struct tdb_bind_ret {
     __u16 addr_port;
 };
 
+/*
+ * Datagram delivery. The first four members are deliberately laid out
+ * identically to struct tdb_return_data (type@0, ret_value@2, sock@4, size@6)
+ * so inet_process_tcpdev() can keep dereferencing ->sock and switching on
+ * ->type without knowing which reply it has.
+ *
+ * avail_next carries the size of the NEXT queued datagram in this same reply.
+ * ktcp must not follow up with an unsolicited TDT_AVAIL_DATA here: down() on
+ * the shared buffer is an uninterruptible sleep_on, so a second write from
+ * ktcp would stall the whole stack until an application process drained it.
+ */
+struct tdb_recvfrom_ret {
+    char type;			/*  0 */
+    char trunc;			/*  1  datagram was longer than the buffer */
+    int ret_value;		/*  2  bytes copied, or -errno */
+    struct socket *sock;	/*  4 */
+    int size;			/*  6  bytes of data[] following */
+    __u32 saddr;		/*  8  source, network byte order */
+    __u16 sport;		/* 12  source port, network byte order */
+    __u16 avail_next;		/* 14  size of next queued datagram, 0 if none */
+    unsigned char data[];	/* 16 */
+};
+
+#ifdef __KERNEL__
+/* kernel-internal; ktcp includes this header too and must not see these */
+#include <linuxmt/init.h>
 extern void tcpdev_clear_data_avail(void);
-extern int inet_process_tcpdev(char *buf, int len);
+extern int FARPROC inet_process_tcpdev(char *buf, int len);
+#endif
 
 #endif

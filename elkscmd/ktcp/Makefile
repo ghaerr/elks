@@ -14,7 +14,10 @@ OBJS		= $(CFILES:.c=.o)
 all:	ktcp
 
 ktcp:	$(OBJS)
-	$(LD) $(LDFLAGS) -maout-heap=33792 -maout-stack=3072  -o ktcp $(OBJS) $(LDLIBS)
+	# heap=0xffff means "all the segment that is left" (elks/fs/exec.c:302), so
+	# the heap tracks BSS automatically instead of silently eating the margin
+	# when a buffer grows. Every connection control block comes out of it.
+	$(LD) $(LDFLAGS) -maout-heap=0xffff -maout-stack=3072  -o ktcp $(OBJS) $(LDLIBS)
 
 install: ktcp
 	$(INSTALL) ktcp $(DESTDIR)/bin

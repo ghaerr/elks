@@ -75,6 +75,13 @@
 #define ESERVERERR      129     /* Server error */
 #define ERESTARTSYS     512     /* Restart system call*/
 
+/* datagram sockets need these; moved out of the UNUSED block below when
+ * sendto/recvfrom were added. Remember etc/perror needs matching strings. */
+#define EDESTADDRREQ    89      /* Destination address required */
+#define EMSGSIZE        90      /* Message too long */
+#define EPROTOTYPE      91      /* Protocol wrong type for socket */
+#define EOPNOTSUPP      95      /* Operation not supported on transport endpoint */
+
 #if UNUSED
 /* when any of these added in, add string to etc/perror as well */
 #define EWOULDBLOCK     41      /* Operation would block */
@@ -124,13 +131,9 @@
 #define ESTRPIPE        86      /* Streams pipe error */
 #define EUSERS          87      /* Too many users */
 
-#define EDESTADDRREQ    89      /* Destination address required */
-#define EMSGSIZE        90      /* Message too long */
-#define EPROTOTYPE      91      /* Protocol wrong type for socket */
 #define ENOPROTOOPT     92      /* Protocol not available */
 #define EPROTONOSUPPORT 93      /* Protocol not supported */
 #define ESOCKTNOSUPPORT 94      /* Socket type not supported */
-#define EOPNOTSUPP      95      /* Operation not supported on transport endpoint */
 #define EPFNOSUPPORT    96      /* Protocol family not supported */
 #define EAFNOSUPPORT    97      /* Address family not supported by protocol */
 

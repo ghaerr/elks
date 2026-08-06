@@ -38,6 +38,7 @@
 /* defaults*/
 #define DEFAULT_GATEWAY		"10.0.2.2"
 #define DEFAULT_NETMASK		"255.255.255.0"
+#define MIN_MTU			68	/* RFC 791 minimum, keeps MSS (MTU-40) positive */
 int linkprotocol = 	LINK_ETHER;
 char ethdev[10] = 	"/dev/ne0";
 char *serdev = 		"/dev/ttyS0";
@@ -60,6 +61,7 @@ static int intfd;	/* interface fd*/
 int tcp_timeruse;		/* retrans timer active, call tcp_retrans */
 int cbs_in_time_wait;		/* time_wait timer active, call tcp_expire_timeouts */
 int cbs_in_user_timeout;	/* fin_wait/closing/last_ack active, call " */
+int cbs_unaccepted;		/* embryonic CBs alive, call tcpcb_expire_timeouts */
 int tcpcb_need_push;		/* push required, tcpcb_push_data/call notify_data_avail */
 int tcp_retrans_memory;		/* total retransmit memory in use*/
 char dhcp_enabled;
@@ -74,7 +76,8 @@ void ktcp_run(void)
 
     while (1) {
 	if (tcp_timeruse > 0 || tcpcb_need_push > 0 || loopagain ||
-	    cbs_in_time_wait > 0 || cbs_in_user_timeout > 0 || dhcp_timer_active) {
+	    cbs_in_time_wait > 0 || cbs_in_user_timeout > 0 ||
+	    cbs_unaccepted > 0 || dhcp_timer_active) {
 
 	    //printf("tcp: timer %d needpush %d timewait %d usertime %d\n", tcp_timeruse,
 		//tcpcb_need_push, cbs_in_time_wait, cbs_in_user_timeout);
@@ -106,9 +109,9 @@ void ktcp_run(void)
 	Now = get_time();
 
 	/* expire timeouts*/
-	if (cbs_in_time_wait > 0 || cbs_in_user_timeout > 0) {
-	    debug_tcp("tcp: time_wait %d user_timeout %d\n",
-		cbs_in_time_wait, cbs_in_user_timeout);
+	if (cbs_in_time_wait > 0 || cbs_in_user_timeout > 0 || cbs_unaccepted > 0) {
+	    debug_tcp("tcp: time_wait %d user_timeout %d unaccepted %d\n",
+		cbs_in_time_wait, cbs_in_user_timeout, cbs_unaccepted);
 	    tcpcb_expire_timeouts();
 	}
 
@@ -199,6 +202,7 @@ int main(int argc,char **argv)
     int ch;
     int bflag = 0;
     int mtu = 0;
+    unsigned int maxmtu;
     char *p;
     char *default_ip, *default_gateway, *default_netmask;
     static char *linknames[3] = { "", "slip", "cslip" };
@@ -255,6 +259,23 @@ int main(int argc,char **argv)
 	    dhcp_enabled = 1;
     }
     MTU = mtu ? mtu : (linkprotocol == LINK_ETHER ? ETH_MTU : SLIP_MTU);
+
+    /*
+     * Clamp -m to what the static packet buffers can actually hold. ipbuf is
+     * IP_BUFSIZ bytes with sizeof(struct ip_ll) reserved at the front for the
+     * link header; slip's receive buffer is sized from SLIP_MTU. Neither was
+     * checked, so an oversized -m (net.cfg exposes it as mtu=) silently
+     * overran them. Clamp rather than exit: a mistyped MTU should not take
+     * the network down at boot.
+     */
+    maxmtu = (linkprotocol == LINK_ETHER)? IP_BUFSIZ - sizeof(struct ip_ll): SLIP_MTU;
+    if (MTU > maxmtu) {
+	printf("ktcp: MTU %u too large, using %u\n", MTU, maxmtu);
+	MTU = maxmtu;
+    } else if (MTU < MIN_MTU) {		/* MSS is MTU-40, keep it positive */
+	printf("ktcp: MTU %u too small, using %u\n", MTU, (unsigned)MIN_MTU);
+	MTU = MIN_MTU;
+    }
 
     /* must exit() in next two stages on error to reset kernel tcpdev_inuse to 0*/
     if ((tcpdevfd = tcpdev_init("/dev/tcpdev")) < 0)

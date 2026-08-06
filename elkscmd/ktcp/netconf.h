@@ -52,6 +52,8 @@ struct packet_stats_s {
 	__u32	udpsndcnt;
 	__u32	udprcvcnt;
 	__u32	udpnoportcnt;
+	__u32	udpdropcnt;	/* queue full, no memory, or bad length */
+	__u32	udpbadchksum;
 };
 
 extern struct packet_stats_s netstats;

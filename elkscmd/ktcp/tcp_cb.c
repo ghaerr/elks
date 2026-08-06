@@ -30,6 +30,7 @@ void tcpcb_init(void)
     tcpcb_need_push = 0;
     cbs_in_time_wait = 0;
     cbs_in_user_timeout = 0;
+    cbs_unaccepted = 0;
 
     tcpcb_num = 0;	/* for netstat*/
 }
@@ -140,6 +141,9 @@ void tcpcb_remove(struct tcpcb_list_s *n)
 	capture_cb = NULL;
     if (&n->tcpcb == pending_icmp_cb)
 	pending_icmp_cb = NULL;
+
+    if (n->tcpcb.unaccepted)	/* still embryonic - release its reaper slot */
+	cbs_unaccepted--;
 
     debug_tcp("tcp: REMOVING control block %x\n", n);
     debug_mem("Free CB\n");
@@ -281,6 +285,27 @@ void tcpcb_expire_timeouts(void)
 		    tcpcb_remove(n);
 		}
 		break;
+	    default:
+		/*
+		 * Embryonic connections - SYN_RECEIVED, or established but
+		 * never accept()ed - had no timeout of any kind, so they lived
+		 * until ktcp restarted. A port scan therefore leaked one
+		 * control block per probe, permanently, and an application
+		 * that stopped calling accept() leaked one per connection.
+		 * Once the heap was gone, every TCP service on the machine
+		 * died with it.
+		 *
+		 * unaccepted is only ever set on a cloned CB (see tcp_listen),
+		 * so LISTEN/CLOSED/SYN_SENT blocks are not touched here.
+		 */
+		if (n->tcpcb.unaccepted &&
+		    TIME_GT(Now - TIMEOUT_UNACCEPTED, n->tcpcb.time_wait_exp)) {
+		    debug_tune("tcp: reaping unaccepted cb port %u from %s\n",
+			n->tcpcb.localport, in_ntoa(n->tcpcb.remaddr));
+		    netstats.tcpdropcnt++;
+		    tcp_reset_connection(&n->tcpcb);	/* RST, then deallocate */
+		}
+		break;
 	}
 	n = next;
     }
@@ -295,32 +320,58 @@ void tcpcb_push_data(void)
 	    notify_data_avail(&n->tcpcb);
 }
 
-/* There must be free space greater-equal than len or will wrap*/
+/*
+ * Ring copies. These were byte-at-a-time loops with a wrap test and a memory
+ * increment of buf_used per byte - around 180 clocks per byte on an 8088,
+ * against 12.5 for a word-at-a-time block move. They run on every received
+ * segment and every application read, which made them the largest single cost
+ * in the receive path. Split at the wrap point and let memcpy do the work.
+ *
+ * Callers guarantee the space: tcp_established() checks CB_BUF_SPACE before
+ * writing, netconf_capture_packet() does the same, and tcpdev_read() clamps
+ * to bytes_to_push.
+ */
+
+/* There must be free space greater-equal than len */
 void tcpcb_buf_write(struct tcpcb_s *cb, unsigned char *data, int len)
 {
-    int tail = cb->buf_tail;
+    unsigned int tail = cb->buf_tail;
+    unsigned int ulen = len;
+    unsigned int n = cb->buf_size - tail;	/* room before the wrap */
 
-    while (--len >= 0) {
-	cb->buf_base[tail++] = *data++;
-	if (tail >= cb->buf_size)
-	    tail = 0;
-	cb->buf_used++;
+    if (ulen < n)
+	n = ulen;
+    memcpy(cb->buf_base + tail, data, n);
+    tail += n;
+    if (tail >= cb->buf_size)
+	tail = 0;
+    if (ulen > n) {				/* wrapped */
+	memcpy(cb->buf_base, data + n, ulen - n);
+	tail = ulen - n;
     }
     cb->buf_tail = tail;
+    cb->buf_used += ulen;
 }
 
 /* same here */
 void tcpcb_buf_read(struct tcpcb_s *cb, unsigned char *data, int len)
 {
-    int head = cb->buf_head;
+    unsigned int head = cb->buf_head;
+    unsigned int ulen = len;
+    unsigned int n = cb->buf_size - head;
 
-    while (--len >= 0) {
-	*data++= cb->buf_base[head++];
-	if (head >= cb->buf_size)
-	    head = 0;
-	cb->buf_used--;
+    if (ulen < n)
+	n = ulen;
+    memcpy(data, cb->buf_base + head, n);
+    head += n;
+    if (head >= cb->buf_size)
+	head = 0;
+    if (ulen > n) {
+	memcpy(data + n, cb->buf_base, ulen - n);
+	head = ulen - n;
     }
     cb->buf_head = head;
+    cb->buf_used -= ulen;
 }
 
 /* congestion avoidance: increment cwnd once per rtt */

@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -189,12 +190,24 @@ static void tcp_listen(struct iptcp_s *iptcp, struct tcpcb_s *lcb)
     if (h->flags & TF_ACK)
 	debug_tcp("tcp: ACK in listen not implemented\n");
 
-    /* duplicate control block but with normal sized input buffer, SO_RCVBUF ignored for now */
-    n = tcpcb_clone(lcb, CB_NORMAL_BUFSIZ);    /* copy lcb into linked list*/
+    /*
+     * Clone the listen CB, giving the new connection the receive ring the
+     * listening socket asked for with SO_RCVBUF. This used to be hardcoded to
+     * CB_NORMAL_BUFSIZ, so SO_RCVBUF reached the listener - which never
+     * receives anything - and never reached the connections that do. A server
+     * therefore had no way to trade window size for connection count, which is
+     * exactly the trade a machine with a 48K stack heap needs to make.
+     *
+     * lcb->buf_size is what tcpdev_bind() allocated: the SO_RCVBUF value, or
+     * CB_NORMAL_BUFSIZ if the socket never set one.
+     */
+    n = tcpcb_clone(lcb, lcb->buf_size);    /* copy lcb into linked list*/
     if (!n)
 	return;		     /* no memory for new connection*/
     cb = &n->tcpcb;
     cb->unaccepted = 1;      		/* indicate new control block is unaccepted*/
+    cbs_unaccepted++;			/* ... and arm the reaper for it */
+    cb->time_wait_exp = Now;		/* stamp for TIMEOUT_UNACCEPTED */
     cb->newsock = lcb->sock;		/* temp hold listen socket in newsock*/
     debug_accept("tcp listen: got SYN, cloning sock[%p]\n", cb->sock);
     /* now both listen CB and unaccepted CB have same sock pointer*/
@@ -278,7 +291,14 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
 	/* check if buffer space for received packet*/
 	if (datasize > CB_BUF_SPACE(cb)) {
-	    printf("tcp: dropping packet, no buffer space: %u > %d\n",
+	    /*
+	     * Was an unconditional printf to /dev/console. One CGA scroll costs
+	     * milliseconds here, and this fires once per dropped packet - so the
+	     * smaller the receive ring, the more time the machine spends
+	     * reporting drops instead of draining them, which causes more drops.
+	     * netstats.tcpdropcnt still counts every one; netstat reports it.
+	     */
+	    debug_tune("tcp: dropping packet, no buffer space: %u > %d\n",
 		datasize, CB_BUF_SPACE(cb));
 	    netstats.tcpdropcnt++;
 	    return;
@@ -488,9 +508,8 @@ static void tcp_last_ack(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 /* Prepare and send RST for non-existing connections
  * (typically lingering connections  after a reboot) */
 void tcp_reject(struct iphdr_s *iph) {
-	struct tcpcb_list_s *cbnode;
 	struct tcphdr_s *tcph;
-	struct tcpcb_s *cb = NULL;
+	struct tcpcb_s cb;
 	__u32 seqno;
 
 	tcph = (struct tcphdr_s *)(((char *)iph) + 4 * IP_HLEN(iph));
@@ -498,26 +517,31 @@ void tcp_reject(struct iphdr_s *iph) {
 	debug_tcp("tcp: refusing packet from %s:%u to :%u fl 0x%02x\n",
 	    in_ntoa(iph->saddr), ntohs(tcph->sport), ntohs(tcph->dport), tcph->flags);
 
-	/* Dummy up a new control block and send RST to shutdown sender */
-	cbnode = tcpcb_new(1);		/* bufsize = 1, dummy */
-	if (cbnode) {
-	    cb = &cbnode->tcpcb;
-	    cb->state = TS_CLOSED;
-	    cb->localaddr = iph->daddr;
-	    cb->localport = ntohs(tcph->dport);
-	    cb->remaddr = iph->saddr;
-	    cb->remport = ntohs(tcph->sport);
-	    if (tcph->flags & TF_ACK) {
-		cb->flags = TF_RST;
-		cb->send_nxt = ntohl(tcph->acknum);
-	    } else
-		cb->flags = TF_RST|TF_ACK;
-	    cb->rcv_nxt = (tcph->flags & TF_SYN)? seqno+1: seqno;
-	    cb->datalen = 0;
-	    tcp_output(cb);		/* send RST*/
-	    tcpcb_remove(cbnode);	/* deallocate*/
-	}
-	return;
+	/*
+	 * Dummy up a control block on the STACK and send RST to shut the sender
+	 * down. This used to malloc one from the same heap that connections come
+	 * out of, which meant that once the heap was exhausted ktcp could no
+	 * longer even refuse a connection - exactly when refusing matters most,
+	 * and exactly the condition a port scan creates. 82 bytes of a 3072-byte
+	 * stack, and it saves a malloc/free per rejected packet as well.
+	 *
+	 * buf_size stays 0: RST carries no data and needs no window, and
+	 * add_for_retrans() returns early on TF_RST so nothing is queued.
+	 */
+	memset(&cb, 0, sizeof(cb));
+	cb.state = TS_CLOSED;
+	cb.localaddr = iph->daddr;
+	cb.localport = ntohs(tcph->dport);
+	cb.remaddr = iph->saddr;
+	cb.remport = ntohs(tcph->sport);
+	if (tcph->flags & TF_ACK) {
+	    cb.flags = TF_RST;
+	    cb.send_nxt = ntohl(tcph->acknum);
+	} else
+	    cb.flags = TF_RST|TF_ACK;
+	cb.rcv_nxt = (tcph->flags & TF_SYN)? seqno+1: seqno;
+	cb.datalen = 0;
+	tcp_output(&cb);		/* send RST*/
 }
 
 /* process an incoming TCP packet*/
@@ -537,10 +561,14 @@ void tcp_process(struct iphdr_s *iph)
     if (cbnode) cb = &cbnode->tcpcb;
     tcp_print(&iptcp, 1, cb);
 
-    if (tcp_chksum(&iptcp) != 0) {
-	printf("tcp: BAD CHECKSUM (0x%x) len %d\n", tcp_chksum(&iptcp), iptcp.tcplen);
-	netstats.tcpbadchksum++;
-	return;
+    {
+	__u16 sum = tcp_chksum(&iptcp);		/* compute once, not twice */
+
+	if (sum != 0) {
+	    printf("tcp: BAD CHECKSUM (0x%x) len %d\n", sum, iptcp.tcplen);
+	    netstats.tcpbadchksum++;
+	    return;
+	}
     }
 
     if (!cbnode) {

@@ -19,12 +19,35 @@ struct sockaddr {
 #define SO_LINGER	13		/* only implemented for l_linger = 0*/
 
 /* non-standard options */
-#define SO_LISTEN_BUFSIZ	128	/* suggested buffer size for listen to save mem*/
+/*
+ * SO_RCVBUF on a socket that goes on to listen() sets the receive ring of the
+ * connections it ACCEPTS, not of the listening socket (which never receives
+ * anything). Pick by what the protocol actually carries: an over-large ring
+ * costs connection count, an under-large one costs throughput, and ktcp
+ * advertises an MSS no larger than the ring so a small choice stays correct.
+ */
+#define SO_LISTEN_BUFSIZ	128	/* deprecated, was "small ring for the listener
+					 * itself"; too small to accept data into */
+#define SO_ACCEPT_BUFSIZ_TINY	512	/* small fixed packets: telnetd, elkscraft */
+#define SO_ACCEPT_BUFSIZ_SMALL	1024	/* request/response: httpd, ftpd control */
+#define SO_ACCEPT_BUFSIZ_BULK	4096	/* streaming: ftpd data, audiorecv, vidrecv */
 
 struct linger {
         int             l_onoff;        /* Linger active                */
         int             l_linger;       /* How long to linger for       */
 };
+
+/*
+ * Flags for sendto/recvfrom. Only the two that can be honoured are accepted;
+ * the rest return -EOPNOTSUPP rather than being silently ignored, so a caller
+ * can tell "not supported" from "bad argument".
+ */
+#define MSG_OOB		0x01	/* not supported */
+#define MSG_PEEK	0x02	/* not supported */
+#define MSG_DONTROUTE	0x04	/* not supported */
+#define MSG_TRUNC	0x20	/* recv: report the real datagram length */
+#define MSG_DONTWAIT	0x40	/* supported */
+#define MSG_SUPPORTED	(MSG_TRUNC|MSG_DONTWAIT)
 
 #define AF_INET	0
 #define AF_UNIX	1

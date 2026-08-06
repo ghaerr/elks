@@ -23,6 +23,7 @@
 #include "tcp_cb.h"
 #include "tcpdev.h"
 #include "netconf.h"
+#include "udp.h"
 
 /* Send a raw ICMP echo request with specified TTL.
  * NOTE: ip_sendpacket() prepends its own IP header, so buf contains only
@@ -177,6 +178,25 @@ void icmp_process(struct iphdr_s *iph, unsigned char *packet)
 	dptcp = (struct tcphdr_s *)(dp->iphdr + len);
 	printf("icmp: destination unreachable code %d from %s\n",
 		dp->code, in_ntoa(iph->saddr));
+
+	/*
+	 * The embedded header was cast to a TCP header and looked up in the
+	 * TCP control blocks WITHOUT checking the protocol, so an ICMP error
+	 * about a UDP datagram could tear down an unrelated TCP connection
+	 * whose 3-tuple happened to match. The first 8 bytes of the quoted
+	 * datagram are a full UDP header, so both ports are available here.
+	 */
+	if (dpip->protocol == PROTO_UDP) {
+	    struct udphdr_s *dpudp = (struct udphdr_s *)(dp->iphdr + len);
+
+	    udp_icmp_error(dpip->daddr, ntohs(dpudp->src), ntohs(dpudp->dest),
+		(dp->code == 1)? -EHOSTUNREACH :
+		(dp->code >= 9)? -ECONNREFUSED : -ENETUNREACH);
+	    break;
+	}
+	if (dpip->protocol != PROTO_TCP)
+	    break;
+
 	debug_ip("icmp: src %s:%u ", in_ntoa(dpip->saddr), ntohs(dptcp->sport));
 	debug_ip("dst %s:%u\n", in_ntoa(dpip->daddr), ntohs(dptcp->dport));
 	cbnode = tcpcb_find(dpip->daddr, ntohs(dptcp->sport), ntohs(dptcp->dport));

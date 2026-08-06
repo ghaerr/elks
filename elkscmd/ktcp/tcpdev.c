@@ -23,9 +23,17 @@
 #include "tcpdev.h"
 #include "tcp_cb.h"
 #include "netconf.h"
+#include "udp.h"
 
 static __u16	next_port;
 static unsigned char sbuf[TCPDEV_BUFSIZ];
+
+/* sbuf carries traffic both ways: it must hold the largest command the kernel
+ * can send us, and the largest reply we can send back. The kernel truncates a
+ * short read without erroring, so getting this wrong fails silently. */
+typedef char __tcpdev_bufsiz_ok[
+    (TCPDEV_BUFSIZ >= (int)TCPDEV_OUTBUFFERSIZE &&
+     TCPDEV_BUFSIZ >= (int)sizeof(struct tdb_return_data) + TCPDEV_MAXREAD)? 1: -1];
 
 int tcpdevfd;
 
@@ -73,6 +81,25 @@ static void tcpdev_bind(void)
 
     if (db->addr.sin_family != AF_INET) {
 	retval_to_sock(db->sock,-EINVAL);
+	return;
+    }
+
+    if (db->proto == TDB_PROTO_DGRAM) {
+	struct udp_sock *us;
+	ipaddr_t laddr;
+	struct tdb_bind_ret bret;
+
+	port = ntohs(db->addr.sin_port);
+	laddr = (db->addr.sin_addr.s_addr == htonl(0x7f000001))?
+		 db->addr.sin_addr.s_addr:
+		 (db->addr.sin_addr.s_addr? local_ip: 0);   /* 0 = INADDR_ANY */
+	us = udp_sock_new(db->sock, laddr, &port);
+	bret.type = TDT_BIND;
+	bret.ret_value = us? 0: (port? -EADDRINUSE: -ENOMEM);
+	bret.sock = db->sock;
+	bret.addr_ip = laddr;
+	bret.addr_port = htons(port);
+	write(tcpdevfd, &bret, sizeof(bret));
 	return;
     }
 
@@ -162,6 +189,7 @@ static void tcpdev_accept(void)
     debug_accept("tcpdev accept: ACCEPT (SYN received before accept) sock[%p], using newsock[%p]\n", sock, db->newsock);
 
     cb->unaccepted = 0;
+    cbs_unaccepted--;			/* accepted: no longer subject to reaping */
     cb->sock = db->newsock;
     cb->newsock = 0;			/* clear newsock in accepted CB*/
     n->tcpcb.newsock = 0;		/* clear newsock in listen CB*/
@@ -212,6 +240,7 @@ void tcpdev_notify_accept(struct tcpcb_s *cb)
 						listencb->sock, listencb->newsock);
 
     cb->unaccepted = 0;
+    cbs_unaccepted--;			/* accepted: no longer subject to reaping */
     cb->sock = listencb->newsock;
     listencb->newsock = 0;
 
@@ -224,9 +253,27 @@ static void tcpdev_connect(void)
     struct tcpcb_list_s *n;
     ipaddr_t addr;
 
+    {
+	struct udp_sock *us = udp_sock_find(db->sock);
+
+	if (us) {			/* datagram: record the peer, no packets */
+	    us->remaddr = db->addr.sin_addr.s_addr;
+	    us->remport = ntohs(db->addr.sin_port);
+	    retval_to_sock(db->sock, 0);
+	    return;
+	}
+    }
+
     n = tcpcb_find_by_sock(db->sock);
     if (!n || n->tcpcb.state != TS_CLOSED) {
-	debug_tcp("tcp: panic in connect\n");
+	/*
+	 * Same trap as the read path: returning without answering leaves
+	 * inet_connect() spinning on SF_CONNECT forever. It does not hold
+	 * rwlock, so this hangs only the calling process rather than the whole
+	 * machine, but it should still be told.
+	 */
+	debug_tcp("tcp: connect on socket with no control block\n");
+	notify_sock(db->sock, TDT_CONNECT, -ECONNREFUSED);
 	return;
     }
 
@@ -274,7 +321,22 @@ static void tcpdev_read(void)
 
     n = tcpcb_find_by_sock(sock);
     if (!n || n->tcpcb.state == TS_CLOSED) {
-	printf("ktcp: panic in read\n");
+	/*
+	 * The control block is gone - the peer reset, or the socket was
+	 * released while this read was in flight.
+	 *
+	 * This used to print and return WITHOUT answering the socket, which
+	 * wedged the whole machine: inet_read() is asleep in
+	 *     down(&rwlock); ... while (bufin_sem == 0) interruptible_sleep_on();
+	 * so with no reply it sleeps forever holding rwlock - and rwlock is the
+	 * single global lock serialising every inet_read/inet_write on every
+	 * socket. The symptom is that connections still get accepted while
+	 * telnetd, ftpd and everything else fall silent, because the cause is
+	 * below all of them. The write path already answers -EPIPE here; do the
+	 * same rather than leaving a reader stranded.
+	 */
+	debug_tune("tcp: read on socket with no control block\n");
+	retval_to_sock(sock, -EPIPE);
 	return;
     }
 
@@ -445,6 +507,11 @@ static void tcpdev_release(void)
     struct tcpcb_s *cb;
     void * sock = db->sock;
 
+    if (udp_sock_find(sock)) {		/* datagram socket: just drop it */
+	udp_sock_free(sock);
+	return;
+    }
+
     n = tcpcb_find_by_sock(sock);
     if (n) {
 	cb = &n->tcpcb;
@@ -495,6 +562,55 @@ common_close:
     }
 }
 
+/* datagram out */
+static void tcpdev_sendto(void)
+{
+    struct tdb_sendto *db = (struct tdb_sendto *)sbuf;
+    struct udp_sock *us = udp_sock_find(db->sock);
+    int ret;
+
+    if (!us) {
+	retval_to_sock(db->sock, -EINVAL);
+	return;
+    }
+    ret = udp_sock_sendto(us, db->daddr, ntohs(db->dport), db->data, db->size);
+    retval_to_sock(db->sock, ret);
+}
+
+/* datagram in - the reply carries the source address and what is still queued */
+static void tcpdev_recvfrom(void)
+{
+    struct tdb_recvfrom *db = (struct tdb_recvfrom *)sbuf;
+    struct udp_sock *us = udp_sock_find(db->sock);
+    struct tdb_recvfrom_ret *r;
+    void *sock = db->sock;
+    int size = db->size;
+    ipaddr_t saddr = 0;
+    __u16 sport = 0;
+    int trunc = 0, avail_next = 0, ret;
+
+    if (!us) {
+	retval_to_sock(sock, -EINVAL);
+	return;
+    }
+    if (size > (int)TCPDEV_MAXDGRAM)
+	size = TCPDEV_MAXDGRAM;
+
+    /* sbuf is reused for the reply, so read the request out of it first */
+    r = (struct tdb_recvfrom_ret *)sbuf;
+    ret = udp_sock_recvfrom(us, r->data, size, &saddr, &sport, &trunc, &avail_next);
+
+    r->type = TDT_RECVFROM;
+    r->trunc = (char)trunc;
+    r->ret_value = ret;
+    r->sock = sock;
+    r->size = (ret > 0)? ret: 0;
+    r->saddr = saddr;
+    r->sport = htons(sport);
+    r->avail_next = (__u16)avail_next;
+    write(tcpdevfd, sbuf, sizeof(struct tdb_recvfrom_ret) + r->size);
+}
+
 void tcpdev_process(void)
 {
 	int len = read(tcpdevfd, sbuf, TCPDEV_BUFSIZ);
@@ -523,6 +639,12 @@ void tcpdev_process(void)
 	case TDC_RELEASE:
 	    debug_tcpdev("tcpdev_release\n");
 	    tcpdev_release();
+	    break;
+	case TDC_SENDTO:
+	    tcpdev_sendto();
+	    break;
+	case TDC_RECVFROM:
+	    tcpdev_recvfrom();
 	    break;
 	case TDC_READ:
 	    debug_tcpdev("tcpdev_read\n");

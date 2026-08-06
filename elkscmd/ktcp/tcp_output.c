@@ -31,6 +31,11 @@ static struct tcp_retrans_list_s *retrans_last;
 #endif
 static unsigned char tcpbuf[TCP_BUFSIZ];
 
+/* tcp_output() builds header + options + one tcpdev write's worth of data here,
+ * with no runtime bounds check - so the bound has to hold at compile time. */
+typedef char __tcp_bufsiz_ok[
+    (TCP_BUFSIZ >= TDB_WRITE_MAX + (int)sizeof(tcphdr_t) + TCP_OPT_MSS_LEN)? 1: -1];
+
 __u16 tcp_chksum(struct iptcp_s *h)
 {
     __u32 sum = htons(h->tcplen);
@@ -474,10 +479,22 @@ void tcp_output(struct tcpcb_s *cb)
     header_len = sizeof(tcphdr_t);
     if (cb->flags & TF_SYN) {
 	__u8 *options = th->options;
+	unsigned int mss = MTU - 40;
+
+	/*
+	 * Advertise the segment size we can actually accept, not the one the
+	 * link could carry. ktcp has no out-of-order queue and drops any
+	 * segment that will not fit the receive ring (see tcp_established),
+	 * with no fast retransmit to recover it - so promising a peer 1460
+	 * while holding a smaller ring costs a retransmit timeout per segment.
+	 * Only matters once a socket asks for a small SO_RCVBUF.
+	 */
+	if (cb->buf_size && mss > cb->buf_size)
+	    mss = cb->buf_size;
 
 	options[0] = TCP_OPT_MSS;
 	options[1] = TCP_OPT_MSS_LEN;		/* total options length (4)*/
-	*(__u16 *)(options + 2) = htons(MTU - 40);
+	*(__u16 *)(options + 2) = htons(mss);
 	header_len += TCP_OPT_MSS_LEN;
     }
 

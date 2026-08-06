@@ -106,6 +106,12 @@ setsockopt	+80	5	= CONFIG_SOCKET
 getsocknam	+81	4	= CONFIG_SOCKET
 fmemalloc	+82	2	*
 fmemfree	+83	1	*
+# datagram send/recv. POSIX takes 6 args; ELKS syscalls take at most 5
+# (bx,cx,dx,di,si - libc/system/syscall0.inc), so addrlen is dropped and
+# fixed at sizeof(struct sockaddr_in). libc restores the POSIX shape,
+# exactly as getsocknam does for getsockname/getpeername.
+_sendto	+84	5	= CONFIG_SOCKET
+_recvfrom	+85	5	= CONFIG_SOCKET
 #
 # Name			No	Args	Flag&comment
 #
