@@ -497,12 +497,7 @@ static void INITPROC comirq(char *line)
 #endif
 }
 
-/*
- * irq,port,ram,flags for any ISA card; ram is the DMA channel on an audio
- * card.  "off" sets the port to -1, which is how a driver is told to skip
- * its card; port 0 is left alone, as the LANCE driver reads it as a request
- * to autoconfigure.
- */
+/* irq,port,ram,flags for any ISA card; ram is the DMA channel on an audio card */
 static void INITPROC parse_isaopts(char *line, struct isa_conf *parms)
 {
     char *p;

@@ -1,3 +1,6 @@
+#ifndef __LINUXMT_AUDIO_H
+#define __LINUXMT_AUDIO_H
+
 /*
  * /dev/dsp audio ioctl definitions.
  *
@@ -15,9 +18,6 @@
  * terms as the ELKS kernel.
  * The ioctl numbers and encoding follow the Linux 2.x OSS sound interface.
  */
-
-#ifndef __LINUXMT_AUDIO_H
-#define __LINUXMT_AUDIO_H
 
 #include <linuxmt/types.h>
 

@@ -2320,14 +2320,14 @@ void mfmhd_park_all(void)
          * each with an actuator of its own, so park the pair.
          */
         if (drive == 0 && drive_info[drive].source == MFM_GEO_SRC_FILECARD20) {
-            mfmhd_seek_unit(MFMHD_PORT, drive, 0,
+            mfmhd_seek_unit(mfm_port, drive, 0,
                 MFM_FILECARD20_UNIT_CYLINDERS - 1);
-            mfmhd_seek_unit(MFMHD_PORT, drive, 1,
+            mfmhd_seek_unit(mfm_port, drive, 1,
                 MFM_FILECARD20_UNIT_CYLINDERS - 1);
             continue;
         }
 
-        mfmhd_seek_unit(MFMHD_PORT, drive, (unsigned int)drive & 1U,
+        mfmhd_seek_unit(mfm_port, drive, (unsigned int)drive & 1U,
             drive_info[drive].cylinders - 1);    /* cylinders are zero based */
     }
 }

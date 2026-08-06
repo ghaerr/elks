@@ -68,10 +68,14 @@ unsigned int INITPROC setup_arch(void)
 
     arch_cpu = SETUP_CPU_TYPE;
 #ifdef SYS_CAPS
-    sys_caps = SYS_CAPS;    /* custom system capabilities */
+    sys_caps = SYS_CAPS;                /* custom system capabilities */
 #else
     if (arch_cpu >= CPU_80286)          /* 80286+ IBM PC/AT capabilities or Unknown CPU */
         sys_caps = CAP_ALL;
+#ifdef CONFIG_ARCH_IBMPC
+    else if (peekb(0x96, BIOSSEG) & 0x10)
+        sys_caps |= CAP_KBD_LEDS;       /* 101/102 enhanced keyboard installed */
+#endif
     debug("arch %d sys_caps %02x\n", arch_cpu, sys_caps);
 #endif
 
