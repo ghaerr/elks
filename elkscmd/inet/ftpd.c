@@ -112,6 +112,7 @@ struct cmd_tab cmdtab[] = {
 static int debug = 0;
 static int nofork = 0;
 static char *pasv_ip = NULL;
+static unsigned long slirp_gw;	/* SLIRP gateway (peer) IP, network order; 0 = 10.0.2.2 */
 static int timeout = 900;
 static int maxtimeout = 7200;
 static int controlfd;
@@ -545,7 +546,7 @@ int do_pasv(int *datafd, int epsv) {
 			struct sockaddr_in peer;
 			len = sizeof(peer);
 			if (getpeername(controlfd, (struct sockaddr *)&peer, &len) == 0
-			    && peer.sin_addr.s_addr == htonl(0x0a000202))
+			    && peer.sin_addr.s_addr == (slirp_gw ? slirp_gw : htonl(0x0a000202)))
 				pasv.sin_addr.s_addr = htonl(0x7f000001);
 		}
 		a = (char *) &pasv.sin_addr;
@@ -645,7 +646,7 @@ int do_stor(int datafd, char *input) {
 }
 
 void usage() {
-	printf("Usage: ftpd [-d] [-D] [-n ip] [-P min:max] [<listen-port>]\n");
+	printf("Usage: ftpd [-d] [-D] [-n ip] [-N slirp-gateway] [-P min:max] [<listen-port>]\n");
 	exit(1);
 }
 
@@ -677,6 +678,9 @@ int main(int argc, char **argv) {
 			} else if (argv[0][1] == 'n') {
 				argc--; argv++;
 				pasv_ip = argv[0];
+			} else if (argv[0][1] == 'N') {
+				argc--; argv++;
+				slirp_gw = in_aton(argv[0]);
 			} else
 				usage();
 		} else {
