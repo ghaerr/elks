@@ -53,6 +53,7 @@ enum {
 	CMD_REIN,
 	CMD_PORT,
 	CMD_PASV,
+	CMD_EPSV,
 	CMD_TYPE,
 	CMD_STRU,
 	CMD_MODE,
@@ -94,6 +95,7 @@ struct cmd_tab cmdtab[] = {
 	{"SYST", CMD_SYST},
 	{"QUIT", CMD_QUIT},
 	{"PASV", CMD_PASV},
+	{"EPSV", CMD_EPSV},
 	{"PORT", CMD_PORT},
 	{"TYPE", CMD_TYPE},
 	{"DELE", CMD_DELE},
@@ -110,6 +112,7 @@ struct cmd_tab cmdtab[] = {
 static int debug = 0;
 static int nofork = 0;
 static char *pasv_ip = NULL;
+static unsigned long slirp_gw;	/* SLIRP gateway (peer) IP, network order; 0 = 10.0.2.2 */
 static int timeout = 900;
 static int maxtimeout = 7200;
 static int controlfd;
@@ -479,11 +482,10 @@ int do_nlist(int dfd, char *iobuf)
 }
 
 /* Passive mode: Server listens for incoming data connection */
-int do_pasv(int *datafd) {
+int do_pasv(int *datafd, int epsv) {
 	int fd;
-	unsigned int i = 1, port = 0, len;
+	unsigned int i = 1, port = 0;
 	struct sockaddr_in pasv;
-	struct sockaddr_in local;
 	char *p, *a;
 	char str[100], *pasv_err = "425 Can't open passive connection.\r\n";
 
@@ -530,16 +532,28 @@ int do_pasv(int *datafd) {
 		return -1;
 	}
 
-	/* Get current local IP from control connection */
-	len = sizeof(local);
-	if (getsockname(controlfd, (struct sockaddr *)&local, &len) == 0)
-		pasv.sin_addr.s_addr = local.sin_addr.s_addr;
-	if (pasv_ip)
-		pasv.sin_addr.s_addr = in_aton(pasv_ip);
-	a = (char *) &pasv.sin_addr;
-	p = (char *) &pasv.sin_port;
-	sprintf(str, "227 Entering Passive Mode (%d,%d,%d,%d,%d,%d)\r\n", UC(a[0]),
-		UC(a[1]), UC(a[2]), UC(a[3]), UC(p[0]), UC(p[1]));
+	if (epsv) {
+		sprintf(str, "229 Entering Extended Passive Mode (|||%u|)\r\n",
+			(unsigned) ntohs(pasv.sin_port));
+	} else {
+		struct sockaddr_in local;
+		unsigned int len = sizeof(local);
+		if (getsockname(controlfd, (struct sockaddr *)&local, &len) == 0)
+			pasv.sin_addr.s_addr = local.sin_addr.s_addr;
+		if (pasv_ip)
+			pasv.sin_addr.s_addr = in_aton(pasv_ip);
+		else {
+			struct sockaddr_in peer;
+			len = sizeof(peer);
+			if (getpeername(controlfd, (struct sockaddr *)&peer, &len) == 0
+			    && peer.sin_addr.s_addr == (slirp_gw ? slirp_gw : htonl(0x0a000202)))
+				pasv.sin_addr.s_addr = htonl(0x7f000001);
+		}
+		a = (char *) &pasv.sin_addr;
+		p = (char *) &pasv.sin_port;
+		sprintf(str, "227 Entering Passive Mode (%d,%d,%d,%d,%d,%d)\r\n", UC(a[0]),
+			UC(a[1]), UC(a[2]), UC(a[3]), UC(p[0]), UC(p[1]));
+	}
     	write(controlfd, str, strlen(str));
 	if (debug) printf("%s", str);
 	i = sizeof(pasv);
@@ -632,7 +646,7 @@ int do_stor(int datafd, char *input) {
 }
 
 void usage() {
-	printf("Usage: ftpd [-d] [-D] [-n ip] [-P min:max] [<listen-port>]\n");
+	printf("Usage: ftpd [-d] [-D] [-n ip] [-N slirp-gateway] [-P min:max] [<listen-port>]\n");
 	exit(1);
 }
 
@@ -664,6 +678,9 @@ int main(int argc, char **argv) {
 			} else if (argv[0][1] == 'n') {
 				argc--; argv++;
 				pasv_ip = argv[0];
+			} else if (argv[0][1] == 'N') {
+				argc--; argv++;
+				slirp_gw = in_aton(argv[0]);
 			} else
 				usage();
 		} else {
@@ -803,8 +820,20 @@ int main(int argc, char **argv) {
 						close(datafd);
 						datafd = -1;
 					}
-					if (do_pasv(&datafd) < 0) {
+					if (do_pasv(&datafd, 0) < 0) {
 						send_reply(502, "PASV: Cannot open server socket");
+						close(datafd);
+						datafd = -1;
+					}
+					break;
+
+				case CMD_EPSV: /* Enter Extended Passive mode (RFC 2428) */
+					if (datafd >= 0) { /* connection already open, close it! */
+						close(datafd);
+						datafd = -1;
+					}
+					if (do_pasv(&datafd, 1) < 0) {
+						send_reply(502, "EPSV: Cannot open server socket");
 						close(datafd);
 						datafd = -1;
 					}

@@ -7,6 +7,8 @@ ftpd \- Internet File Transfer Protocol server
 .RB [ \-D ]
 .RB [ \-n
 .IR ip ]
+.RB [ \-N
+.IR ip ]
 .RB [ \-P
 .IR min:max ]
 .RI [ port ]
@@ -36,6 +38,18 @@ This is useful when running behind NAT or in virtual machines such as QEMU.
 If the server has no local address (e.g. SLIRP), use
 .B \-n 127.0.0.1
 to redirect clients to the loopback address.
+.PP
+If the
+.B \-N
+option is specified, it sets the IP address of the SLIRP gateway (peer)
+used to detect when a PASV client connects through a user-mode network
+stack. When the control connection's peer matches this address,
+.B ftpd
+advertises the loopback address (127.0.0.1) in its PASV reply, since the
+client reaches the server through a host-forwarded port. The default is
+.BR 10.0.2.2 ,
+QEMU's standard SLIRP gateway; override it when using an emulator
+configured with a different gateway address.
 .PP
 If the
 .B \-P

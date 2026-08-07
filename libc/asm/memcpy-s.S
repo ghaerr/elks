@@ -50,6 +50,10 @@ memcpy:
 #endif
 
 	cld
+	shr	$1,%cx			// copy words
+	rep
+	movsw
+	rcl	$1,%cx			// then possibly final byte
 	rep
 	movsb
 

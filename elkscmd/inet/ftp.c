@@ -860,6 +860,28 @@ int do_active(int cmdfd) {
 
 /* PASSIVE MODE:
  * Connect to service point announced by server */
+/* Decipher the port from an EPSV 229 reply (|||port|) */
+int get_epsv_port(char *str, unsigned int *server_port) {
+	char *p;
+
+	p = strrchr(str, ')');
+	if (!p)
+		return -1;
+	while (p > str && *p != '|')
+		p--;
+	if (*p != '|')
+		return -1;
+	p--;			/* step off the closing delimiter */
+	while (p > str && *p != '|')
+		p--;
+	if (*p != '|')
+		return -1;
+	*server_port = atoi(p + 1);
+	if (*server_port == 0)
+		return -1;
+	return 1;
+}
+
 int do_passive(int cmdfd) {
 	
 	struct sockaddr_in srvaddr;
@@ -867,14 +889,28 @@ int do_passive(int cmdfd) {
 	unsigned int port;
 	char command[BUF_SIZE], *ip, ip_addr[ADDRBUF];
 
-	send_cmd(cmdfd, "PASV\r\n");
-	get_reply(cmdfd, command, sizeof(command), 1);
-	if (strncmp(command, "227", 3)) {
-		return -1;
-	}
-	
-	if (get_server_ip_port(command, ip_addr, &port) < 0) {
-		printf("Passive mode error: %s", command);
+	/* Try EPSV (RFC 2428) first - no IP advertised, client uses the
+	 * control connection's server address */
+	send_cmd(cmdfd, "EPSV\r\n");
+	get_reply(cmdfd, command, sizeof(command), 10);
+	if (!strncmp(command, "229", 3)) {
+		if (get_epsv_port(command, &port) < 0) {
+			printf("Extended passive mode error: %s", command);
+			return -1;
+		}
+		strcpy(ip_addr, srvr_ip);
+	} else if (!strncmp(command, "5", 1)) {
+		/* EPSV not supported - fall back to classic PASV */
+		send_cmd(cmdfd, "PASV\r\n");
+		get_reply(cmdfd, command, sizeof(command), 1);
+		if (strncmp(command, "227", 3)) {
+			return -1;
+		}
+		if (get_server_ip_port(command, ip_addr, &port) < 0) {
+			printf("Passive mode error: %s", command);
+			return -1;
+		}
+	} else {
 		return -1;
 	}
 	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
@@ -1048,7 +1084,8 @@ int connect_cmd(char *ip, unsigned int server_port) {
 	if (in_connect(controlfd, (struct sockaddr *) &servaddr, sizeof(servaddr), 10) < 0) {
 		perror("ftp");
 		controlfd = -1;
-	}
+	} else
+		get_ip_port(controlfd, myip, &myport);	/* refresh: advertise conn local addr */
 	return controlfd;
 }
 
