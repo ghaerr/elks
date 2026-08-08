@@ -1,14 +1,7 @@
 /*
  * audiorcv - play raw unsigned 8-bit mono PCM arriving over TCP on /dev/dsp
  *
- * usage: audiorcv [-d] [-p port] [-r rate] [-b bytes] [-4]
- *
- * -4 expects Creative 4-bit ADPCM on the wire and expands it here, which
- * halves what the network has to carry for a given sample rate.  The card
- * has its own ADPCM playback commands, but an OPTi 82C929 decodes them to
- * something other than what Creative's encoder produces (measured: a
- * 440Hz tone came back at 794Hz), so the expansion is done in this
- * program and the driver is fed plain 8-bit PCM.
+ * usage: audiorcv [-d] [-p port] [-r rate] [-b bytes]
  *
  * Listens on a TCP port and writes whatever arrives straight to /dev/dsp.  The
  * stream carries no header, so the sample rate is a property of this end: -r
@@ -62,19 +55,15 @@
 #define MAX_BUFSIZE     4096        /* == the driver's default DMA block */
 
 static unsigned char buf[MAX_BUFSIZE];
-/* Expansion target: a half block of packed data becomes a full block of PCM */
-static unsigned char pcm[MAX_BUFSIZE];
 static audio_errinfo einfo;         /* 104 bytes: keep off the small stack */
 
 static void usage(void)
 {
-    fprintf(stderr, "usage: audiorcv [-d] [-p port] [-r rate] [-b bytes] [-4]\n");
-    fprintf(stderr, "  -4  the stream is Creative 4-bit ADPCM, expanded here\n");
+    fprintf(stderr, "usage: audiorcv [-d] [-p port] [-r rate] [-b bytes]\n");
     fprintf(stderr, "       -d serves streams forever in the background,"
         " otherwise one stream is played\n");
     fprintf(stderr, "       raw unsigned 8-bit mono PCM, %ld-%ld Hz,"
         " default %ld, port %d\n", MIN_RATE, MAX_RATE, DEFAULT_RATE, DEF_PORT);
-    fprintf(stderr, "G Keet, 2026\n");
     exit(1);
 }
 
@@ -119,88 +108,6 @@ static int write_all(int fd, unsigned char *p, int len)
         len -= n;
     }
     return 0;
-}
-
-/*
- * Creative 4-bit ADPCM expansion, the encoding DOSBox and 86Box implement.
- * Two output samples per input byte, high nibble first; the first byte of a
- * stream is the reference sample.
- *
- * The published algorithm clamps an index, looks up a delta, then adjusts a
- * step from a second table - too much per sample for a 4.77MHz 8086 to keep
- * ahead of 16000 of them a second.  It collapses though: the step only ever
- * holds four values, so (step, nibble) is 64 states whose delta and next
- * step are precomputed below.  Decoding a nibble is then one indexed byte
- * fetch for the delta, one for the next state, an add and a clamp.
- */
-#define ADPCM_STATES    4
-
-static const signed char adpcm_delta[ADPCM_STATES * 16] = {
-       0,    1,    2,    3,    4,    5,    6,    7,    0,   -1,   -2,   -3,   -4,   -5,   -6,   -7,
-       1,    3,    5,    7,    9,   11,   13,   15,   -1,   -3,   -5,   -7,   -9,  -11,  -13,  -15,
-       2,    6,   10,   14,   18,   22,   26,   30,   -2,   -6,  -10,  -14,  -18,  -22,  -26,  -30,
-       4,   12,   20,   28,   36,   44,   52,   60,   -4,  -12,  -20,  -28,  -36,  -44,  -52,  -60
-};
-
-static const unsigned char adpcm_next[ADPCM_STATES * 16] = {
-    0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1,
-    0, 1, 1, 1, 1, 2, 2, 2, 0, 1, 1, 1, 1, 2, 2, 2,
-    1, 2, 2, 2, 2, 3, 3, 3, 1, 2, 2, 2, 2, 3, 3, 3,
-    2, 3, 3, 3, 3, 3, 3, 3, 2, 3, 3, 3, 3, 3, 3, 3
-};
-
-static int adpcm;               /* -4: the wire carries 4-bit ADPCM */
-static int adpcm_ref = 128;     /* running predictor */
-static int adpcm_state;         /* index into the tables above */
-static int adpcm_primed;        /* the reference sample has been read */
-
-/*
- * Expand n packed bytes from src into dst, returning the samples written.
- * The reference test is hoisted out of the loop and both buffers are walked
- * with pointers: at 16000 samples a second an 8086 has about 300 cycles per
- * sample for everything the program does, so a per-byte branch and an index
- * multiply are not free.
- */
-static int adpcm_expand(unsigned char *dst, unsigned char *src, int n)
-{
-    unsigned char *out = dst;
-    unsigned char *end = src + n;
-    const signed char *delta = adpcm_delta;
-    const unsigned char *next = adpcm_next;
-    int ref = adpcm_ref;
-    int base = adpcm_state << 4;
-
-    if (!adpcm_primed && src < end) {   /* first byte of a stream is the ref */
-        adpcm_primed = 1;
-        ref = *src;
-        base = 0;
-        *out++ = *src++;
-    }
-    while (src < end) {
-        unsigned char b = *src++;
-        int k;
-
-        k = base + (b >> 4);
-        ref += delta[k];
-        if (ref < 0)
-            ref = 0;
-        else if (ref > 255)
-            ref = 255;
-        *out++ = (unsigned char)ref;
-        base = next[k] << 4;
-
-        k = base + (b & 0x0F);
-        ref += delta[k];
-        if (ref < 0)
-            ref = 0;
-        else if (ref > 255)
-            ref = 255;
-        *out++ = (unsigned char)ref;
-        base = next[k] << 4;
-    }
-    adpcm_ref = ref;
-    adpcm_state = base >> 4;
-    return (int)(out - dst);
 }
 
 /*
@@ -279,10 +186,8 @@ static int play_stream(int conn, long rate, int bufsize)
     if (dsp < 0)
         return 1;
 
-    adpcm_primed = 0;           /* each stream carries its own reference */
     for (;;) {
-        /* a packed read expands to twice its size, so read half a block */
-        n = read_full(conn, buf, adpcm? bufsize / 2: bufsize);
+        n = read_full(conn, buf, bufsize);
         if (n < 0) {
             perror("audiorcv: read");
             err = 1;
@@ -290,9 +195,7 @@ static int play_stream(int conn, long rate, int bufsize)
         }
         if (n == 0)
             break;
-        if (adpcm)
-            n = adpcm_expand(pcm, buf, n);
-        if (write_all(dsp, adpcm? pcm: buf, n) < 0) {
+        if (write_all(dsp, buf, n) < 0) {
             perror("/dev/dsp");
             err = 1;
             break;
@@ -345,7 +248,7 @@ int main(int argc, char **argv)
     int c, val, err;
     struct sockaddr_in localadr;
 
-    while ((c = getopt(argc, argv, "dp:r:b:4")) != -1) {
+    while ((c = getopt(argc, argv, "dp:r:b:")) != -1) {
         switch (c) {
         case 'd':
             dflag = 1;
@@ -356,9 +259,6 @@ int main(int argc, char **argv)
                 fprintf(stderr, "audiorcv: port must be 1-65535\n");
                 return 1;
             }
-            break;
-        case '4':
-            adpcm = 1;
             break;
         case 'r':
             rate = atol(optarg);
