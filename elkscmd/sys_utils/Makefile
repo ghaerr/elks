@@ -37,6 +37,7 @@ PRGS = \
 	decomp \
 	sysctl \
 	dmesg \
+	sudo \
 	logout \
 	clock \
 	# EOL
@@ -129,6 +130,8 @@ sysctl: sysctl.o
 dmesg: dmesg.o
 	$(LD) $(LDFLAGS) -o dmesg dmesg.o $(LDLIBS)
 
+sudo: sudo.o
+	$(LD) $(LDFLAGS) -o sudo sudo.o $(LDLIBS)
 logout: logout.o
 	$(LD) $(LDFLAGS) -o logout logout.o $(LDLIBS)
 

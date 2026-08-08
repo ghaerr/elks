@@ -23,6 +23,7 @@ ps
 sercat
 shutdown
 sysctl
+sudo
 umount
 test_unreal
 who
