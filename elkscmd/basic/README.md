@@ -82,13 +82,12 @@ INPW(port) (IO read word from `port`)
 OUTB port, value (IO write byte `value` from `port`)
 OUTW port, value (IO write word `value` from `port`)
 POKE offset,segment,value (Memory write byte `value` to `segment:offset`)
+RANDOMIZE [nmber]
 
 Architecture-specific
 PIN pinNum, value (0 = low, non-zero = high)
 PINMODE pinNum, mode - not implemented
 
-Not yet implemented
-RANDOMIZE [nmber]
 ```
 
 "Pseudo-identifiers"
