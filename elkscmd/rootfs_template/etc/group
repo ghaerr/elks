@@ -8,7 +8,7 @@ disk::6:root,adm
 lp::7:lp
 mem::8:
 kmem::9:
-wheel::10:root
+wheel::10:root,user1
 floppy::11:root
 mail::12:mail,postmaster
 ftp::50:ftp

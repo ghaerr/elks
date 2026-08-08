@@ -12,8 +12,16 @@
 #include <pwd.h>
 #include <grp.h>
 #include <string.h>
-#include <stdio.h>
 #include <stdlib.h>
+
+#define errmsg(str) write(STDERR_FILENO, str, sizeof(str) - 1)
+
+static void errcmd(char *cmd)
+{
+    errmsg("sudo: ");
+    write(STDERR_FILENO, cmd, strlen(cmd));
+    errmsg(": command not found\n");
+}
 
 static int in_wheel_group(uid_t uid)
 {
@@ -38,7 +46,7 @@ int main(int argc, char **argv)
     uid_t uid;
 
     if (argc < 2) {
-        fprintf(stderr, "Usage: sudo <command> [args...]\n");
+        errmsg("Usage: sudo <command> [args...]\n");
         return 1;
     }
 
@@ -46,18 +54,18 @@ int main(int argc, char **argv)
 
     if (uid == 0) {
         execvp(argv[1], &argv[1]);
-        fprintf(stderr, "sudo: %s: command not found\n", argv[1]);
+        errcmd(argv[1]);
         return 1;
     }
 
     if (!in_wheel_group(uid)) {
-        fprintf(stderr, "sudo: user not in wheel group\n");
+        errmsg("sudo: user not in wheel group\n");
         return 1;
     }
 
     pwd = getpwnam("root");
     if (!pwd) {
-        fprintf(stderr, "sudo: no root entry in /etc/passwd\n");
+        errmsg("sudo: no root entry in /etc/passwd\n");
         return 1;
     }
 
@@ -65,7 +73,7 @@ int main(int argc, char **argv)
         setuid(0);
         setgid(0);
         execvp(argv[1], &argv[1]);
-        fprintf(stderr, "sudo: %s: command not found\n", argv[1]);
+        errcmd(argv[1]);
         return 1;
     }
 
@@ -80,11 +88,11 @@ int main(int argc, char **argv)
             setuid(0);
             setgid(0);
             execvp(argv[1], &argv[1]);
-            fprintf(stderr, "sudo: %s: command not found\n", argv[1]);
+            errcmd(argv[1]);
             return 1;
         }
     }
 
-    fprintf(stderr, "Sorry, try again.\n");
+    errmsg("Sorry, try again.\n");
     return 1;
 }
