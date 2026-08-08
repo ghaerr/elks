@@ -49,6 +49,7 @@
 #include <float.h>
 #include <limits.h>
 #include <math.h>
+#include <time.h>
 
 #include "host.h"
 #include "basic.h"
@@ -206,6 +207,7 @@ PROGMEM const TokenTableEntry tokenTable[] = {
     {"HEX$",1|TKN_RET_TYPE_STR},
     {"PEEK", 2},
     {"POKE", TKN_FMT_POST},
+    {"RANDOMIZE",TKN_FMT_POST}
 };
 
 
@@ -1632,6 +1634,23 @@ int parse_RUN(int isRestore) {
     return 0;
 }
 
+int parse_RANDOMIZE() {
+    getNextToken();
+    if (curToken != TOKEN_EOL) {
+        int val = expectNumber();
+        if (val) return val;	// error
+        if (executeMode) {
+            srand((uint16_t)stackPopNum());
+        }
+    }
+    else {
+        if (executeMode) {
+            srand((uint16_t)time(NULL));
+        }
+    }
+    return 0;
+}
+
 int parse_GOTO() {
     getNextToken();
     int val = expectNumber();
@@ -2139,6 +2158,7 @@ int parseStmts()
         case TOKEN_LIST: ret = parse_LIST(); break;
         case TOKEN_RUN: ret = parse_RUN(false); break;
         case TOKEN_RESTORE: ret = parse_RUN(true); break;
+        case TOKEN_RANDOMIZE: ret = parse_RANDOMIZE(); break;
         case TOKEN_GOTO: ret = parse_GOTO(); break;
         case TOKEN_REM: getNextToken(); getNextToken(); break;
         case TOKEN_IF: ret = parse_IF(); needCmdSep = 0; break;

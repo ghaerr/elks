@@ -2,7 +2,7 @@
 
 #define MEMORY_SIZE	10240		// max tokenized memory bytes for program
 #define TOKEN_BUF_SIZE  256             // max tokenized bytes per line
-#define MAX_IDENT_LEN	8
+#define MAX_IDENT_LEN	9
 #define MAX_NUMBER_LEN	30
 #define MAX_PATH_LEN	64		// for LOAD/SAVE filename strings
 
@@ -104,7 +104,8 @@
 #define TOKEN_HEX		91
 #define TOKEN_PEEK		92
 #define TOKEN_POKE		93
-#define LAST_IDENT_TOKEN	93
+#define TOKEN_RANDOMIZE		94
+#define LAST_IDENT_TOKEN	94
 
 #define ERROR_NONE				0
 // parse errors
