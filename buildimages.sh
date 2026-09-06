@@ -89,7 +89,7 @@ build_rom_swan()
 {
     cleanup
     cp swan.config .config
-    make
+    make -j1
     mv image/rom.wsc image/rom-swan.wsc
     rm -f image/romfs.bin
 }
