@@ -445,6 +445,12 @@ void INITPROC ne2k_drv_init(void)
 
 	net_port = NET_PORT;    // ne2k-asm.S needs this.
 
+	/* This has to be done before ne2k_get_hw_addr() 
+	*  otherwise the DMA routines in ne2k-asm.S will hang indefinitely
+	*  on an actual 8 bit-only interface. */
+	if (net_flags & ETHF_8BIT_BUS)
+		ne2k_flags = ETHF_8BIT_BUS;
+
 	while (1) {
 		int j, k;
 
