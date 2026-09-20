@@ -144,7 +144,7 @@ endif
 endif
 
 ifdef CONFIG_APPS_1232K
-	TAGS = :boot|:360k|:720k|:1200k|:1232k|
+	TAGS = :boot|:360k|:720k|:1200k|:1232k|:net|
 ifdef CONFIG_APPS_COMPRESS
 	# does not include :1200c
 	TAGS += :360c|:1232c|
