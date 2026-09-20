@@ -201,8 +201,7 @@ static int rs_open(struct tty *tty)
     if (tty->usecount++)
 	return 0;
 
-    /* FIXME for now, use 80 rather than 1024 RSINQ_SIZE unless SLIP in use */
-    err = tty_allocq(tty, 80, RSOUTQ_SIZE);
+    err = tty_allocq(tty, RSINQ_SIZE, RSOUTQ_SIZE);
     if (err) {
 	--tty->usecount;
 	return err;
