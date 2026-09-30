@@ -203,7 +203,7 @@ static void ne2k_int(int irq, struct pt_regs *regs)
 
 	//printk("/");
 	while (1) {
-		stat = ne2k_int_stat();
+		stat = ne2k_int_stat() & 0x7f;
 		if (!stat) break; 	/* If zero, we're done! */
 #if 0	/* debug */
 		page = ne2k_getpage();
