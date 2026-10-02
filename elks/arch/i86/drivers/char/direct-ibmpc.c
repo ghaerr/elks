@@ -12,6 +12,8 @@ static void PositionCursor(Console * C)
 {
     unsigned int Pos = C->cx + C->Width * C->cy + C->crtc_offset;
 
+    if (C->cursoroff)           /* hide by moving just past end of page */
+        Pos = C->Width * C->Height + C->crtc_offset;
     outb(14, C->crtc_base);
     outb(Pos >> 8, C->crtc_base + 1);
     outb(15, C->crtc_base);
@@ -20,17 +22,13 @@ static void PositionCursor(Console * C)
 
 static void DisplayCursor(Console * C, int onoff)
 {
-    /* unfortunately, the cursor start/end at BDA 0x0460 can't be relied on! */
-    unsigned int v;
-
-    if (onoff)
-        v = C->type == OT_MDA ? 0x0b0c : (C->type == OT_CGA ? 0x0607: 0x0d0e);
-    else v = 0x2000;
-
-    outb(10, C->crtc_base);
-    outb(v >> 8, C->crtc_base + 1);
-    outb(11, C->crtc_base);
-    outb(v, C->crtc_base + 1);
+    /* Hide cursor by moving it offscreen rather than changing its shape.
+     * The correct shape can't be known on all adapters (BDA 0x0460 is
+     * emulated on EGA/VGA and wrong on the Compaq Portable), so the
+     * shape set by the BIOS at boot is left untouched.
+     */
+    C->cursoroff = !onoff;
+    PositionCursor(C);
 }
 
 static void VideoWrite(Console * C, int c)
