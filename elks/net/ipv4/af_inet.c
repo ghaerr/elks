@@ -293,6 +293,10 @@ static int inet_read(struct socket *sock, char *ubuf, int size, int nonblock)
         if (sock->flags & SF_CLOSING)
             return 0;
 
+        /* nothing to read on a non-blocking socket (no locks held yet)*/
+        if (nonblock)
+            return -EAGAIN;
+
         debug_net("INET(%P) read waiting on sock->avail_data sock %x buf_in %d\n",
             sock, bufin_sem);
 
