@@ -64,6 +64,7 @@ struct console {
     unsigned char type;
     unsigned char attr;         /* current attribute */
     unsigned char XN;           /* delayed newline on column 80 */
+    unsigned char cursoroff;    /* cursor hidden */
     void (*fsm)(struct console *, int);
     seg_t vseg;                 /* current render target: video page seg when foreground,
                                    ram_seg when backgrounded in RAM-buffer mode */
