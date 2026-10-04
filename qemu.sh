@@ -12,11 +12,11 @@
 # Select disk image to use
 # MINIX or FAT .config build
 #IMAGE="-fda image/fd2880.img"
-#IMAGE="-fda image/fd1440.img"
+IMAGE="-fda image/fd1440.img"
 #IMAGE="-fda image/fd1200.img"
 #IMAGE="-fda image/fd720.img"
 #IMAGE="-fda image/fd360.img"
-IMAGE="-hda image/hd.img"
+#IMAGE="-hda image/hd.img"
 #IMAGE="-boot order=a -fda image/fd1440.img -drive file=image/hd32-minix.img,format=raw,if=ide"
 
 # FAT package manager build
