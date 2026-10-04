@@ -928,7 +928,11 @@ int do_passive(int cmdfd) {
 
 	ip = ip_addr;
 	srvaddr.sin_family = AF_INET;
-	srvaddr.sin_addr.s_addr = in_aton(ip);
+	srvaddr.sin_addr.s_addr = in_gethostbyname(ip);
+	if (srvaddr.sin_addr.s_addr == 0) {
+		printf("Host name not found.\n");
+		return -1;
+	}
 	srvaddr.sin_port = htons(port);
 
 	if (debug > 1) printf("Connecting to %s @ %u\n", ip, port);
