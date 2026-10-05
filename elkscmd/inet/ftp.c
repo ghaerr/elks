@@ -683,6 +683,9 @@ void print_timing(unsigned long bcnt, struct timeval *m_start, struct timeval *m
 
 	ms = (((m_end->tv_sec * 1000000) + m_end->tv_usec) -
 		((m_start->tv_sec * 1000000) + m_start->tv_usec))/1000;
+	if (ms == 0)
+		ms = 1;		/* transfer completed within the clock's resolution:
+				 * dividing by ms below would fault */
 	rest = ms;
 	bps = (unsigned int)__divmod(bcnt, &rest);
 	rest = (unsigned int)(((long)rest*1000L)/ms);		/* scale the decimal */
