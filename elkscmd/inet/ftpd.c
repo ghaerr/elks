@@ -282,17 +282,16 @@ int get_command(char *cmdline) {
 int do_login() {
 	struct passwd *pwd;
 	char buf[200];
-	char ubuf[64];
 	char salt[3];
 
 	if (read(controlfd, buf, 200) < 0)
 		return -1;
 	clean(buf);
 
-	strncpy(ubuf, buf + 5, sizeof(ubuf)); // Remove 'USER '
-	ubuf[sizeof(ubuf) - 1] = '\0';
+	if (strlen(buf) < 6)
+		return -1;
 
-	pwd = getpwnam(ubuf);
+	pwd = getpwnam(buf + 5); // buf + 5 removes 'USER '
 
 	if (pwd == NULL)
 		return -1;
@@ -302,20 +301,17 @@ int do_login() {
 		return -1;
 	clean(buf);
 
-	strncpy(ubuf, buf + 5, sizeof(ubuf)); // Remove 'PASS '
-	ubuf[sizeof(ubuf) - 1] = '\0';
-
 	if (pwd->pw_passwd[0] == 0) {
 	} else if (pwd->pw_passwd[1] != 0) {
 		salt[0] = pwd->pw_passwd[0];
 		salt[1] = pwd->pw_passwd[1];
 		salt[2] = 0;
-		if (strcmp(crypt(ubuf, salt), pwd->pw_passwd))
+		if (strlen(buf) < 6)
+			return -1;
+		if (strcmp(crypt(buf + 5, salt), pwd->pw_passwd)) // buf + 5 removes 'PASS '
 			return -1;
 	} else
 		return -1;
-
-	bzero(ubuf, sizeof(ubuf));
 
 	if (setgid(pwd->pw_gid) < 0)
 		return -1;
