@@ -280,22 +280,50 @@ int get_command(char *cmdline) {
 /* as supplement. */
 
 int do_login() {
+	struct passwd *pwd;
 	char buf[200];
+	char salt[3];
 
 	if (read(controlfd, buf, 200) < 0)
 		return -1;
 	clean(buf);
-	if (strncmp(buf, "USER", 4)) 
+
+	if (strlen(buf) < 6)
+		return -1;
+
+	pwd = getpwnam(buf + 5); // buf + 5 removes 'USER '
+
+	if (pwd == NULL)
 		return -1;
 	send_reply(331, "User OK");
 
 	if (read(controlfd, buf, 200) < 0)
 		return -1;
-	if (strncmp(buf, "PASS", 4)) 
+	clean(buf);
+
+	if (pwd->pw_passwd[0] == 0) {
+	} else if (pwd->pw_passwd[1] != 0) {
+		salt[0] = pwd->pw_passwd[0];
+		salt[1] = pwd->pw_passwd[1];
+		salt[2] = 0;
+		if (strlen(buf) < 6)
+			return -1;
+		if (strcmp(crypt(buf + 5, salt), pwd->pw_passwd)) // buf + 5 removes 'PASS '
+			return -1;
+	} else
 		return -1;
-	chdir("/root");		/* brute force ... */
+
+	if (setgid(pwd->pw_gid) < 0)
+		return -1;
+
+	if (setuid(pwd->pw_uid) < 0)
+		return -1;
+
+	if (chdir(pwd->pw_dir) < 0)
+		chdir("/");
+
 	send_reply(230, "Password OK");
-	return 0; /* always OK */
+	return 0;
 }
 
 /* session timeout, close connection */
