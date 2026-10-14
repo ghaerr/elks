@@ -286,12 +286,14 @@ void tcpcb_expire_timeouts(void)
     }
 }
 
-void tcpcb_push_data(void)
+/* inform kernel of data available, only when changed unless force */
+void tcpcb_push_data(int force)
 {
     struct tcpcb_list_s *n;
 
     for (n=tcpcbs; n; n=n->next)
-	if (n->tcpcb.bytes_to_push > 0)
+	if (n->tcpcb.bytes_to_push > 0 &&
+	    (force || n->tcpcb.bytes_to_push != n->tcpcb.bytes_notified))
 	    notify_data_avail(&n->tcpcb);
 }
 

@@ -55,6 +55,7 @@ void notify_data_avail(struct tcpcb_s *cb)
 	//return;
 
     notify_sock(cb->sock, TDT_AVAIL_DATA, cb->bytes_to_push);
+    cb->bytes_notified = cb->bytes_to_push;
 }
 
 void retval_to_sock(void *sock, int retval)
@@ -311,6 +312,8 @@ static void tcpdev_read(void)
 
     data_avail = db->size < data_avail ? db->size : data_avail;
     cb->bytes_to_push -= data_avail;
+    /* inet_read() zeroes sock->avail_data, so remainder must be resent */
+    cb->bytes_notified = 0;
     if (cb->bytes_to_push <= 0)
 	tcpcb_need_push--;
 
