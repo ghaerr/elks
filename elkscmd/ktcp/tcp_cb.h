@@ -11,7 +11,7 @@ void tcpcb_remove_all(void);
 void tcpcb_buf_read(struct tcpcb_s *cb, unsigned char *data, int len);
 void tcpcb_buf_write(struct tcpcb_s *cb, unsigned char *data, int len);
 void tcpcb_expire_timeouts(void);
-void tcpcb_push_data(void);
+void tcpcb_push_data(int force);
 struct tcpcb_list_s *tcpcb_check_port(__u16 lport);
 struct tcpcb_list_s *tcpcb_find_unaccepted(void *sock);
 void tcpcb_rmv_all_unaccepted(struct tcpcb_s *cb);

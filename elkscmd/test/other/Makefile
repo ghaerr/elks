@@ -13,6 +13,7 @@ PRGS = \
     test_exit \
     test_eth \
     test_float \
+    test_ktcp \
     test_pty \
     test_select \
     test_signal \
@@ -38,6 +39,9 @@ test_fd: test_fd.o $(TINYPRINTF)
 	$(LD) $(LDFLAGS) -o $@ test_fd.o $(TINYPRINTF) $(KERNEL_LIBS) $(LDLIBS)
 
 test_float: test_float.o
+	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+test_ktcp: test_ktcp.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 test_pty: test_pty.o
