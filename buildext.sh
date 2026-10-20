@@ -16,6 +16,7 @@
 #       dflat           ia16-elf-gcc    D-Flat TUI memopad/library
 #       elkirc          ia16-elf-gcc    IRC for ELKS
 #       elksdigger      ia16-elf-gcc    Digger for ELKS
+#       elksweb         ia16-elf-gcc    Graphical HTTP browser for IBM PC compatibles
 #       owc_libc        OpenWatcom      ELKS C Library compiled by OWC
 #       owc_elkscmd     OpenWatcom      Some elkscmd/ programs compiled by OWC
 #       c86_toolchain   OpenWatcom/C86  C86 Toolchain, header files and examples
@@ -348,6 +349,19 @@ elksmoria()
     echo "ELKSmoria build complete"
 }
 
+elksweb()
+{
+    echo "Building ELKSWeb..."
+    cd "$TOPDIR/extapps"
+    if [ ! -d ELKSWeb ] ; then
+        git clone https://github.com/l00nix/ELKSWeb.git ELKSWeb
+    fi
+    cd ELKSWeb
+    git pull --ff-only
+    ELKSWEB_ELKS="$TOPDIR" sh toolchain/build-external.sh
+    echo "ELKSWeb build complete"
+}
+
 # build all extapps repos
 make_all()
 {
@@ -356,6 +370,7 @@ make_all()
     dflat
     elkirc
     elksdigger
+    elksweb
     gem
     if [ -n "$WATCOM" ] ; then
         owc_libc

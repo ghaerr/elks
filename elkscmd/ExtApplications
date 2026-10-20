@@ -28,6 +28,13 @@
 # ------------- ----------------------------------------------------------
 #
 # ia16 builds
+# ELKSWeb is installed on HD images only (no floppy-size tags).
+ELKSWeb/build/elksweb                              :elksweb
+ELKSWeb/share/welcome.htm ::root/welcome.htm        :elksweb
+ELKSWeb/share/elksweb.gif ::root/elksweb.gif        :elksweb
+ELKSWeb/share/logo-source.txt ::root/logo-src.txt   :elksweb
+ELKSWeb/COPYING ::lib/elksweb/COPYING               :elksweb
+ELKSWeb/font/COPYING ::lib/elksweb/font-copying     :elksweb
 microwindows/src/bin/nano-x                         :nanox  :1232c :1440k
 microwindows/src/bin/nxcalc                         :nanox  :1232c :1440k
 microwindows/src/bin/nxclock                        :nanox  :1232c :1440k
