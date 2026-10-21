@@ -347,63 +347,151 @@ int checknum(char *s) {
 	return 1;
 }
 
-/*
- * Two quite different functions: LIST (DIR command) which returns a ls -l output
- * and NLST (nlist) which returns filenames with paths if approriate. In the first case
- * the shell will do wildcard processing, in the latter, we have to do it (if GLOB is defined).
- * In both cases we should check for some existence, so as to not return an empty list (no
- * message) which will look like an error 'wtf happened?') to the user at the other end.
+/* Append a UNIX 'ls -l' style entry line to out, which already holds a "dir/"
+ * prefix of length len. Returns the new total length (prefix + entry line), or
+ * the unchanged len if the line would overflow size or the file type is skipped.
+ * Keeps code and data small for the restricted ELKS environment.
  */
-int do_list(int datafd, char *input) {
-	char cmd_buf[CMDBUFSIZ], iobuf[IOBUFSIZ];
-   	FILE *in;
-	int len, nlst = 0, status = 0;
+static int format_list_entry(char *out, int len, int size, const char *name,
+		struct stat *sb)
+{
+	char mode[11];
+	char *p = out + len;
 
-	bzero(iobuf, sizeof(iobuf));
+	if (!S_ISREG(sb->st_mode) && !S_ISDIR(sb->st_mode) &&
+	    !S_ISCHR(sb->st_mode) && !S_ISBLK(sb->st_mode) &&
+	    !S_ISFIFO(sb->st_mode) && !S_ISLNK(sb->st_mode))
+		return len;		/* skip sockets and other oddities */
 
-	if (strncmp(input, "NLST", 4) == 0)
-		nlst++;
-	if (get_param(input, iobuf) > 0)
-		trim(iobuf);
-	else
-		*iobuf = '.';	
+	if (len + 60 + (int)strlen(name) >= size)
+		return len;
 
-	if (nlst) {
-		if (debug) printf("NLST <%s>\n", iobuf);
-		status = do_nlist(datafd, iobuf);
-	} else {
-		/* LIST - pipe output from ls-command back to the client */
-		/*        let /bin/sh do the error reporting */
+	/* ELKS libc has no name lookup here; use numeric uid/gid like a minimal
+	 * ls. Column layout matches a typical 'ls -l' listing. */
+	strcpy(mode, "----------");
+	if (S_ISDIR(sb->st_mode))  mode[0] = 'd';
+	else if (S_ISCHR(sb->st_mode)) mode[0] = 'c';
+	else if (S_ISBLK(sb->st_mode)) mode[0] = 'b';
+	else if (S_ISFIFO(sb->st_mode)) mode[0] = 'p';
+	else if (S_ISLNK(sb->st_mode)) mode[0] = 'l';
+	if (sb->st_mode & S_IRUSR) mode[1] = 'r';
+	if (sb->st_mode & S_IWUSR) mode[2] = 'w';
+	if (sb->st_mode & S_IXUSR) mode[3] = 'x';
+	if (sb->st_mode & S_IRGRP) mode[4] = 'r';
+	if (sb->st_mode & S_IWGRP) mode[5] = 'w';
+	if (sb->st_mode & S_IXGRP) mode[6] = 'x';
+	if (sb->st_mode & S_IROTH) mode[7] = 'r';
+	if (sb->st_mode & S_IWOTH) mode[8] = 'w';
+	if (sb->st_mode & S_IXOTH) mode[9] = 'x';
 
-		sprintf(cmd_buf, "/bin/ls -l %s 2>&1", iobuf);
+	sprintf(p, "%s %3d %3d %3d %8lu %s\r\n", mode, 1, sb->st_uid,
+		sb->st_gid, (unsigned long)sb->st_size, name);
+	return len + strlen(p);
+}
 
-#ifdef LET_LS_DO_THIS	/* wildcards are OK, so we either let the shell do the processing */
-			/* or we do full wildcard processing here */
-		if (access(iobuf, F_OK)) {
-			send_reply1(550, "No such file or directory", iobuf);
-    			return -1;
-    		} 
-#endif
-		if (!(in = popen(cmd_buf, "r"))) {
-			send_reply(451, "Requested action aborted. Local error in processing");
-        		return -1;
+/*
+ * LIST (DIR) processing: send a UNIX 'ls -l' style listing for a file, directory
+ * or (with GLOB) a wildcard match list. This enumerates with opendir/readdir/stat
+ * directly instead of forking /bin/sh + /bin/ls, which fails on memory/task-slot
+ * constrained systems such as under a nano-X nxterm session.
+ */
+static int do_list(int datafd, char *input) {
+	struct stat sb;
+	int status = 0;
+
+	if (get_param(input, input) <= 0)
+		*input = '\0';
+
+#ifdef GLOB
+	{
+		char *myargv[MAXARGS];
+		int count, i;
+
+		count = expandwildcards(input, MAXARGS, myargv);
+		if (count < 0) {
+			send_reply1(550, "No such file or directory", input);
+			close(datafd);
+			return -1;
 		}
-		//printf("LIST: command is '%s'\n", cmd_buf);
-		send_reply(150,"Opening ASCII mode data connection for /bin/ls");
+		if (count > 0) {	/* wildcard matches, already sorted */
+			send_reply(150, "Opening ASCII mode data connection for file list");
+			for (i = 0; i < count; i++) {
+				if (stat(myargv[i], &sb) == 0) {
+					int len = format_list_entry(input, 0,
+						CMDBUFSIZ, myargv[i], &sb);
+					if (len > 0 &&
+					    write(datafd, input, len) != len) {
+						perror("LIST: Data socket write");
+						status = -1;
+						break;
+					}
+				}
+			}
+			freewildcards();
+			close(datafd);
+			return status;
+		}
+		freewildcards();
+	}
+#endif
 
-		bzero(iobuf, sizeof(iobuf));
-		while (fgets(iobuf, IOBUFSIZ-2, in) != NULL) {
-			len = strlen(iobuf);
-			iobuf[len-1] = '\r';    /* Change to FTP ASCII-style line endings */
-			iobuf[len++] = '\n';
-			if (write(datafd, iobuf, len) != len) {
+	if (*input == '\0')
+		strcpy(input, ".");
+
+	if (stat(input, &sb) < 0) {
+		send_reply1(550, "No such file or directory", input);
+		close(datafd);
+		return -1;
+	}
+
+	send_reply(150, "Opening ASCII mode data connection for file list");
+
+	if (S_ISDIR(sb.st_mode)) {
+		DIR *dir = opendir(input);
+		struct dirent *dp;
+		int plen;
+
+		if (dir == NULL) {
+			send_reply1(550, "Cannot open directory", input);
+			close(datafd);
+			return -1;
+		}
+		/* Convert the dir name in-place to a "dir/" prefix for entries. */
+		plen = strlen(input);
+		if (input[plen-1] != '/')
+			input[plen++] = '/';
+		input[plen] = '\0';
+		while ((dp = readdir(dir)) != NULL) {
+			int len;
+
+			if (dp->d_name[0] == '.')	/* hide dotfiles, matches ls default */
+				continue;
+			if (plen + strlen(dp->d_name) + 60 >= CMDBUFSIZ)
+				continue;
+			/* stat the full path, then restore the dir/ prefix in input. */
+			strcpy(input + plen, dp->d_name);
+			if (stat(input, &sb) < 0)
+				continue;
+			input[plen] = '\0';
+			len = format_list_entry(input, plen, CMDBUFSIZ,
+				dp->d_name, &sb);
+			if (len > 0 && write(datafd, input, len) != len) {
 				perror("LIST: Data socket write");
 				status = -1;
 				break;
 			}
-			bzero(iobuf, sizeof(iobuf));
 		}
-		pclose(in);
+		closedir(dir);
+	} else {
+		char name[CMDBUFSIZ];
+		int len;
+
+		strcpy(name, input);	/* input is reused as the output buffer */
+		len = format_list_entry(input, 0, CMDBUFSIZ, name, &sb);
+		if (len > 0 && write(datafd, input, len) != len) {
+			perror("LIST: Data socket write");
+			status = -1;
+		}
 	}
 	close(datafd);
 
