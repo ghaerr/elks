@@ -349,7 +349,7 @@ int checknum(char *s) {
 
 /* Append a UNIX 'ls -l' style entry line to out, which already holds a "dir/"
  * prefix of length len. Returns the new total length (prefix + entry line), or
- * the unchanged len if the line would overflow size or the file type is skipped.
+ * the unchanged len if the line would not fit in size.
  * Keeps code and data small for the restricted ELKS environment.
  */
 static int format_list_entry(char *out, int len, int size, const char *name,
@@ -357,23 +357,35 @@ static int format_list_entry(char *out, int len, int size, const char *name,
 {
 	char mode[11];
 	char *p = out + len;
+	char *t;
 
-	if (!S_ISREG(sb->st_mode) && !S_ISDIR(sb->st_mode) &&
-	    !S_ISCHR(sb->st_mode) && !S_ISBLK(sb->st_mode) &&
-	    !S_ISFIFO(sb->st_mode) && !S_ISLNK(sb->st_mode))
-		return len;		/* skip sockets and other oddities */
-
-	if (len + 60 + (int)strlen(name) >= size)
+	/* Bound the sprintf() below so it cannot overrun the size-byte output
+	 * buffer. 'len' is the caller's "dir/" prefix, which can itself be
+	 * hundreds of bytes, while name is at most MAXNAMLEN (26) since d_name[]
+	 * is fixed at MAXNAMLEN+1. The 72 is the worst-case width of the fixed
+	 * fields appended after the prefix: mode[10] plus three "%3d" columns,
+	 * one "%8lu" size, a 12-byte date (Mmm dd hh:mm) and separating spaces
+	 * and CRLF. Checked here rather than only in the caller because
+	 * format_list_entry is the single choke point shared by the directory,
+	 * single-file and GLOB paths. */
+	if (len + 72 + (int)strlen(name) >= size)
 		return len;
+
+	t = ctime(&sb->st_mtime);
+	/* ctime format: "Www Mmm dd hh:mm:ss yyyy\n" */
 
 	/* ELKS libc has no name lookup here; use numeric uid/gid like a minimal
 	 * ls. Column layout matches a typical 'ls -l' listing. */
 	strcpy(mode, "----------");
+	/* First char is the file type; unknown/socket types fall through to
+	 * 's'/'?' rather than being omitted, matching 'ls -l'. */
+	mode[0] = '?';
 	if (S_ISDIR(sb->st_mode))  mode[0] = 'd';
 	else if (S_ISCHR(sb->st_mode)) mode[0] = 'c';
 	else if (S_ISBLK(sb->st_mode)) mode[0] = 'b';
 	else if (S_ISFIFO(sb->st_mode)) mode[0] = 'p';
 	else if (S_ISLNK(sb->st_mode)) mode[0] = 'l';
+	else if (S_ISSOCK(sb->st_mode)) mode[0] = 's';
 	if (sb->st_mode & S_IRUSR) mode[1] = 'r';
 	if (sb->st_mode & S_IWUSR) mode[2] = 'w';
 	if (sb->st_mode & S_IXUSR) mode[3] = 'x';
@@ -384,8 +396,8 @@ static int format_list_entry(char *out, int len, int size, const char *name,
 	if (sb->st_mode & S_IWOTH) mode[8] = 'w';
 	if (sb->st_mode & S_IXOTH) mode[9] = 'x';
 
-	sprintf(p, "%s %3d %3d %3d %8lu %s\r\n", mode, 1, sb->st_uid,
-		sb->st_gid, (unsigned long)sb->st_size, name);
+	sprintf(p, "%s %3d %3d %3d %8lu %.12s %s\r\n", mode, 1, sb->st_uid,
+		sb->st_gid, (unsigned long)sb->st_size, t ? t + 4 : "             ", name);
 	return len + strlen(p);
 }
 
@@ -450,17 +462,21 @@ static int do_list(int datafd, char *input) {
 		DIR *dir = opendir(input);
 		struct dirent *dp;
 		int plen;
+		char path[CMDBUFSIZ];
 
 		if (dir == NULL) {
 			send_reply1(550, "Cannot open directory", input);
 			close(datafd);
 			return -1;
 		}
-		/* Convert the dir name in-place to a "dir/" prefix for entries. */
+		/* Build "<dir>/" once in path[] for stat()ing each entry; the entry
+		 * line itself holds only the basename in the name column, matching
+		 * 'ls -l' which does not prefix lines with the directory. */
 		plen = strlen(input);
-		if (input[plen-1] != '/')
-			input[plen++] = '/';
-		input[plen] = '\0';
+		strcpy(path, input);
+		if (path[plen-1] != '/')
+			path[plen++] = '/';
+		path[plen] = '\0';
 		while ((dp = readdir(dir)) != NULL) {
 			int len;
 
@@ -468,12 +484,10 @@ static int do_list(int datafd, char *input) {
 				continue;
 			if (plen + strlen(dp->d_name) + 60 >= CMDBUFSIZ)
 				continue;
-			/* stat the full path, then restore the dir/ prefix in input. */
-			strcpy(input + plen, dp->d_name);
-			if (stat(input, &sb) < 0)
+			strcpy(path + plen, dp->d_name);
+			if (stat(path, &sb) < 0)
 				continue;
-			input[plen] = '\0';
-			len = format_list_entry(input, plen, CMDBUFSIZ,
+			len = format_list_entry(input, 0, CMDBUFSIZ,
 				dp->d_name, &sb);
 			if (len > 0 && write(datafd, input, len) != len) {
 				perror("LIST: Data socket write");
