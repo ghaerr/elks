@@ -26,7 +26,7 @@
 #define CPU_VEC_S0_RX 20
 #define CPU_VEC_S0_TX 21
 
-#ifdef CONFIG_HW_PHILIPS_YES
+#ifndef CONFIG_8018X_EB
 #include <arch/80186.h>
 #else
 

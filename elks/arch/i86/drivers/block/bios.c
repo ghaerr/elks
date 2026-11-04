@@ -381,9 +381,14 @@ int INITPROC bios_getfdinfo(struct drive_infot *drivep)
         if (!call_bios(&bdt)) {         /* returns drive type in BL*/
             *drivep = fd_types[(BD_BX & 0xFF) - 1];
         } else {
+#ifdef CONFIG_HW_PHILIPS_YES
+            int type = FD720;
+#else
             int type = (sys_caps & CAP_PC_AT) ? FD1440 : FD360;
+#endif
             *drivep = fd_types[type];
-            printk("fd%d: default %s\n", drive, type? "1440k": "360k");
+            printk("fd%d: default %s\n", drive,
+                type == FD720? "720k": (type? "1440k": "360k"));
         }
         drivep++;
     }
