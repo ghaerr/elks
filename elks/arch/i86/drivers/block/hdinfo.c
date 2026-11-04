@@ -47,7 +47,7 @@ void GENPROC show_drive_info(struct drive_infot *drivep, const char *name, int d
             printk("%s%c: %4lu%c CHS %3u,%2d,%d",
                 name, drive + (drivep->fdtype < 0? 'a' : '0'), (size/10), *unit,
                 drivep->cylinders, drivep->heads, drivep->sectors);
-#ifdef CONFIG_ARCH_IBMPC
+#if defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_HW_PHILIPS_YES)
             /* IBM BIOS INT 13 can't use HD drives > 528MB, must use ATA/CF driver */
             if (drivep->cylinders > 1024 && name[0] == 'h')
                 printk(" (CYL > 1024, must use /dev/cf%c)", drive+'a');

@@ -257,7 +257,7 @@ int INITPROC bios_gethdinfo(struct drive_infot *drivep) {
 
 static BFPROC void bios_disk_park(struct gendisk *hd)
 {
-#ifdef CONFIG_ARCH_IBMPC
+#if defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_HW_PHILIPS_YES)
     struct drive_infot *drivep;
     unsigned int cyl;
 
@@ -311,7 +311,7 @@ int INITPROC bios_getfdinfo(struct drive_infot *drivep)
     drivep[3] = fd_types[FD1232];
 #endif
 
-#ifdef CONFIG_ARCH_IBMPC
+#if defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_HW_PHILIPS_YES)
     drivep[0] = fd_types[FD720];
     drivep[1] = fd_types[FD720];
 #endif

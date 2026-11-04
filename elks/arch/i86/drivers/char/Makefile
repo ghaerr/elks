@@ -67,6 +67,18 @@ OBJS += audio-8254.o                        # CONFIG_AUDIO
 OBJS += serial-8250.o serfast.o             # CONFIG_CHAR_DEV_RS
 endif
 
+ifdef CONFIG_HW_PHILIPS_YES
+  ifdef CONFIG_CONSOLE_BIOS
+    OBJS += console-bios.o console-bios-asm.o
+  endif
+  ifdef CONFIG_CONSOLE_HEADLESS
+    OBJS += console-headless.o
+  endif
+  OBJS += kbd-poll.o conio-bios.o             # no scancode keyboard
+  OBJS += bell-yes.o
+  OBJS += crtc-6845.o                         # CONFIG_CONSOLE_DUAL
+endif
+
 ifdef CONFIG_ARCH_PC98
   ifdef CONFIG_CONSOLE_DIRECT
     OBJS += console-direct-pc98.o

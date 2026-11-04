@@ -215,7 +215,7 @@
 
 #else /* !CONFIG_ROMCODE */
 
-#ifdef CONFIG_ARCH_IBMPC
+#if defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_HW_PHILIPS_YES)
 #define OPTSEGSZ        0x400       /* max size of /bootopts file (1024 bytes max) */
 #define SEG_OPTSEG      0x50        /* 0x400 bytes boot options at lowest usable ram */
 #define SEG_LOADALL     0x80        /* LOADALL buffer from 0x800-0x865 on 80286 CPU */

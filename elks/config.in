@@ -27,6 +27,9 @@ mainmenu_option next_comment
 
 	elif [ "$CONFIG_ARCH_8018X" = "y" ]; then
 
+		comment 'Platform'
+		bool 'Philips :YES (P2056)' CONFIG_HW_PHILIPS_YES n
+
 		comment 'Devices'
 		hex 'RTC (AT compatible) I/O address' CONFIG_8018X_RTC 0x200
 
@@ -37,8 +40,14 @@ mainmenu_option next_comment
 		int 'INT0 Logical IRQ' CONFIG_8018X_INT3 0
 		int 'INT0 Logical IRQ' CONFIG_8018X_INT4 0
 
-		define_bool CONFIG_CONSOLE_DIRECT   n
-		define_bool CONFIG_CONSOLE_8018X    y
+		if [ "$CONFIG_HW_PHILIPS_YES" = "y" ]; then
+			# console selected in the char device menu (BIOS)
+			define_bool CONFIG_CONSOLE_DIRECT   n
+			define_bool CONFIG_CONSOLE_8018X    n
+		else
+			define_bool CONFIG_CONSOLE_DIRECT   n
+			define_bool CONFIG_CONSOLE_8018X    y
+		fi
 
 	elif [ "$CONFIG_ARCH_NECV25" = "y" ]; then
 
