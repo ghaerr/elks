@@ -46,7 +46,11 @@
 // (http://www.webtech.co.jp/company/doc/undocumented_mem/memsys.txt)
 // mechanism for configuring the "end of track" value; we will need to
 // somehow figure out this mechanism and test it :-( :-(
-#if !defined BOOT_FAT && !defined CONFIG_ARCH_PC98
+// Whole-track reads are disabled on the Philips :YES: a transfer there may
+// not cross from head 0 to head 1 (measured: AH=04), and its ROM does not
+// use a PC-format DDPT, so the end-of-track patch below would not take.
+#if !defined BOOT_FAT && !defined CONFIG_ARCH_PC98 \
+    && !defined CONFIG_HW_PHILIPS_YES
 #   define FAST_READ
 #else
 #   undef FAST_READ
@@ -89,6 +93,28 @@ floppy_table:
 
 	FAT_BPB
 
+entry1:
+#elif defined(CONFIG_HW_PHILIPS_YES)
+
+// The :YES ROM refuses a sector that does not look like one of its own
+// disks, and asks for a different disk instead. ':YES' at offset 3 is what
+// its INT 19h tests and is the only thing distinguishing a bootable disk
+// here, so match a stock sector byte for byte. Filesystem is still MINIX.
+
+	jmp entry1
+	.org 3, 0x90
+	.ascii ":YES    "
+	.word 512		// bytes per sector
+	.byte 2			// sectors per cluster
+	.word 1			// reserved sectors
+	.byte 2			// FAT copies
+	.word 176		// root entries
+	.word 1440		// total sectors
+	.byte 0xfe		// media byte
+	.word 3			// sectors per FAT
+	.word 9			// sectors per track
+	.word 2			// heads
+	.long 0			// hidden sectors
 entry1:
 #endif
 
