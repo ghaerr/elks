@@ -51,7 +51,12 @@ OBJS += irq-solo86.o reset-stubs.o timer-8254.o divzero.o nmi.o
 endif
 
 ifeq ($(CONFIG_ARCH_8018X), y)
-OBJS += irq-8018x.o reset-stubs.o timer-8018x.o
+OBJS += irq-8018x.o timer-8018x.o
+ifeq ($(CONFIG_HW_PHILIPS_YES), y)
+OBJS += reset-ibm.o
+else
+OBJS += reset-stubs.o
+endif
 endif
 
 ifeq ($(CONFIG_ARCH_NECV25), y)
