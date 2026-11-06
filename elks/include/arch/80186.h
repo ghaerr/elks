@@ -1,6 +1,8 @@
 /*
  * Classic 80186 peripheral control block, as used by the Philips :YES.
  * Same FF00 base as the 80C188EB in 8018x.h, different register offsets.
+ * Offsets follow Table 4-1 of the 80C186XL user manual for the NMOS
+ * 80186/80188 and CMOS 80C186/80C188.
  */
 
 /* INTERRUPT CONTROL REGISTERS */
@@ -57,6 +59,14 @@
 /* DMA interrupt types; the 80C188EB has a serial unit here instead */
 #define CPU_VEC_DMA0 10
 #define CPU_VEC_DMA1 11
+
+/* CMOS ONLY (80C186/80C188 and later); reserved on the NMOS 80186 */
+#define PCB_RFBASE  0xffe0
+#define PCB_RFTIME  0xffe2
+#define PCB_RFCON   0xffe4
+#define PCB_PWRSAV  0xfff0
+#define PCB_PWRCON  0xfff2
+#define PCB_STEPID  0xfff6
 
 /* PERIPHERAL CONTROL BLOCK RELOCATION REGISTER */
 #define PCB_RELREG  0xfffe
