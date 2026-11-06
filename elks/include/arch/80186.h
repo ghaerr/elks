@@ -1,7 +1,6 @@
 /*
  * Classic 80186 peripheral control block, as used by the Philips :YES.
  * Same FF00 base as the 80C188EB in 8018x.h, different register offsets.
- * No serial unit, I/O port unit, GCS chip selects or refresh unit.
  */
 
 /* INTERRUPT CONTROL REGISTERS */
@@ -12,10 +11,10 @@
 #define PCB_PRIMSK  0xff2a
 #define PCB_INSERV  0xff2c
 #define PCB_REQST   0xff2e
-#define PCB_INTSTS  0xff30
+#define PCB_INTSTS  0xff30      /* Intel calls this INSTS; name matches 8018x.h */
 #define PCB_TCUCON  0xff32
-#define PCB_D0CON   0xff34
-#define PCB_D1CON   0xff36
+#define PCB_DMA0CON 0xff34      /* interrupt control for DMA ch0 */
+#define PCB_DMA1CON 0xff36      /* interrupt control for DMA ch1 */
 #define PCB_I0CON   0xff38
 #define PCB_I1CON   0xff3a
 #define PCB_I2CON   0xff3c
@@ -47,13 +46,13 @@
 #define PCB_D0DSTL  0xffc4
 #define PCB_D0DSTH  0xffc6
 #define PCB_D0TC    0xffc8
-#define PCB_D0CTL   0xffca
+#define PCB_D0CON   0xffca      /* DMA ch0 channel control register */
 #define PCB_D1SRCL  0xffd0
 #define PCB_D1SRCH  0xffd2
 #define PCB_D1DSTL  0xffd4
 #define PCB_D1DSTH  0xffd6
 #define PCB_D1TC    0xffd8
-#define PCB_D1CTL   0xffda
+#define PCB_D1CON   0xffda      /* DMA ch1 channel control register */
 
 /* DMA interrupt types; the 80C188EB has a serial unit here instead */
 #define CPU_VEC_DMA0 10
