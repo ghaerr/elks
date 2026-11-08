@@ -31,6 +31,10 @@
 
 void enable_timer_tick(void)
 {
+#ifdef CONFIG_HW_PHILIPS_YES
+    /* Timer1/Timer2 interrupt types 18 and 19 are the BIOS INT 12h/13h
+     * entry points here. The tick comes from chaining Timer0 on vector 8. */
+#else
     /* Set Timer2 Maxcount register */
     outw(TIMER2_INTERVAL, PCB_T2CMPA);
     /* Clear the Timer count register before starting it */
@@ -46,13 +50,16 @@ void enable_timer_tick(void)
 
     /* Enable Timer1, release inhibit to change EN bit, INT enabled, use Timer2 as source, continuous mode */
     outw(0xe009, PCB_T1CON);
+#endif
 }
 
 void disable_timer_tick(void)
 {
+#ifndef CONFIG_HW_PHILIPS_YES
     /* Disable Timer2, release inhibit to change EN bit */
     outw(0x4000, PCB_T2CON);
 
     /* Disable Timer1, release inhibit to change EN bit */
     outw(0x4000, PCB_T1CON);
+#endif
 }

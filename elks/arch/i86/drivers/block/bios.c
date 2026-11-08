@@ -257,7 +257,7 @@ int INITPROC bios_gethdinfo(struct drive_infot *drivep) {
 
 static BFPROC void bios_disk_park(struct gendisk *hd)
 {
-#ifdef CONFIG_ARCH_IBMPC
+#if defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_HW_PHILIPS_YES)
     struct drive_infot *drivep;
     unsigned int cyl;
 
@@ -311,7 +311,7 @@ int INITPROC bios_getfdinfo(struct drive_infot *drivep)
     drivep[3] = fd_types[FD1232];
 #endif
 
-#ifdef CONFIG_ARCH_IBMPC
+#if defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_HW_PHILIPS_YES)
     drivep[0] = fd_types[FD720];
     drivep[1] = fd_types[FD720];
 #endif
@@ -381,9 +381,14 @@ int INITPROC bios_getfdinfo(struct drive_infot *drivep)
         if (!call_bios(&bdt)) {         /* returns drive type in BL*/
             *drivep = fd_types[(BD_BX & 0xFF) - 1];
         } else {
+#ifdef CONFIG_HW_PHILIPS_YES
+            int type = FD720;
+#else
             int type = (sys_caps & CAP_PC_AT) ? FD1440 : FD360;
+#endif
             *drivep = fd_types[type];
-            printk("fd%d: default %s\n", drive, type? "1440k": "360k");
+            printk("fd%d: default %s\n", drive,
+                type == FD720? "720k": (type? "1440k": "360k"));
         }
         drivep++;
     }

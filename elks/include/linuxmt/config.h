@@ -75,6 +75,22 @@
 #endif /* CONFIG_ARCH_PC98 */
 
 #ifdef CONFIG_ARCH_8018X
+#ifdef CONFIG_HW_PHILIPS_YES
+/* classic 80186, boots from floppy through a PC-compatible BIOS, so the
+ * values below come from the boot loader rather than being compiled in */
+#define MAX_SERIAL              1               /* 8256 MUART, no driver yet */
+#define SETUP_VID_COLS          setupb(7)       /* BIOS video # columns */
+#define SETUP_VID_LINES         25              /* video # lines */
+#define SETUP_CPU_TYPE          CPU_80186       /* processor type */
+#define SETUP_MEM_KBYTES        setupw(0x2a)    /* from INT 12h */
+#define SETUP_XMS_KBYTES        0               /* no XMS on an 80186 */
+#define SETUP_ROOT_DEV          setupw(0x1fc)   /* BIOS drive from boot sector */
+#define SETUP_ELKS_FLAGS        setupb(0x1f6)   /* flags for root device type */
+#define SETUP_PART_OFFSETLO     setupw(0x1e2)   /* partition offset low word */
+#define SETUP_PART_OFFSETHI     setupw(0x1e4)   /* partition offset high word */
+#define SYS_CAPS                0               /* no XT/AT capabilities */
+#define UTS_MACHINE             "philips-yes"
+#else
 #define MAX_SERIAL              2       /* max number of serial tty devices*/
 #define SETUP_VID_COLS          80      /* video # columns */
 #define SETUP_VID_LINES         25      /* video # lines */
@@ -89,6 +105,7 @@
 #define UTS_MACHINE             "8018x"
 #define CONFIG_8018X_FCPU       16
 #define CONFIG_8018X_EB
+#endif
 #endif /* CONFIG_ARCH_8018X */
 
 #ifdef CONFIG_ARCH_NECV25
@@ -215,7 +232,7 @@
 
 #else /* !CONFIG_ROMCODE */
 
-#ifdef CONFIG_ARCH_IBMPC
+#if defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_HW_PHILIPS_YES)
 #define OPTSEGSZ        0x400       /* max size of /bootopts file (1024 bytes max) */
 #define SEG_OPTSEG      0x50        /* 0x400 bytes boot options at lowest usable ram */
 #define SEG_LOADALL     0x80        /* LOADALL buffer from 0x800-0x865 on 80286 CPU */

@@ -255,6 +255,14 @@ a6:     out     %al,$PIC1_CMD   // Ack on primary controller
 #elif defined(CONFIG_ARCH_8018X)
         cmp     $16,%ax         // Determine if trap or interrupt
         jge     was_trap        // Traps need no reset
+#if defined(CONFIG_HW_PHILIPS_YES) && !defined(CONFIG_286_PMODE)
+        or      %ax,%ax         // Timer 0 is the ROM's 100 Hz system tick
+        jnz     1f
+        pushf                   // Chain the ROM handler before returning
+        lcall   *org_irq0       // It maintains BIOS time and acknowledges Timer 0
+        jmp     was_trap        // ROM handler sent the EOI
+1:
+#endif
         mov $0x8000, %ax        // set the NSPEC bit on the
         mov $0xff02, %dx        // EOI register so the ICU
         out %ax, %dx            // acks the highest priority interrupt

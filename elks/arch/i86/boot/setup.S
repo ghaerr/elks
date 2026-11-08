@@ -1260,6 +1260,50 @@ checkhma:
 
 #ifdef CONFIG_ARCH_8018X
 
+#ifdef CONFIG_HW_PHILIPS_YES
+
+// The :YES has a PC-compatible INT 10h/12h BIOS.
+
+// Return total memory in Kbytes
+arch_get_mem:
+	int $0x12				// AX in KB
+	ret
+
+// Set INITSEG values
+arch_set_initseg:
+	mov	$0x0f,%ah			// get video state
+	int	$0x10
+	mov	%ah,7				// ah = video columns
+
+	mov	$INITSEG,%ax
+	mov	%ax,%ds
+	call	arch_get_mem	// save base memory size
+	mov	%ax,mem_kbytes
+	ret						// no INT 15h AH=88h
+
+// Write AL to console, save all other registers
+putc:	push %ax
+	push %bx
+	push %cx
+	push %dx
+	push %bp
+	mov	$0x0E,%ah			// teletype output
+	mov	$0x0007,%bx			// page 0, attribute 7
+	int	$0x10
+	pop %bp
+	pop %dx
+	pop %cx
+	pop %bx
+	pop %ax
+	ret
+
+// 20-bit address bus; AX=0 means "cannot enable".
+enable_a20_gate:
+	xor %ax,%ax
+	ret
+
+#else /* bare 8018x board */
+
 // Return total memory in Kbytes
 arch_get_mem:
 	mov $SETUP_MEM_KBYTES,%ax
@@ -1281,6 +1325,8 @@ putc:	push %bx
 	pop %cx
 	pop %bx
 	ret
+
+#endif /* CONFIG_HW_PHILIPS_YES */
 
 #endif /* CONFIG_ARCH_8018X*/
 
