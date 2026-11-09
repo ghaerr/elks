@@ -34,7 +34,6 @@ IA16DIRS =       \
 	minix2      \
 	minix3      \
 	misc_utils  \
-	romprg      \
 	sash        \
 	screen      \
 	cron        \
@@ -43,6 +42,10 @@ IA16DIRS =       \
 	tui         \
 	test        \
 	# EOL
+
+ifneq ($(CONFIG_HW_PHILIPS_YES),y)
+IA16DIRS += romprg
+endif
 
 OWCDIRS =       \
     basic       \
