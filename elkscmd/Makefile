@@ -47,6 +47,8 @@ ifneq ($(CONFIG_HW_PHILIPS_YES),y)
 IA16DIRS += romprg
 endif
 
+CLEANDIRS = $(sort $(IA16DIRS) romprg)
+
 OWCDIRS =       \
     basic       \
     fsck_dos    \
@@ -81,7 +83,7 @@ c86:
 
 clean: owclean c86clean
 	$(MAKE) -C lib clean
-	for DIR in $(IA16DIRS); do $(MAKE) -C $$DIR clean || exit 1; done
+	for DIR in $(CLEANDIRS); do $(MAKE) -C $$DIR clean || exit 1; done
 
 owclean:
 	for DIR in $(OWCDIRS); do $(MAKE) -C $$DIR -f Makefile.owc clean || exit 1; done
