@@ -164,3 +164,4 @@ elksmoria/elks/morifile/roglcmds ::lib/moria/roglcmds :elksmoria
 8086-toolchain/examples/graphics.h  ::usr/src
 8086-toolchain/examples/showfont.s  ::usr/src
 8086-toolchain/examples/vga-4bp.s   ::usr/src
+../elkscmd/romprg/romprg           :romprg

@@ -2,10 +2,6 @@
  * 80C188EB peripheral control block and CPU interrupt vectors.
  */
 
-#ifndef CONFIG_8018X_FCPU
-#define CONFIG_8018X_FCPU       16
-#endif
-
 /* serial, serial-8018x.c */
 #define UART0_IRQ_RX  1 /* maps to interrupt type 20 */
 #define UART0_IRQ_TX  2 /* maps to interrupt type 21 */

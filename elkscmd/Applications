@@ -239,4 +239,3 @@ debug/disasm                      :other                    :1232k:1440k
 #debug/nm86                        :other                            :1440c
 #debug/system.sym ::lib/system.sym :other                            :1440c
 #debug/testsym                     :other                            :1440c
-romprg/romprg                   :romprg

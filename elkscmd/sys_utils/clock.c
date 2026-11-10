@@ -1,4 +1,5 @@
 #include <autoconf.h>       /* for CONFIG_ options */
+#include <linuxmt/config.h> /* for per-port CONFIG_ constants */
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
