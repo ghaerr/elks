@@ -2,7 +2,11 @@
  * 8018X's Integrated Interrupt Controller Unit
  *
  * This file contains code used for the embedded 8018X family only.
- * 
+ *
+ * Currently handles two variants:
+ * - 80C188EB (arch/8018x.h)
+ * - Classic 80186/80188 (arch/80186.h)
+ *
  * 16 May 21 Santiago Hormazabal
  */
 
@@ -12,7 +16,11 @@
 #include <linuxmt/types.h>
 
 #include <arch/ports.h>
-#include <arch/8018x.h>
+#ifdef CONFIG_HW_PHILIPS_YES
+#include <arch/80186.h>         /* classic 80186/80188 PCB */
+#else
+#include <arch/8018x.h>         /* 80C188EB PCB */
+#endif
 #include <arch/io.h>
 #include <arch/irq.h>
 
@@ -50,19 +58,20 @@ struct irq_logical_map {
     { UART0_IRQ_RX, 0x1, PCB_SCUCON, CPU_VEC_S0_RX },
     { UART0_IRQ_TX, 0x1, PCB_SCUCON, CPU_VEC_S0_TX },
 #endif
-#if CONFIG_8018X_INT0 + 0 > 0
+#if CONFIG_8018X_INT0
     { CONFIG_8018X_INT0, 0x6, PCB_I0CON, CPU_VEC_INT0 },
 #endif
-#if CONFIG_8018X_INT1 + 0 > 0
+#if CONFIG_8018X_INT1
     { CONFIG_8018X_INT1, 0x6, PCB_I1CON, CPU_VEC_INT1 },
 #endif
-#if CONFIG_8018X_INT2 + 0 > 0
+#if CONFIG_8018X_INT2
     { CONFIG_8018X_INT2, 0x6, PCB_I2CON, CPU_VEC_INT2 },
 #endif
-#if CONFIG_8018X_INT3 + 0 > 0 
+#if CONFIG_8018X_INT3
     { CONFIG_8018X_INT3, 0x6, PCB_I3CON, CPU_VEC_INT3 },
 #endif
-#if CONFIG_8018X_INT4 + 0 > 0
+#if CONFIG_8018X_INT4
+    /* Note: INT4 is 80C188EB only; the classic 80186 has INT0-INT3 */
     { CONFIG_8018X_INT4, 0x6, PCB_I4CON, CPU_VEC_INT4 },
 #endif
 };

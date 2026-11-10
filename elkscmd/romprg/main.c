@@ -1,3 +1,12 @@
+/*
+ * romprg: ROM/flash programmer, driven over a serial link from the host.
+ *
+ * Requires an 8018X variant with the integrated serial unit, i.e. the
+ * PCB_B0CMP/PCB_S0CON registers in arch/8018x.h, or a NEC V25. The classic
+ * 80186/80188 (as in the Philips :YES) has no on-chip UART and cannot run
+ * this, even though it is part of the same 8018X family.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

@@ -1,9 +1,30 @@
 /*
- * Classic 80186 peripheral control block, as used by the Philips :YES.
+ * Classic 80186/80188 peripheral control block and CPU interrupt vectors,
+ * as used by the Philips :YES.
  * Same FF00 base as the 80C188EB in 8018x.h, different register offsets.
  * Offsets follow Table 4-1 of the 80C186XL user manual for the NMOS
  * 80186/80188 and CMOS 80C186/80C188.
  */
+
+/* CPU INTERRUPT VECTORS */
+#define CPU_VEC_DIVIDE_ERROR 0
+#define CPU_VEC_SINGLE_STEP 1
+#define CPU_VEC_NMI 2
+#define CPU_VEC_BREAKPOINT 3
+#define CPU_VEC_OVERFLOW 4
+#define CPU_VEC_ARRAY_BOUNDS 5
+#define CPU_VEC_UNUSED_OPCODE 6
+#define CPU_VEC_ESC_OPCODE 7
+#define CPU_VEC_TIMER0 8
+#define CPU_VEC_DMA0 10
+#define CPU_VEC_DMA1 11
+#define CPU_VEC_INT0 12
+#define CPU_VEC_INT1 13
+#define CPU_VEC_INT2 14
+#define CPU_VEC_INT3 15
+#define CPU_VEC_NUMERICS 16
+#define CPU_VEC_TIMER1 18
+#define CPU_VEC_TIMER2 19
 
 /* INTERRUPT CONTROL REGISTERS */
 #define PCB_EOI     0xff22
@@ -55,10 +76,6 @@
 #define PCB_D1DSTH  0xffd6
 #define PCB_D1TC    0xffd8
 #define PCB_D1CON   0xffda      /* DMA ch1 channel control register */
-
-/* DMA interrupt types; the 80C188EB has a serial unit here instead */
-#define CPU_VEC_DMA0 10
-#define CPU_VEC_DMA1 11
 
 /* CMOS ONLY (80C186/80C188 and later); reserved on the NMOS 80186 */
 #define PCB_RFBASE  0xffe0

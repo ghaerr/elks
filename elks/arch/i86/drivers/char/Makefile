@@ -75,7 +75,7 @@ ifdef CONFIG_HW_PHILIPS_YES
     OBJS += console-headless.o
   endif
   OBJS += kbd-poll.o conio-bios.o             # no scancode keyboard
-  OBJS += bell-yes.o
+  OBJS += bell-philips-yes.o
   OBJS += crtc-6845.o                         # CONFIG_CONSOLE_DUAL
 endif
 

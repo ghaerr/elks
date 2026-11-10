@@ -34,7 +34,6 @@ IA16DIRS =       \
 	minix2      \
 	minix3      \
 	misc_utils  \
-	romprg      \
 	sash        \
 	screen      \
 	cron        \
@@ -43,6 +42,14 @@ IA16DIRS =       \
 	tui         \
 	test        \
 	# EOL
+
+# romprg drives an on-chip serial unit, only build for archs that may have one
+ifeq ($(CONFIG_ARCH_8018X), y)
+IA16DIRS += romprg
+endif
+ifeq ($(CONFIG_ARCH_NECV25), y)
+IA16DIRS += romprg
+endif
 
 OWCDIRS =       \
     basic       \

@@ -90,6 +90,14 @@
 #define SETUP_PART_OFFSETHI     setupw(0x1e4)   /* partition offset high word */
 #define SYS_CAPS                0               /* no XT/AT capabilities */
 #define UTS_MACHINE             "philips-yes"
+/* Philips :YES-specific per-port constants */
+#define CONFIG_8018X_FCPU       8               /* 8 MHz */
+#define CONFIG_8018X_RTC        0               /* no AT-compatible RTC */
+#define CONFIG_8018X_INT0       0               /* logical IRQ, 0 = disabled */
+#define CONFIG_8018X_INT1       0
+#define CONFIG_8018X_INT2       0
+#define CONFIG_8018X_INT3       0
+#define CONFIG_8018X_INT4       0               /* no INT4 on classic 80186 */
 #else
 #define MAX_SERIAL              2       /* max number of serial tty devices*/
 #define SETUP_VID_COLS          80      /* video # columns */
@@ -103,7 +111,14 @@
 #define SETUP_PART_OFFSETHI     0       /* partition offset high word */
 #define SYS_CAPS                0       /* no XT/AT capabilities */
 #define UTS_MACHINE             "8018x"
-#define CONFIG_8018X_FCPU       16
+/* per-port constants; edit here when experimenting */
+#define CONFIG_8018X_FCPU       16              /* 16 MHz */
+#define CONFIG_8018X_RTC        0x200           /* AT-compatible RTC address */
+#define CONFIG_8018X_INT0       0               /* logical IRQ, 0 = disabled */
+#define CONFIG_8018X_INT1       12
+#define CONFIG_8018X_INT2       0
+#define CONFIG_8018X_INT3       0
+#define CONFIG_8018X_INT4       0
 #define CONFIG_8018X_EB
 #endif
 #endif /* CONFIG_ARCH_8018X */
