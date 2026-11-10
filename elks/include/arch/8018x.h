@@ -1,3 +1,7 @@
+/*
+ * 80C188EB peripheral control block and CPU interrupt vectors.
+ */
+
 #ifndef CONFIG_8018X_FCPU
 #define CONFIG_8018X_FCPU       16
 #endif
@@ -25,10 +29,6 @@
 #define CPU_VEC_TIMER2 19
 #define CPU_VEC_S0_RX 20
 #define CPU_VEC_S0_TX 21
-
-#ifdef CONFIG_HW_PHILIPS_YES
-#include <arch/80186.h>
-#else
 
 /* INTERRUPT CONTROL REGISTERS */
 #define PCB_EOI     0xff02
@@ -120,5 +120,3 @@
 
 /* STEPPING ID REGISTER */
 #define PCB_STEPID  0xffbc
-
-#endif
