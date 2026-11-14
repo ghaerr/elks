@@ -136,27 +136,45 @@ int sys_execve(const char *filename, char *sptr, size_t slen)
 /*
  * Read relocations for a particular segment and apply them
  * Only IA-16 segment relocations are accepted
+ *
+ * Relocation records are read in large chunks into the new process's data
+ * segment at scratch_off (the not yet used bss/heap/stack area past the
+ * initialized data), rather than one 8-byte record per filesystem read call,
+ * which is extremely slow on 8088 systems for binaries with thousands of
+ * relocations. The scratch area is overwritten later by bss clearing and argv.
  */
 static int FARPROC relocate(seg_t place_base, unsigned long rsize, segment_s *seg_code,
-    segment_s *seg_data, struct inode *inode, struct file *filp, size_t tseg)
+    segment_s *seg_data, struct inode *inode, struct file *filp, size_t tseg,
+    size_t scratch_off, size_t scratch_size)
 {
     int retval = 0;
     seg_t save_ds = current->t_regs.ds;
-    struct minix_reloc reloc;   //FIXME too large
-    word_t val;
+    size_t chunk, off;
+    word_t r_vaddr, r_symndx, r_type, val;
 
     if ((int)rsize % sizeof(struct minix_reloc))
         return -EINVAL;
-    current->t_regs.ds = KERNEL_DS;
+    scratch_size &= ~(sizeof(struct minix_reloc) - 1);
+    if (rsize && !scratch_size)
+        return -ENOEXEC;
     debug_reloc("EXEC: applying %04lx bytes of relocations to segment %x\n",
            (unsigned long)rsize, place_base);
-    while (rsize >= sizeof(struct minix_reloc)) {
-        retval = filp->f_op->read(inode, filp, (char *)&reloc, sizeof(reloc));
-        if (retval != sizeof(reloc))
+    while (rsize) {
+        chunk = (rsize > scratch_size)? scratch_size: (size_t)rsize;
+        current->t_regs.ds = seg_data->base;
+        retval = filp->f_op->read(inode, filp, (char *)scratch_off, chunk);
+        current->t_regs.ds = save_ds;
+        if (retval != chunk)
             goto error;
-        switch (reloc.r_type) {
-        case R_SEGWORD:
-            switch (reloc.r_symndx) {
+        for (off = scratch_off; off < scratch_off + chunk; off += sizeof(struct minix_reloc)) {
+            r_vaddr = peekw(off + offsetof(struct minix_reloc, r_vaddr), seg_data->base);
+            r_symndx = peekw(off + offsetof(struct minix_reloc, r_symndx), seg_data->base);
+            r_type = peekw(off + offsetof(struct minix_reloc, r_type), seg_data->base);
+            if (r_type != R_SEGWORD) {
+                debug_reloc("EXEC: bad relocation type 0x%x\n", r_type);
+                goto error;
+            }
+            switch (r_symndx) {
             case S_TEXT:
                 val = seg_code->base; break;
             case S_FTEXT:
@@ -164,25 +182,18 @@ static int FARPROC relocate(seg_t place_base, unsigned long rsize, segment_s *se
             case S_DATA:
                 val = seg_data->base; break;
             default:
-                debug_reloc("EXEC: bad relocation symbol index 0x%x\n", reloc.r_symndx);
+                debug_reloc("EXEC: bad relocation symbol index 0x%x\n", r_symndx);
                 goto error;
             }
             debug_reloc("EXEC: reloc %d,%d,%04x:%04x %04x -> %04x\n",
-                reloc.r_type, reloc.r_symndx, place_base, (word_t)reloc.r_vaddr,
-                peekw((word_t)reloc.r_vaddr, place_base), val);
-            pokew((word_t)reloc.r_vaddr, place_base, val);
-            break;
-        default:
-            debug_reloc("EXEC: bad relocation type 0x%x\n", reloc.r_type);
-            goto error;
+                r_type, r_symndx, place_base, r_vaddr, peekw(r_vaddr, place_base), val);
+            pokew(r_vaddr, place_base, val);
         }
-        rsize -= sizeof(struct minix_reloc);
+        rsize -= chunk;
     }
-    current->t_regs.ds = save_ds;
     return 0;
   error:
     debug_reloc("EXEC: error in relocations\n");
-    current->t_regs.ds = save_ds;
     if (retval >= 0)
         retval = -EINVAL;
     return retval;
@@ -205,6 +216,7 @@ static int FARPROC execve_aout(struct inode *inode, struct file *filp,
 #ifdef CONFIG_EXEC_MMODEL
     ASYNCIO_REENTRANT struct elks_supl_hdr esuph;       /* 24 bytes */
     int need_reloc_code = 1;
+    size_t scratch_off;
 #endif
 
     /* (Re)read the header */
@@ -465,16 +477,18 @@ static int FARPROC execve_aout(struct inode *inode, struct file *filp,
 #endif
 
 #ifdef CONFIG_EXEC_MMODEL
+    /* relocation records are staged in the unused data segment area past dseg */
+    scratch_off = ((size_t)mh.dseg + 1) & ~1;
     if (need_reloc_code) {
         /* Read and apply text segment relocations */
         retval = relocate(seg_code->base, esuph.msh_trsize, seg_code, seg_data,
-                          inode, filp, mh.tseg);
+                          inode, filp, mh.tseg, scratch_off, len - scratch_off);
         if (retval != 0)
             goto error_exec5;
         /* Read and apply far text segment relocations */
         retval = relocate(seg_code->base + bytes_to_paras((size_t)mh.tseg),
                           esuph.esh_ftrsize, seg_code, seg_data,
-                          inode, filp, mh.tseg);
+                          inode, filp, mh.tseg, scratch_off, len - scratch_off);
         if (retval != 0)
             goto error_exec5;
     } else {
@@ -484,7 +498,7 @@ static int FARPROC execve_aout(struct inode *inode, struct file *filp,
     }
     /* Read and apply data relocations */
     retval = relocate(seg_data->base, esuph.msh_drsize, seg_code, seg_data,
-                      inode, filp, mh.tseg);
+                      inode, filp, mh.tseg, scratch_off, len - scratch_off);
     if (retval != 0)
         goto error_exec5;
 #endif
