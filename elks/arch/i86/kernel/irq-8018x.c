@@ -14,15 +14,17 @@
 #include <linuxmt/errno.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/types.h>
-
 #include <arch/ports.h>
-#ifdef CONFIG_HW_PHILIPS_YES
-#include <arch/80186.h>         /* classic 80186/80188 PCB */
-#else
-#include <arch/8018x.h>         /* 80C188EB PCB */
-#endif
 #include <arch/io.h>
 #include <arch/irq.h>
+
+#ifdef CONFIG_HW_PHILIPS_YES
+#include <arch/80186.h>         /* classic 80186/80188 PCB */
+#endif
+
+#ifdef CONFIG_HW_80188_EB
+#include <arch/8018x.h>         /* 80C188EB PCB */
+#endif
 
 /*
  *  Low level interrupt handling for the X86 8018X platforms
@@ -32,7 +34,9 @@ void initialize_irq(void)
 {
 #ifdef CONFIG_HW_PHILIPS_YES
     /* leave the ROM's setup alone: its INT 13h waits on the INT2 floppy ISR */
-#else
+#endif
+
+#ifdef CONFIG_HW_80188_EB
     /* Mask all interrupt sources on the IMASK register */
     outw(0xfd, PCB_IMASK);
 #endif
@@ -47,7 +51,9 @@ struct irq_logical_map {
 #ifdef CONFIG_HW_PHILIPS_YES
     /* ROM runs Timer0 on vector 8; zero register = don't touch the PIC */
     { TIMER_IRQ, 0x7, 0, CPU_VEC_TIMER0 },
-#else
+#endif
+
+#ifdef CONFIG_HW_80188_EB
     /* 8018x: Timer Interrupt unmasked, priority 7, Interrupt type (vector) 18. */
     { TIMER_IRQ, 0x7, PCB_TCUCON, CPU_VEC_TIMER1 },
     /**
@@ -58,6 +64,7 @@ struct irq_logical_map {
     { UART0_IRQ_RX, 0x1, PCB_SCUCON, CPU_VEC_S0_RX },
     { UART0_IRQ_TX, 0x1, PCB_SCUCON, CPU_VEC_S0_TX },
 #endif
+
 #if CONFIG_8018X_INT0
     { CONFIG_8018X_INT0, 0x6, PCB_I0CON, CPU_VEC_INT0 },
 #endif

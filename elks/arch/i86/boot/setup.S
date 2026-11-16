@@ -1261,7 +1261,6 @@ checkhma:
 #ifdef CONFIG_ARCH_8018X
 
 #ifdef CONFIG_HW_PHILIPS_YES
-
 // The :YES has a PC-compatible INT 10h/12h BIOS.
 
 // Return total memory in Kbytes
@@ -1301,8 +1300,9 @@ putc:	push %ax
 enable_a20_gate:
 	xor %ax,%ax
 	ret
+#endif
 
-#else /* bare 8018x board */
+#ifdef CONFIG_HW_80188_EB
 
 // Return total memory in Kbytes
 arch_get_mem:
@@ -1325,8 +1325,7 @@ putc:	push %bx
 	pop %cx
 	pop %bx
 	ret
-
-#endif /* CONFIG_HW_PHILIPS_YES */
+#endif
 
 #endif /* CONFIG_ARCH_8018X*/
 
