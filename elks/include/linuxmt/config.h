@@ -120,7 +120,6 @@
 #define CONFIG_8018X_INT2       0
 #define CONFIG_8018X_INT3       0
 #define CONFIG_8018X_INT4       0
-#define CONFIG_8018X_EB
 #endif
 
 #endif /* CONFIG_ARCH_8018X */
