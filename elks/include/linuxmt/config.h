@@ -75,9 +75,9 @@
 #endif /* CONFIG_ARCH_PC98 */
 
 #ifdef CONFIG_ARCH_8018X
-#ifdef CONFIG_HW_PHILIPS_YES
-/* classic 80186, boots from floppy through a PC-compatible BIOS, so the
- * values below come from the boot loader rather than being compiled in */
+
+#ifdef CONFIG_HW_PHILIPS_YES                    /* 80186 using Peripheral Control Block */
+/* classic 80186, boots from floppy through a PC-compatible BIOS */
 #define MAX_SERIAL              1               /* 8256 MUART, no driver yet */
 #define SETUP_VID_COLS          setupb(7)       /* BIOS video # columns */
 #define SETUP_VID_LINES         25              /* video # lines */
@@ -90,7 +90,6 @@
 #define SETUP_PART_OFFSETHI     setupw(0x1e4)   /* partition offset high word */
 #define SYS_CAPS                0               /* no XT/AT capabilities */
 #define UTS_MACHINE             "philips-yes"
-/* Philips :YES-specific per-port constants */
 #define CONFIG_8018X_FCPU       8               /* 8 MHz */
 #define CONFIG_8018X_RTC        0               /* no AT-compatible RTC */
 #define CONFIG_8018X_INT0       0               /* logical IRQ, 0 = disabled */
@@ -98,7 +97,9 @@
 #define CONFIG_8018X_INT2       0
 #define CONFIG_8018X_INT3       0
 #define CONFIG_8018X_INT4       0               /* no INT4 on classic 80186 */
-#else
+#endif
+
+#ifdef CONFIG_HW_80188_EB               /* 80C188EB CPU, BIOS and on-chip UART */
 #define MAX_SERIAL              2       /* max number of serial tty devices*/
 #define SETUP_VID_COLS          80      /* video # columns */
 #define SETUP_VID_LINES         25      /* video # lines */
@@ -121,6 +122,7 @@
 #define CONFIG_8018X_INT4       0
 #define CONFIG_8018X_EB
 #endif
+
 #endif /* CONFIG_ARCH_8018X */
 
 #ifdef CONFIG_ARCH_NECV25

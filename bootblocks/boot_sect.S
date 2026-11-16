@@ -49,8 +49,7 @@
 // Whole-track reads are disabled on the Philips :YES: a transfer there may
 // not cross from head 0 to head 1 (measured: AH=04), and its ROM does not
 // use a PC-format DDPT, so the end-of-track patch below would not take.
-#if !defined BOOT_FAT && !defined CONFIG_ARCH_PC98 \
-    && !defined CONFIG_HW_PHILIPS_YES
+#if !defined BOOT_FAT && !defined CONFIG_ARCH_PC98 && !defined CONFIG_HW_PHILIPS_YES
 #   define FAST_READ
 #else
 #   undef FAST_READ

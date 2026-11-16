@@ -51,10 +51,11 @@ OBJS += irq-solo86.o reset-stubs.o timer-8254.o divzero.o nmi.o
 endif
 
 ifeq ($(CONFIG_ARCH_8018X), y)
-OBJS += irq-8018x.o                     # dual use: 80C188EB and classic 80186
+OBJS += irq-8018x.o
 ifeq ($(CONFIG_HW_PHILIPS_YES), y)
 OBJS += timer-philips-yes.o reset-ibm.o
-else
+endif
+ifeq ($(CONFIG_HW_80188_EB), y)
 OBJS += timer-8018x.o reset-stubs.o
 endif
 endif

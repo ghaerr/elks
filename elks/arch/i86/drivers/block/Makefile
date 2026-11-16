@@ -69,7 +69,7 @@ ifdef CONFIG_BLK_DEV_SSD_SD
       OBJS += ssd.o ssd-sd.o spi-necv25.o
     endif
   endif
-  ifdef CONFIG_ARCH_8018X
+  ifdef CONFIG_HW_80188_EB
     OBJS += ssd.o ssd-sd.o spi-8018x.o
   endif
 endif

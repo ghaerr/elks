@@ -95,6 +95,7 @@ if [ "$1" = "auto" ]; then
     cp 8018x.config .config
     make kclean || clean_exit 7
     rm elkscmd/basic/*.o
+    rm elkscmd/sys_utils/clock.o
     rm -f elkscmd/romprg/*.o
     make || clean_exit 8
 fi
@@ -105,6 +106,7 @@ if [ "$1" = "auto" ]; then
     cp necv25.config .config
     make kclean || clean_exit 7
     rm elkscmd/basic/*.o
+    rm elkscmd/sys_utils/clock.o
     rm -f elkscmd/romprg/*.o
     make || clean_exit 8
 fi
