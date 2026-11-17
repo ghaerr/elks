@@ -222,12 +222,10 @@ void unmap_inode_buffer()
 		printd("none mapped\n");
 		return;
 	}
-	/* Seek to after the Superblock, inode maps and zone maps */
-	lseek(IN, (off_t)((2 + IMAPS + ZMAPS) * BLOCK_SIZE), SEEK_SET);
-	/* Seek to the block we have to write */
-	if (mapped_block > 1) {
-		lseek(IN, (off_t)((mapped_block) * BLOCK_SIZE), SEEK_CUR);
-	}
+	/* Seek past the superblock, inode maps and zone maps to the inode block
+	 * using long arithmetic to avoid overflow past block 31 (inode 1024).
+	 */
+	lseek(IN, ((off_t)(2 + IMAPS + ZMAPS) + mapped_block) * BLOCK_SIZE, SEEK_SET);
 	if (BLOCK_SIZE != write(IN, inode_buffer, BLOCK_SIZE)) {
 		die("Unable to write inodes");
 	}
@@ -277,12 +275,8 @@ struct minix_inode * map_inode(unsigned int nr)
 		/* WRITE OLD INODE BLOCK BACK TO DISK */
 		unmap_inode_buffer();
 	}
-	/* Seek to after the Superblock, inode maps and zone maps */
-	lseek(IN, (off_t)((2 + IMAPS + ZMAPS) * BLOCK_SIZE), SEEK_SET);
-	/* Seek to the block we have to write */
-	if (inode_block > 0) {
-		lseek(IN, (off_t)((inode_block) * BLOCK_SIZE), SEEK_CUR);
-	}
+	/* Seek past the superblock, inode maps and zone maps to the inode block */
+	lseek(IN, ((off_t)(2 + IMAPS + ZMAPS) + inode_block) * BLOCK_SIZE, SEEK_SET);
 	/* READ In NEW BLOCK FROM DISK */
 	if (BLOCK_SIZE != read(IN, inode_buffer, BLOCK_SIZE)) {
 		die("Unable to read inodes");
