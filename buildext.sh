@@ -382,7 +382,7 @@ scrcap()
     echo "Building scrcap..."
     cd "$TOPDIR/extapps"
     if [ ! -d scrcap ] ; then
-        git clone https://github.com/l00nix/scrcap.git scrcap
+        git clone https://github.com/l00nix/ELKS-scrcap.git scrcap
     fi
     cd scrcap
     git pull --ff-only
