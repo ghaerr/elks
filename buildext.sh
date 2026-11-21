@@ -369,7 +369,7 @@ cmdr()
     echo "Building cmdr..."
     cd "$TOPDIR/extapps"
     if [ ! -d cmdr ] ; then
-        git clone https://github.com/l00nix/cmdr.git cmdr
+        git clone https://github.com/l00nix/ELKS-cmdr.git cmdr
     fi
     cd cmdr
     git pull --ff-only
