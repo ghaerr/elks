@@ -16,6 +16,8 @@
 #       dflat           ia16-elf-gcc    D-Flat TUI memopad/library
 #       elkirc          ia16-elf-gcc    IRC for ELKS
 #       elksdigger      ia16-elf-gcc    Digger for ELKS
+#       cmdr            ia16-elf-gcc    Two-panel ANSI file manager
+#       scrcap          ia16-elf-gcc    CGA/HP monochrome screenshot utility
 #       elksweb         ia16-elf-gcc    Graphical HTTP browser for IBM PC compatibles
 #       owc_libc        OpenWatcom      ELKS C Library compiled by OWC
 #       owc_elkscmd     OpenWatcom      Some elkscmd/ programs compiled by OWC
@@ -362,6 +364,32 @@ elksweb()
     echo "ELKSWeb build complete"
 }
 
+cmdr()
+{
+    echo "Building cmdr..."
+    cd "$TOPDIR/extapps"
+    if [ ! -d cmdr ] ; then
+        git clone https://github.com/l00nix/ELKS-cmdr.git cmdr
+    fi
+    cd cmdr
+    git pull --ff-only
+    ELKS="$TOPDIR" sh build.sh
+    echo "cmdr build complete"
+}
+
+scrcap()
+{
+    echo "Building scrcap..."
+    cd "$TOPDIR/extapps"
+    if [ ! -d scrcap ] ; then
+        git clone https://github.com/l00nix/ELKS-scrcap.git scrcap
+    fi
+    cd scrcap
+    git pull --ff-only
+    ELKS="$TOPDIR" sh build.sh
+    echo "scrcap build complete"
+}
+
 # build all extapps repos
 make_all()
 {
@@ -371,6 +399,8 @@ make_all()
     elkirc
     elksdigger
     elksweb
+    cmdr
+    scrcap
     gem
     if [ -n "$WATCOM" ] ; then
         owc_libc
