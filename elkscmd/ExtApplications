@@ -28,6 +28,13 @@
 # ------------- ----------------------------------------------------------
 #
 # ia16 builds
+# Cmdr and scrcap are HD-only by default (no floppy-size tags).
+cmdr/build/cmdr ::bin/cmdr :cmdr
+cmdr/COPYING ::lib/cmdr/copying :cmdr
+cmdr/USAGE.TXT ::lib/cmdr/usage.txt :cmdr
+scrcap/build/scrcap ::bin/scrcap :scrcap
+scrcap/COPYING ::lib/scrcap/copying :scrcap
+scrcap/USAGE.TXT ::lib/scrcap/usage.txt :scrcap
 # ELKSWeb is installed on HD images only (no floppy-size tags).
 ELKSWeb/build/elksweb                              :elksweb
 ELKSWeb/share/welcome.htm ::root/welcome.htm        :elksweb
