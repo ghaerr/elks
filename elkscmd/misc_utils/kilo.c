@@ -456,7 +456,7 @@ void add_to_recentfiles() {
         for(int i=(max_recent-1); i>0; i--)
             { rf[i] = rf[i-1]; }
     }
-    snprintf(rf[0].recentfilename,200,E.filename);
+    snprintf(rf[0].recentfilename,sizeof(rf[0].recentfilename),"%s",E.filename);
     storeRecentCurPos();
 }
 
@@ -489,7 +489,7 @@ int readrecentfiles(){
     }
 
 	for(i=0; i<max_recent; i++) {
-        fscanf(fptr, "%s %d %d %d %d", rf[i].recentfilename, &rf[i].cx, &rf[i].cy, &rf[i].coloff, &rf[i].rowoff);
+        fscanf(fptr, "%127s %d %d %d %d", rf[i].recentfilename, &rf[i].cx, &rf[i].cy, &rf[i].coloff, &rf[i].rowoff);
 	}
     fclose(fptr);
     
@@ -787,7 +787,7 @@ int editorUpdateSyntax(erow *row) {
     } else {
         row->hl = 0;
     }
-    memset(row->hl,HL_NORMAL,row->rsize);
+    if (row->hl) memset(row->hl,HL_NORMAL,row->rsize);
 
     if (E.syntax == NULL) return HL_NORMAL; /* No syntax, everything is HL_NORMAL. */
 
@@ -1323,37 +1323,90 @@ int editorInsertFile(int at) {
     return 0;
 }
 
-/* Save the current file on disk. Return 0 on success, 1 on error. */
+/* Write buffered output to fd; return 0 on success, -1 on error */
+static char wbuf[256];
+static int wlen;
+static int wflush(int fd) {
+    int n = wlen;
+    wlen = 0;
+    return (n && write(fd, wbuf, n) != n) ? -1 : 0;
+}
+static int wput(int fd, const char *p, int n) {
+    while (n > 0) {
+        int k = sizeof(wbuf) - wlen;
+        if (k > n) k = n;
+        memcpy(wbuf + wlen, p, k);
+        wlen += k; p += k; n -= k;
+        if (wlen == sizeof(wbuf) && wflush(fd) < 0) return -1;
+    }
+    return 0;
+}
+
+/* Copy file src to dst, return 0 on success */
+static int copyfile(const char *src, const char *dst) {
+    int in, out, n, err = 0;
+    if ((in = open(src, O_RDONLY)) < 0) return -1;
+    if ((out = open(dst, O_WRONLY|O_CREAT|O_TRUNC, 0644)) < 0) { close(in); return -1; }
+    while ((n = read(in, wbuf, sizeof(wbuf))) > 0)
+        if (write(out, wbuf, n) != n) { err = -1; break; }
+    if (n < 0) err = -1;
+    close(in);
+    if (close(out) < 0) err = -1;
+    return err;
+}
+
+/* Save the current file on disk. Return 0 on success, 1 on error.
+ * The text is first written to a temporary file in the same directory; the
+ * original file is replaced only after that write has fully succeeded, so a
+ * full disk or an I/O error never destroys the file being edited. */
 int editorSave(void) {
     int len, fd, j;
-    char nl[2] = "\n";
+    char tmpname[300];
+    char *slash;
+
+    if (strcmp(E.filename,"unknown.txt") == 0) {
+        editorSaveAs();
+        return 0;
+    }
     /* Compute count of bytes */
     len=0;
     for (j = 0; j < E.numrows; j++)
         len += E.row[j].size+1; /* +1 is for "\n" at end of every row */
 
-    char comparestr[] = "unknown.txt";
+    slash = strrchr(E.filename, '/');
+    j = slash ? (int)(slash - E.filename) + 1 : 0;
+    if (j > (int)sizeof(tmpname) - 9) j = 0;
+    memcpy(tmpname, E.filename, j);
+    strcpy(tmpname + j, "kilo.tmp");
 
-    unlink(E.filename);
-    if(strcmp(E.filename,comparestr) == 0) {
-        editorSaveAs();
-        return 0;        
-    }
-    fd = open(E.filename,O_RDWR|O_CREAT,0644);
+    fd = open(tmpname,O_WRONLY|O_CREAT|O_TRUNC,0644);
     if (fd == -1) goto writeerr;
-
+    wlen = 0;
     for (j = 0; j < E.numrows; j++) {
-        if (write(fd,strncat(E.row[j].chars,nl,1),E.row[j].size+1) != E.row[j].size+1) goto writeerr;
+        if (wput(fd,E.row[j].chars,E.row[j].size) < 0 || wput(fd,"\n",1) < 0)
+            goto tmperr;
     }
+    if (wflush(fd) < 0) goto tmperr;
+    if (close(fd) < 0) { fd = -1; goto tmperr; }
 
-    close(fd);
+    /* new text is safely on disk: now replace the original */
+    unlink(E.filename);
+    if (rename(tmpname, E.filename) < 0) {
+        if (copyfile(tmpname, E.filename) < 0) {
+            editorSetStatusMessage("Can't replace file! New text kept in %s", tmpname);
+            return 1;
+        }
+        unlink(tmpname);
+    }
     E.dirty = 0;
     editorSetStatusMessage("%d bytes written on disk", len);
     return 0;
 
-writeerr:
+tmperr:
     if (fd != -1) close(fd);
-    editorSetStatusMessage("Can't save! I/O error: %s",strerror(errno));
+    unlink(tmpname);
+writeerr:
+    editorSetStatusMessage("Can't save! I/O error: %s (file unchanged)",strerror(errno));
     return 1;
 }
 
@@ -1361,8 +1414,9 @@ void editorSaveAs(void){
     char namebuffer[300] = {0,};
     editorQueryString("Please enter filename:",namebuffer); 
     if (namebuffer[0]=='\0') return;
-    sprintf(E.filename,"%s",namebuffer);
-    snprintf(rf[0].recentfilename,200,E.filename);
+    free(E.filename);
+    E.filename = strdup(namebuffer);
+    snprintf(rf[0].recentfilename,sizeof(rf[0].recentfilename),"%s",E.filename);
     storeRecentCurPos();
     editorSave();
 
@@ -1381,6 +1435,8 @@ int editorOpenNew(void){
             row = E.row+i;
             editorFreeRow(row);
     }
+    free(E.row);
+    free(E.filename);
     initEditor();
     editorSelectSyntaxHighlight(namebuffer);
     result = editorOpen(namebuffer);
@@ -1584,7 +1640,7 @@ void editorRefreshScreen(void) {
     abAppend(&ab,"\x1b[0K",4);
     abAppend(&ab,"\x1b[7m",4);
     char status[80], rstatus[80], hstatus[5];
-    int hlen = snprintf(hstatus,5,*E.syntax->filematch+1);
+    int hlen = E.syntax ? snprintf(hstatus,5,"%s",*E.syntax->filematch+1) : 0;
     if (hlen == 0) snprintf(hstatus,5,"text");
     int len = snprintf(status, sizeof(status), "%.20s - %d lines, highlight:%s %s",
         E.filename, E.numrows, hstatus, E.dirty ? "(modified)" : "");
@@ -1746,7 +1802,7 @@ void editorFind(int fd, int mode) {
                 
                 if (!(eof==1 && mode==2)){
                 match = strstr(E.row[current].render,query);
-                additional = strstr(match+1,query);
+                additional = match ? strstr(match+1,query) : NULL;
                 if (match) {
                     match_offset = match-E.row[current].render;
                     break;
@@ -2126,20 +2182,19 @@ int editorFileWasModified(void) {
 void copylines(int numlines) { 
 
     char* str=NULL;
-    char buf[256];
     int i,len;
 	int filerow = E.rowoff+E.cy;
     for (i=0;i<numlines;i++) {
       erow *row = (filerow >= E.numrows) ? NULL : &E.row[filerow+i];
       if (i==0) {
         str = (char*)malloc((sizeof(char)*row->size)+2); /*+2 for NL + zero byte */
-        sprintf(buf,"%s\n",row->chars);
-        strcpy(str,buf);
+        strcpy(str,row->chars);
+        strcat(str,"\n");
       } else {
         len = strlen(str);
         str = (char*)realloc(str,len+2+(sizeof(char)*row->size));
-        sprintf(buf,"%s\n",row->chars);
-        strcat(str,buf);
+        strcat(str,row->chars);
+        strcat(str,"\n");
       }
     }   
 	if(copyText)
@@ -2150,8 +2205,7 @@ void copylines(int numlines) {
 void copybuffer(void) {
 
     char* str=NULL;
-    char buf[256];
-    int len, lineoffset;
+    int len, lineoffset, lastlen;
 	int filerow = E.rowoff+E.cy;
     int c,i;
 
@@ -2159,8 +2213,9 @@ void copybuffer(void) {
     copyTopRow=E.rowoff+E.cy;
     copyBottomRow=copyTopRow; //init
     str = (char*)malloc((sizeof(char)*row->size)-E.cx+2); /*+2 for NL + zero byte */
-    sprintf(buf,"%s\n",row->chars+E.cx);
-    strcpy(str,buf);
+    strcpy(str,row->chars+E.cx);
+    strcat(str,"\n");
+    lastlen = strlen(str);
     lineoffset = E.cx;
     memset(row->hl+E.cx,HL_MATCH,(sizeof(char)*row->size)-E.cx);
     
@@ -2173,8 +2228,9 @@ void copybuffer(void) {
             erow *row = (filerow >= E.numrows) ? NULL : &E.row[E.rowoff+E.cy];
             len = strlen(str);
             str = (char*)realloc(str,len+2+(sizeof(char)*row->size));
-            sprintf(buf,"%s\n",row->chars);
-            strcat(str,buf);
+            strcat(str,row->chars);
+            strcat(str,"\n");
+            lastlen = strlen(row->chars) + 1;
             memset(row->hl,HL_MATCH,(sizeof(char)*row->size));            
             lineoffset=0; /* indicates more than one line */
             copyBottomRow++; //to be able to clear
@@ -2193,14 +2249,13 @@ void copybuffer(void) {
         copyBottomRow = E.rowoff+E.cy+1;        
         if (lineoffset == 0) {
             /*arrow down saved full line already - remove buf of that*/
-            snprintf(str,strlen(str)-strlen(buf)+1,"%s",str);
+            str[strlen(str)-lastlen] = '\0';
             len = strlen(str);
             str = (char*)realloc(str,len+2+E.cx);
-            snprintf(buf,E.cx+1,"%s",row->chars);
-            strcat(str,buf);
+            strncat(str,row->chars,E.cx);
         } else {
             /* cut out chars behind cursor if just one line */
-            snprintf(str,E.cx-1,"%s",str);
+            if (E.cx >= 2 && (int)strlen(str) > E.cx - 2) str[E.cx - 2] = '\0';
         }
         memset(row->hl+lineoffset,HL_MATCH,E.cx);  
         memset(row->hl+E.cx,0,(sizeof(char)*row->size)-E.cx); /*will remove any attribute */
