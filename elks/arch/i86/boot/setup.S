@@ -935,6 +935,7 @@ arch_set_initseg:
 1:
 #ifdef CONFIG_BOOTOPTS
 	call	bootopts	// load /bootopts into SEG_OPTSEG (0050:0000)
+	call	mem_bootopt	// process MINIX or FAT bootopts
 	call    hmabootopts	// check /bootopts for hma=kernel
 	mov	%al,hma_kernel
 #endif
@@ -1249,6 +1250,70 @@ checkhma:
 1:	stc				// fail
 2:	pop	%ds
 	ret
+
+#ifdef CONFIG_ARCH_IBMPC
+// Override the memory count passed to the kernel, not BIOS scratch placement.
+// Accept a decimal KiB count that fits the kernel's 16-bit paragraph limit.
+mem_bootopt:
+	push	%ds
+	mov	$SEG_OPTSEG,%ax
+	mov	%ax,%ds
+	xor	%si,%si
+	cmpw	$0x2323,(%si)	// standard ## bootopts signature
+	jne	5f
+1:	cmp	$OPTSEGSZ-5,%si	// mem= and at least one byte
+	ja	5f
+	cmpw	$0x656d,(%si)	// me
+	jne	4f
+	cmpw	$0x3d6d,2(%si)	// m=
+	jne	4f
+	add	$4,%si
+	mov	%si,%di
+	xor	%ax,%ax
+	xor	%cx,%cx
+	mov	$10,%bx
+2:	movb	(%si),%cl
+	subb	$'0',%cl
+	cmpb	$9,%cl
+	ja	3f
+	mulw	%bx
+	add	%cx,%ax
+	cmp	$1023,%ax		// mem_kbytes << 6 must not wrap
+	ja	5f
+	inc	%si
+	cmp	$OPTSEGSZ,%si
+	jb	2b
+	jmp	5f
+3:	cmp	%di,%si
+	je	5f
+	movb	(%si),%cl
+	testb	%cl,%cl
+	jz	6f
+	cmpb	$' ',%cl
+	je	6f
+	cmpb	$'#',%cl
+	je	6f
+	subb	$9,%cl		// accept tab, LF or CR
+	cmpb	$4,%cl
+	ja	5f
+	cmpb	$2,%cl
+	je	5f
+	cmpb	$3,%cl
+	je	5f
+6:	pop	%ds
+	mov	%ax,mem_kbytes
+	ret
+4:	cmp	$OPTSEGSZ,%si
+	jae	5f
+	lodsb
+	test	%al,%al
+	jz	5f
+	cmp	$10,%al
+	je	1b
+	jmp	4b
+5:	pop	%ds
+	ret
+#endif
 
 #endif /* ifdef CONFIG_BOOTOPTS */
 
