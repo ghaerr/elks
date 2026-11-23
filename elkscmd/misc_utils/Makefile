@@ -7,7 +7,7 @@ include $(BASEDIR)/Makefile-rules
 ###############################################################################
 
 #TODO: fix uncompress zcat disabled
-PRGS = ecalc tar miniterm ed od hd time kilo mined sleep tty uuencode uudecode compress
+PRGS = ecalc tar miniterm ed od hd time kilo mined sleep tty uuencode uudecode compress ept
 
 HOSTPRGS = hostcompress
 
@@ -56,6 +56,18 @@ uuencode: uuencode.o
 
 uudecode: uudecode.o
 	$(LD) $(LDFLAGS) -o uudecode uudecode.o $(LDLIBS)
+
+# ept: ELKS Package Tool, built as tiny ept (-DTINY) to stay within 7 blocks.
+# -mregparmcall links the regparmcall libc; the other flags turn off
+# optimizations that make it bigger, and -finline undoes CLBASE's -fno-inline.
+EPTFLAGS = -DTINY -mregparmcall -fno-inline-small-functions -fno-caller-saves \
+	-fno-reorder-blocks -fno-optimize-sibling-calls -finline
+
+ept.o: ept.c
+	$(CC) $(CFLAGS) $(EPTFLAGS) -c -o $@ $<
+
+ept: ept.o
+	$(LD) $(LDFLAGS) -mregparmcall -maout-heap=256 -maout-stack=2048 -o ept ept.o $(LDLIBS)
 
 hostcompress: compress.c
 	$(HOSTCC) $(HOSTCFLAGS) compress.c -o $@

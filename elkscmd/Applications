@@ -142,6 +142,7 @@ misc_utils/tty                  :miscutil               :1200k
 misc_utils/uuencode             :miscutil                :1200c
 misc_utils/uudecode             :miscutil                :1200c
 misc_utils/ecalc                :miscutil                           :1440k
+misc_utils/ept                  :miscutil                           :1440k
 #misc_utils/ed                  :be-miscutil        :720k
 elvis/elvis ::bin/vi            :elvis              :720k
 minix1/banner                   :minix1                 :1200k
