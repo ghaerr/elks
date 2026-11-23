@@ -346,7 +346,8 @@ static int split(char *s)
 
 /* ---- HTTP */
 
-/* SIGALRM only has to interrupt a read() that waits too long */
+/* SIGALRM only has to interrupt a read() that waits too long. ELKS resets the
+ * handler after each signal, so get() sets it again before every read() */
 static void onalarm(int sig)
 {
 }
@@ -417,8 +418,7 @@ static int get(const char *rpath, int fd, long size, const char *sum)
     md5_init();
     if (sum)
         out("  [................]\r  [");
-    signal(SIGALRM, onalarm);
-    while (alarm(STALL), (n = read(s, buf, sizeof(buf))) > 0) {
+    while (signal(SIGALRM, onalarm), alarm(STALL), (n = read(s, buf, sizeof(buf))) > 0) {
         for (i = 0; i < n && hdr; i++) {
             if (slen < sizeof(status))
                 status[slen++] = buf[i];
