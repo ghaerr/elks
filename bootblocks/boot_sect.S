@@ -138,6 +138,9 @@ entry1:
 	xor %sp,%sp
 
 	xor %di,%di
+	mov %di,%ds		// invalidate previous /bootopts, clear '##' signature
+	mov %di,SEG_OPTSEG*16
+
 #ifdef BOOTCS
 	mov %cs,%ax
 	mov %ax,%ds
