@@ -1,7 +1,7 @@
 /*
-+ * Generic internal UDP support in ktcp, not DHCP-specific. ktcp clients
-+ * can use udp_register()/udp_send() for small datagram protocols; DHCP
-+ * was just the first user. No BSD sockets, IP fragmentation, or UDP checksums.
+* Generic internal UDP support in ktcp, not DHCP-specific. ktcp clients
+* can use udp_register()/udp_send() for small datagram protocols; DHCP
+* was just the first user. No BSD sockets, IP fragmentation, or UDP checksums.
  */
 #include <stdio.h>
 #include <string.h>
