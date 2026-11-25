@@ -13,7 +13,7 @@
 
 void div0_handler(int irq, struct pt_regs *regs)
 {
-    if (intr_count > 1 /*|| current->t_regs.ss == kernel_ds*/) {
+    if (intr_count > 1 /*|| current->t_regs.ss == KERNEL_DS*/) {
         /*
          * Trap from kernel code or idle task.
          *

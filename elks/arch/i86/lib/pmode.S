@@ -26,8 +26,8 @@
 enable_protected_mode:
         push    %bp
         mov     %sp,%bp
-        pushf                   // save interrupt status
-        cli                     // no interrupts during the transition
+        cli                     // no interrupts before or after the transition
+        pushf                   // save flag word w/interrupts disabled
 
         mov     4(%bp),%bx      // bx -> gdtr { word limit; long base }
         lgdt    (%bx)
@@ -45,7 +45,7 @@ pm_cs:
         mov     %ax,%es
         mov     %ax,%ss         // SS base = kernel_ds<<4 (same phys as real-mode SS)
 
-        popf                    // restore interrupt status
+        popf                    // restore flag word, interrupts remain disabled
         pop     %bp
         ret                     // return (in PM) to gdt_init -> crt0 -> start_kernel
 

@@ -20,7 +20,8 @@
 #define SEL_TRACKBUF    0x50  /* directfd DMA track buffer (SEG_TRACK) */
 #define SEL_DMABUF      0x58  /* ATA/CF DMA sector buffer (SEG_DMASEG) */
 #define SEL_VIDEO       0x60  /* CGA/EGA/VGA text video memory (SEG_VIDEO) */
-#define SEL_FIRST_DYN   0x68  /* first dynamically-allocated selector */
+#define SEL_GRAPHICS    0x68  /* EGA/VGA graphics video memory (SEG_GRAPHICS) */
+#define SEL_FIRST_DYN   0x70  /* first dynamically-allocated selector */
 
 #define GDT_SIZE        ((unsigned)(MAX_GDT_ENTRIES << 3))
 
@@ -36,6 +37,7 @@
 #define OPTSEG          SEL_OPTSEG      /* /bootopts options segment */
 #define BIOSSEG         SEL_BIOSDATA    /* BIOS data */
 #define VIDEOSEG        SEL_VIDEO       /* text video RAM */
+#define GRAPHICSSEG     SEL_GRAPHICS    /* graphics video RAM */
 #define TRACKSEG        SEL_TRACKBUF    /* direct floppy track cache */
 #define DMASEG          SEL_DMABUF      /* ata/cf dma buffer */
 
@@ -52,6 +54,7 @@
 #define OPTSEG          SEG_OPTSEG      /* /bootopts options segment */
 #define BIOSSEG         SEG_BIOSDATA    /* BIOS data */
 #define VIDEOSEG        SEG_VIDEO       /* text video RAM */
+#define GRAPHICSSEG     SEG_GRAPHICS    /* graphics video RAM */
 #define TRACKSEG        SEG_TRACK       /* direct floppy track cache */
 #define DMASEG          SEG_DMASEG      /* ata/cf dma buffer */
 

@@ -164,7 +164,7 @@ static int unix_bind(struct socket *sock, struct sockaddr *umyaddr, int sockaddr
 	return -EINVAL;
 
     old_ds = current->t_regs.ds;
-    current->t_regs.ds = kernel_ds;
+    current->t_regs.ds = KERNEL_DS;
 
 #if !USE_IFREG
     i = do_mknod(upd->sockaddr_un.sun_path,
@@ -220,7 +220,7 @@ unix_connect(struct socket *sock, struct sockaddr *uservaddr, int sockaddr_len, 
  */
 
     old_ds = current->t_regs.ds;
-    current->t_regs.ds = kernel_ds;
+    current->t_regs.ds = KERNEL_DS;
 
     i = open_namei(sockun.sun_path, 2, MODE, &inode, NULL);
     current->t_regs.ds = old_ds;

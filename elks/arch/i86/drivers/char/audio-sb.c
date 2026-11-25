@@ -57,6 +57,7 @@
 #include <arch/irq.h>
 #include <arch/dma.h>
 #include <arch/segment.h>
+#include <arch/seg286.h>
 #include <arch/divmod.h>
 
 /*

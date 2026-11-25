@@ -77,7 +77,7 @@ static int romfs_readdir (struct inode * i, struct file * f,
 			break;
 		}
 
-		fmemcpyb (name, kernel_ds, (char *)pos + 3, iseg, len);
+		fmemcpyb (name, KERNEL_DS, (char *)pos + 3, iseg, len);
 
 		res = filldir (dirent, name, len, pos, (ino_t)peekw(pos, iseg));
 		debug("readdir %T, %ld\n", iseg, pos + 3, (ino_t)peekw(pos, iseg));
@@ -247,7 +247,7 @@ static void romfs_read_inode (struct inode * i)
 		if (ino >= isb->icount) break;
 
 		off_i = isb->ssize + ino * isb->isize;
-		fmemcpyw (&rim, kernel_ds, (char *)off_i, CONFIG_ROMFS_BASE,
+		fmemcpyw (&rim, KERNEL_DS, (char *)off_i, CONFIG_ROMFS_BASE,
 			sizeof (struct romfs_inode_mem) >> 1);
 
 		i->i_size = rim.size;
@@ -328,14 +328,14 @@ static struct super_block * romfs_read_super (struct super_block * s, void * dat
 	while (1) {
 		lock_super (s);
 
-		if (fmemcmpw ((void *)ROMFS_MAGIC_STR, kernel_ds, 0, CONFIG_ROMFS_BASE,
+		if (fmemcmpw ((void *)ROMFS_MAGIC_STR, KERNEL_DS, 0, CONFIG_ROMFS_BASE,
           ROMFS_MAGIC_LEN >> 1)) {
 			printk ("romfs: no superblock at %x:0h\n", CONFIG_ROMFS_BASE);
 			res = NULL;
 			break;
 		}
 
-		fmemcpyw (&rsm, kernel_ds, 0, CONFIG_ROMFS_BASE, sizeof (struct romfs_super_mem) >> 1);
+		fmemcpyw (&rsm, KERNEL_DS, 0, CONFIG_ROMFS_BASE, sizeof (struct romfs_super_mem) >> 1);
 		if (rsm.ssize != sizeof (struct romfs_super_mem)) {
 			printk ("romfs: superblock size mismatch\n");
 			res = NULL;
