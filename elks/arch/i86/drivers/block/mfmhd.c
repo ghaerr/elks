@@ -635,7 +635,7 @@ mfmhd_dma_prepare(unsigned int rlen, unsigned char *write,
         return -1;
 
     if (wlen) {
-        fmemcpyw(0, DMASEG, write, kernel_ds, count >> 1);
+        fmemcpyw(0, DMASEG, write, KERNEL_DS, count >> 1);
         mode = DMA_MODE_WRITE;
     } else {
         mode = DMA_MODE_READ;
@@ -675,7 +675,7 @@ static void
 mfmhd_dma_copy_read(unsigned char *read, unsigned int count)
 {
     if (read)
-        fmemcpyw(read, kernel_ds, 0, DMASEG, count >> 1);
+        fmemcpyw(read, KERNEL_DS, 0, DMASEG, count >> 1);
 }
 
 static unsigned char
@@ -2457,7 +2457,7 @@ void do_mfmhd_request(void)
 
         start = req->rq_sector + mfmhd_part[minor].start_sect;
         buff = req->rq_buffer;
-        direct = (req->rq_seg == kernel_ds);
+        direct = (req->rq_seg == KERNEL_DS);
         left = count;
 
         if (mfmhd_trace)
@@ -2474,7 +2474,7 @@ void do_mfmhd_request(void)
             iobuf = direct ? buff : mfmhd_bounce;
 
             if (req->rq_cmd == WRITE && !direct)
-                xms_fmemcpyw(mfmhd_bounce, kernel_ds, buff, req->rq_seg,
+                xms_fmemcpyw(mfmhd_bounce, KERNEL_DS, buff, req->rq_seg,
                     (unsigned int)(pass * (MFM_SECTOR_BYTES >> 1)));
 
             xfer = mfmhd_rw_chunk(drive, start, (unsigned int)pass,
@@ -2494,7 +2494,7 @@ void do_mfmhd_request(void)
             }
 
             if (req->rq_cmd == READ && !direct)
-                xms_fmemcpyw(buff, req->rq_seg, mfmhd_bounce, kernel_ds,
+                xms_fmemcpyw(buff, req->rq_seg, mfmhd_bounce, KERNEL_DS,
                     (unsigned int)(xfer * (MFM_SECTOR_BYTES >> 1)));
 
             left -= (unsigned int)xfer;
