@@ -240,6 +240,7 @@
 /* Define segment locations of low and other memory, must not overlap */
 #define SEG_BIOSDATA    0x0040      /* BIOS data area (real-mode seg 0x40) */
 #define SEG_VIDEO       0xB800      /* text video RAM (real-mode seg 0xB800) */
+#define SEG_GRAPHICS    0xA000      /* graphics video RAM (real-mode seg 0xA000) */
 
 #ifdef CONFIG_ROMCODE
 #define SEG_DMASEG      0x80        /* start of floppy sector buffer */

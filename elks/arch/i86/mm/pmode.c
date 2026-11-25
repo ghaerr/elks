@@ -146,6 +146,7 @@ void INITPROC pm_init(void)
     desc_set(SEL_OPTSEG, SEG_OPTSEG << 4, 1024, DESC_KDATA);    /* /bootopts segment */
     desc_set(SEL_BIOSDATA, SEG_BIOSDATA << 4, 256, DESC_KDATA); /* BIOS data area */
     desc_set(SEL_VIDEO, (addr_t)SEG_VIDEO << 4, 32768L, DESC_KDATA); /* text video area */
+    desc_set(SEL_GRAPHICS, (addr_t)SEG_GRAPHICS << 4, 65536L, DESC_KDATA);
 
 #ifdef TRACKSEGSZ
     /* low-memory DMA track buffer (direct floppy) */
