@@ -170,6 +170,7 @@ void pm_early_init(void)
     /* enable A20 while still in real mode (calls BIOS) */
     if (!enable_a20_gate())
         printk("A20 fail ");
+    clr_irq();                              /* NOTE: BIOS call may re-enable IF!! */
 
     /* Init sel_gdt now with a segment address to allow desc_set to build the
      * initial GDT in real mode, which is placed just after the kernel data segment.
