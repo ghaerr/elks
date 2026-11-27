@@ -12,8 +12,11 @@ extern int SCREENWIDTH;                 /* set by graphics_open */
 extern int SCREENHEIGHT;
 
 /* start/stop graphics mode */
-int graphics_open(int mode);
+int graphics_open(char *modestr);
 void graphics_close(void);
+void vga_hwinit(void);
+void vga_hwterm(void);
+
 int draw_bmp(char *path, int x, int y);
 int save_bmp(char *pathname);
 

@@ -9,25 +9,54 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "graphics.h"
 #include "vgalib.h"
 
 int SCREENWIDTH;                /* initialized by graphics_open */
 int SCREENHEIGHT;
+static int hwinit;
 
-int graphics_open(int mode)
+int graphics_open(char *modestr)
 {
+    int mode = 0;
+
+    /* allow MODE=HWVGA (default), VGA, EGA or CGA */
+    if (!modestr)
+        modestr = getenv("MODE");
+    if (!modestr)
+        modestr = "HWVGA";
+    if (!strcmp(modestr, "HWVGA")) {
+        hwinit = 1;
+        mode = VGA_640x480x16;
+    } else if (!strcmp(modestr, "VGA"))
+        mode = VGA_640x480x16;
+    else if (!strcmp(modestr, "EGA"))
+        mode = VGA_640x350x16;
+    else if (!strcmp(modestr, "CGA"))
+        mode = PAL_320x200x256;
+
     switch (mode) {
     case VGA_640x350x16:
         SCREENWIDTH = 640;
         SCREENHEIGHT = 350;
-        set_bios_mode(mode);
+#ifdef __ia16__
+        if (hwinit)
+            vga_hwinit();
+        else
+#endif
+            set_bios_mode(mode);
         vga_init();
         break;
     case VGA_640x480x16:
         SCREENWIDTH = 640;
         SCREENHEIGHT = 480;
-        set_bios_mode(mode);
+#ifdef __ia16__
+        if (hwinit)
+            vga_hwinit();
+        else
+#endif
+            set_bios_mode(mode);
         vga_init();
         break;
     case PAL_320x200x256:
@@ -44,7 +73,12 @@ int graphics_open(int mode)
 
 void graphics_close(void)
 {
-    set_bios_mode(TEXT_MODE);
+#ifdef __ia16__
+    if (hwinit)
+        vga_hwterm();
+    else
+#endif
+        set_bios_mode(TEXT_MODE);
 }
 
 #ifdef __WATCOMC__

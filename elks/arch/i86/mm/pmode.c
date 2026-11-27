@@ -192,6 +192,16 @@ void pm_early_init(void)
      */
     desc_set(SEL_KDATA_EXEC, data_base, 65536, DESC_KCODE);
 
+    /* Create selector for graphics restore of text mode ROM font and store in BDA:00F0 */
+    unsigned long __far *int43 = _MK_FP(0, 0x43 << 2);  /* INT 43 location of ROM font */
+    unsigned seg = _FP_SEG(*int43);
+    unsigned off = _FP_OFF(*int43);
+    //printk("int43 %x:%x\n", seg, off);
+    desc_set(SEL_ROMFONT, (addr_t)seg << 4, 65536L, DESC_KDATA);
+    unsigned long __far *bda_romfont = _MK_FP(SEG_BIOSDATA, 0xF0);
+    *bda_romfont = _MK_FP(SEL_ROMFONT, off);
+    //printk("bda %lx\n", *bda_romfont);
+
     /* IDT replaces real mode IVT interrupt vector table + 8 bytes from 0:0 to 0:0407.
      * NOTE: With the normal MAX_IDT_ENTRIES of 129 (required for syscall INT 0x80),
      * the IDT which uses 8 bytes/entry will overwrite the first 1K IVT plus the
