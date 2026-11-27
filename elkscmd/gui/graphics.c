@@ -44,8 +44,8 @@ int graphics_open(char *modestr)
         if (hwinit)
             vga_hwinit();
         else
-            set_bios_mode(mode);
 #endif
+            set_bios_mode(mode);
         vga_init();
         break;
     case VGA_640x480x16:
@@ -55,8 +55,8 @@ int graphics_open(char *modestr)
         if (hwinit)
             vga_hwinit();
         else
-            set_bios_mode(mode);
 #endif
+            set_bios_mode(mode);
         vga_init();
         break;
     case PAL_320x200x256:

@@ -1,5 +1,5 @@
 /*
- * ELKS Graphics VGA hardware initialization and return to text mode
+ * ELKS Graphics VGA hardware graphics/text mode initialization
  *
  * Copyright (c) 1999, 2026 Greg Haerr <greg@censoft.com>
  * Copyright (c) 1991 David I. Bell
@@ -11,12 +11,31 @@
 #include <arch/segment.h>
 #include <arch/io.h>
 
-int rom_char_height;
-int rom_font_number;
-
 /* Define hardware init default to be VGA or EGA */
 #define VGA_STANDARD    1       /* standard VGA 640x480*/
 #define EGA_STANDARD    0       /* standard EGA 640x350*/
+
+#if VGA_STANDARD
+static int rom_char_height = 16;
+static int rom_font_number = 6; /* for INT 10 AX=1130h BH=font number */
+#endif
+
+#if EGA_STANDARD
+static int rom_char_height = 14;
+static int rom_font_number = 2;
+#endif
+
+#define out_byte(port, val)     outb(val, port)
+#define out_word(port, val)     outw(val, port)
+
+/* VGA register initialization table structure */
+struct regio {
+    int action;
+    int port1;
+    int data1;
+    int port2;
+    int data2;
+};
 
 #define DONE    0
 #define IN      1
@@ -34,23 +53,9 @@ int rom_font_number;
 #define GENREG2 0x3cc
 #define GENREG3 0x3ca
 
-#define out_byte(port, val)     outb(val, port)
-#define out_word(port, val)     outw(val, port)
-
-typedef struct {
-    int action;
-    int port1;
-    int data1;
-    int port2;
-    int data2;
-} REGIO;
-
-/* local data*/
-static REGIO    graphics_on[];
-static REGIO    graph_off[];
-
-/* local routines*/
-static void writeregs(REGIO *rp);
+static struct regio mode_graphics[];
+static struct regio mode_text[];
+static void writeregs(struct regio *rp);
 
 #if 0
 /* return true if running on PM kernel */
@@ -107,7 +112,7 @@ static int runningPM(void)
 }
 
 /* Query BIOS INT 10h / AX=1130h for the ROM font address */
-static unsigned char __far *get_rom_font(int font_type)
+static unsigned char __far *bios_get_rom_font(int font_type)
 {
     unsigned int seg, off;
     __asm__ __volatile__ (
@@ -123,28 +128,22 @@ static unsigned char __far *get_rom_font(int font_type)
     return _MK_FP(seg, off);
 }
 
-static void load_vga_font(unsigned char __far *font_src, int char_height, int slot)
+static void vga_load_font(unsigned char __far *font_src, int char_height)
 {
-    /* Plane 2 font slots are spaced every 8 KB (0x2000) in the A0000h aperture */
-    static const unsigned int slot_offsets[8] = {
-        0x0000, 0x4000, 0x8000, 0xC000, 0x2000, 0x6000, 0xA000, 0xE000
-    };
-
-    unsigned char __far *vga_plane2 = _MK_FP(0xA000, slot_offsets[slot & 7]);
+    unsigned char __far *vga_plane2 = _MK_FP(0xA000, 0);    /* slot 0 */
 
     /* 1. Configure Sequencer (0x3C4) & Graphics Controller (0x3CE) for Plane 2 access */
-out_word(SEQREG, 0x0100);       /* syn reset */
+    out_word(SEQREG, 0x0100);   /* Resest (0): synchronous reset */
     out_word(SEQREG, 0x0402);   /* Map Mask (2): enable writes to Plane 2 only (bit 2) */
-    //out_word(SEQREG, 0x0604); /* Memory Mode (4): disable Odd/Even (bit 2), enable Ext Mem (bit 1) */
-out_word(SEQREG, 0x0704);       /* Memory Mode (4): disable Odd/Even (bit 2), enable Ext Mem (bit 1) */
-out_word(SEQREG, 0x0300);       /* clear synchronous reset */
+    out_word(SEQREG, 0x0704);   /* Memory Mode (4): disable Odd/Even, enable Ext Mem (was 0604) */
+    out_word(SEQREG, 0x0300);   /* Reest (0): clear synchronous reset */
 
-out_word(GRREG, 0x0001);
-out_word(GRREG, 0x0003);        /* drawing mode to COPY/NOP */
-out_word(GRREG, 0x0204);
-    out_word(GRREG, 0x0005);    /* Graphics Mode (5): Write Mode 0, disable Odd/Even (bit 4) */
-    out_word(GRREG, 0x0406);    /* Misc Graphics (6): map VRAM to A0000h-AFFFFh (bits 3:2 = 01b) */
-out_word(GRREG, 0xFF08);
+    out_word(GRREG, 0x0001);    /* Set/Reset (1): disable hold data */
+    out_word(GRREG, 0x0003);    /* Data Rotate (3): set mode to COPY/NOP */
+    out_word(GRREG, 0x0204);    /* Read Map Select (4): plane 2 */
+    out_word(GRREG, 0x0005);    /* Graphics Mode (5): Write Mode 0, disable Odd/Even */
+    out_word(GRREG, 0x0406);    /* Misc Graphics (6): map VRAM to A0000h-AFFFFh */
+    out_word(GRREG, 0xFF08);    /* Bit Mask (8): all bits */
 
     //__dprintf("rom %lx height %d\n", font_src, char_height);
     /* 2. Copy glyphs: VGA hardware ALWAYS reserves 32 bytes per character in Plane 2,
@@ -154,32 +153,29 @@ out_word(GRREG, 0xFF08);
         int dst_base = ch * 32;
         int src_base = ch * char_height;
         int row;
-        for (row = 0; row < char_height; row++) {
+        for (row = 0; row < char_height; row++)
             vga_plane2[dst_base + row] = font_src[src_base + row];
-        }
         //for ( ; row < 32; row++)
             //vga_plane2[dst_base + row] = 0;
     }
 
     /* 3. Restore standard VGA text mode (Odd/Even addressing at B8000h) */
     out_word(SEQREG, 0x0302);   /* Map Mask (2): enable Planes 0 & 1 (chars & attributes) */
-    out_word(SEQREG, 0x0204);   /* Memory Mode (4): enable Odd/Even, Ext Mem */
-//out_word(SEQREG, 0x0304);     /* Memory Mode (4): enable Odd/Even, Ext Mem */
-out_word(GRREG, 0x0004);        /* Read Map Select: Plane 0 */
+    out_word(SEQREG, 0x0204);   /* Memory Mode (4): enable Odd/Even, Ext Mem (was 0304) */
+
+    out_word(GRREG, 0x0004);    /* Read Map Select: Plane 0 */
     out_word(GRREG, 0x1005);    /* Graphics Mode (5): enable Odd/Even (bit 4) */
     out_word(GRREG, 0x0E06);    /* Misc Graphics (6): map VRAM to B8000h-BFFFFh, Odd/Even on */
 }
 
-void
-vga_hwinit(void)
+void vga_hwinit(void)
 {
-    writeregs(graphics_on);
+    writeregs(mode_graphics);
     fmemset(_MK_FP(0xA000, 0), 0, 0x8000);
     fmemset(_MK_FP(0xA000, 0x8000), 0, 0x8000);
 }
 
-void
-vga_hwterm(void)
+void vga_hwterm(void)
 {
     unsigned char __far *rom_font_address;
     //__dprintf("RUN %d\n", runningPM());
@@ -187,25 +183,23 @@ vga_hwterm(void)
     if (runningPM()) {
         /* selector-based address of ROM font is passed in BDA:00F0 by PM kernel */
         unsigned long __far *bda = _MK_FP(SEL_BIOSDATA, 0x00F0);
-        //__dprintf("BDA %08lx\n", *bda);
         rom_font_address = (unsigned char __far *)*bda;
     } else {
-        rom_font_address = get_rom_font(rom_font_number);
+        rom_font_address = bios_get_rom_font(rom_font_number);
     }
     //__dprintf("ROM %08lx\n", rom_font_address);
     
-    load_vga_font(rom_font_address, rom_char_height, 0);
+    vga_load_font(rom_font_address, rom_char_height);
 
     /* back to text mode */
     //restore_dac_palette();
-    writeregs(graph_off);
+    writeregs(mode_text);
 
     fmemset(_MK_FP(0xB800, 0), 0, 80*25*2);
 }
 
 /* Set the graphics registers as indicated by the given table */
-static void
-writeregs(REGIO *rp)
+static void writeregs(struct regio *rp)
 {
     for (; rp->action != DONE; rp++) {
         switch (rp->action) {
@@ -225,12 +219,8 @@ writeregs(REGIO *rp)
 
 #if VGA_STANDARD
 
-int rom_char_height = 16;
-int rom_font_number = 6;
-
-/* VGA 640x480 16-color graphics (BIOS mode 0x12).
- */
-static REGIO graphics_on[] = {
+/* VGA 640x480 16-color graphics (BIOS mode 0x12). */
+static struct regio mode_graphics[] = {
   /* Reset attr F/F */
   IN, ATTRREG, 0, 0, 0,
 
@@ -325,10 +315,8 @@ static REGIO graphics_on[] = {
   DONE, 0, 0, 0, 0
 };
 
-
-/* VGA 80x25 text (BIOS mode 3).
- */
-static REGIO graph_off[] = {
+/* VGA 80x25 text (BIOS mode 3). */
+static struct regio mode_text[] = {
   /* Reset attr F/F */
   IN, ATTRREG, 0, 0, 0,
 
@@ -434,12 +422,8 @@ static REGIO graph_off[] = {
 
 #if EGA_STANDARD
 
-int rom_char_height = 14;
-int rom_font_number = 2;
-
-/* EGA 640x350 16-color graphics (BIOS mode 0x10).
- */
-static REGIO graphics_on[] = {
+/* EGA 640x350 16-color graphics (BIOS mode 0x10). */
+static struct regio mode_graphics[] = {
   /* Reset attr F/F */
   IN, ATTRREG, 0, 0, 0,
 
@@ -534,10 +518,8 @@ static REGIO graphics_on[] = {
   DONE, 0, 0, 0, 0
 };
 
-
-/* EGA 80x25 text (BIOS mode 3).
- */
-static REGIO graph_off[] = {
+/* EGA 80x25 text (BIOS mode 3). */
+static struct regio mode_text[] = {
   /* Reset attr F/F */
   IN, ATTRREG, 0, 0, 0,
 
