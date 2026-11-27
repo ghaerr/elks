@@ -21,6 +21,7 @@
 
 volatile jiff_t jiffies;
 static int spin_on;
+int spin_graph;         /* console held for graphics, don't draw wheel */
 static int delaytick;
 
 #ifdef CONFIG_CPU_USAGE
@@ -106,7 +107,7 @@ void timer_bh(void)
 
 #if defined(CONFIG_CONSOLE_DIRECT) && !defined(CONFIG_ARCH_SWAN)
     /* spin timer wheel in upper right of screen*/
-    if (spin_on && !(jiffies & 7)) {
+    if (spin_on && !spin_graph && !(jiffies & 7)) {
         static unsigned char wheel[4] = {'-', '\\', '|', '/'};
         static int c;
 
@@ -118,7 +119,7 @@ void timer_bh(void)
 void spin_timer(int onflag)
 {
 #if defined(CONFIG_CONSOLE_DIRECT) && !defined(CONFIG_ARCH_SWAN)
-    if ((spin_on = onflag) == 0)
+    if ((spin_on = onflag) == 0 && !spin_graph)
         pokeb((79 + 0*80) * 2, VideoSeg, ' ');
 #endif
 }

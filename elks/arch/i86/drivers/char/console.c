@@ -1,5 +1,7 @@
 /* shared console routines for Direct and BIOS consoles - #include in console drivers*/
 
+#include <linuxmt/timer.h>
+
 static void WriteChar(Console * C, int c)
 {
     /* check for graphics lock */
@@ -372,6 +374,7 @@ static int Console_ioctl(struct tty *tty, int cmd, char *arg)
             }
 #endif
             glock = C;
+            spin_graph = 1;     /* disk wheel would write into graphics screen */
             return 0;
         }
         return -EBUSY;
@@ -400,6 +403,7 @@ static int Console_ioctl(struct tty *tty, int cmd, char *arg)
                 SetDisplayPage(Visible[C->display]);
 #endif
             glock = NULL;
+            spin_graph = 0;
             wake_up(&glock_wait);
             return 0;
         }

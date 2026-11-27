@@ -31,6 +31,7 @@ void run_timer_list(void);
 void timer_tick(int, struct pt_regs *);
 void timer_bh(void);
 void spin_timer(int);
+extern int spin_graph;
 
 /* timer-8254.c*/
 void enable_timer_tick(void);
