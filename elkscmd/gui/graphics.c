@@ -40,6 +40,7 @@ int graphics_open(char *modestr)
     case VGA_640x350x16:
         SCREENWIDTH = 640;
         SCREENHEIGHT = 350;
+        //ioctl(0, DCGET_GRAPH);    /* disallow console switching in graphics mode */
 #ifdef __ia16__
         if (hwinit)
             vga_hwinit();
@@ -51,6 +52,7 @@ int graphics_open(char *modestr)
     case VGA_640x480x16:
         SCREENWIDTH = 640;
         SCREENHEIGHT = 480;
+        //ioctl(0, DCGET_GRAPH);
 #ifdef __ia16__
         if (hwinit)
             vga_hwinit();
@@ -62,6 +64,7 @@ int graphics_open(char *modestr)
     case PAL_320x200x256:
         SCREENWIDTH = 320;
         SCREENHEIGHT = 200;
+        //ioctl(0, DCGET_GRAPH);
         set_bios_mode(mode);
         break;
     default:
@@ -73,6 +76,7 @@ int graphics_open(char *modestr)
 
 void graphics_close(void)
 {
+        //ioctl(0, DCREL_GRAPH);
 #ifdef __ia16__
     if (hwinit)
         vga_hwterm();

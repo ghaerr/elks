@@ -199,7 +199,7 @@ void pm_early_init(void)
     //printk("int43 %x:%x\n", seg, off);
     desc_set(SEL_ROMFONT, (addr_t)seg << 4, 65536L, DESC_KDATA);
     unsigned long __far *bda_romfont = _MK_FP(SEG_BIOSDATA, 0xF0);
-    *bda_romfont = _MK_FP(SEL_ROMFONT, off);
+    *bda_romfont = (unsigned long)_MK_FP(SEL_ROMFONT, off);
     //printk("bda %lx\n", *bda_romfont);
 
     /* IDT replaces real mode IVT interrupt vector table + 8 bytes from 0:0 to 0:0407.
