@@ -15,15 +15,17 @@
 #define SEL_GDT         0x28  /* GDT table access (directly follows kernel data segment */
 #define SEL_IDT         0x30  /* IDT table access at physical address 0:0 */
 #define SEL_SETUP       0x38  /* setup.S data segment  (SEG_INITSEG, for setupb/setupw) */
-#define SEL_OPTSEG      0x40  /* boot options area (SEG_OPTSEG, /bootopts at init) */
-#define SEL_BIOSDATA    0x48  /* BIOS data area (SEG_BIOSDATA) */
+                              /* 0x40 used for SEL_BIOSDATA below */
+#define SEL_OPTSEG      0x48  /* boot options area (SEG_OPTSEG, /bootopts at init) */
 #define SEL_TRACKBUF    0x50  /* directfd DMA track buffer (SEG_TRACK) */
 #define SEL_DMABUF      0x58  /* ATA/CF DMA sector buffer (SEG_DMASEG) */
-#define SEL_FIRST_DYN   0x60  /* first dynamically-allocated selector */
+#define SEL_ROMFONT     0x60  /* location of ROM font for VGA text mode restore */
+#define SEL_FIRST_DYN   0x68  /* first dynamically-allocated selector */
 
-/* identical segment/selectors for video text and graphics */
-#define SEL_VIDEO       SEG_VIDEO      /* CGA/EGA/VGA text video memory (SEG_VIDEO) */
-#define SEL_GRAPHICS    SEG_GRAPHICS   /* EGA/VGA graphics video memory (SEG_GRAPHICS) */
+/* identical segment/selectors for video text, graphics and BDA */
+#define SEL_BIOSDATA    SEG_BIOSDATA   /* BIOS data area at 0040 */
+#define SEL_VIDEO       SEG_VIDEO      /* CGA/EGA/VGA text video memory at B800 */
+#define SEL_GRAPHICS    SEG_GRAPHICS   /* EGA/VGA graphics video memory at A000 */
 
 #define GDT_SIZE        ((unsigned)(MAX_GDT_ENTRIES << 3))
 

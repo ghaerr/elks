@@ -1,5 +1,6 @@
 ## /bootopts 1023 max
 #TZ=MDT6
+#MODE=VGA	# HWVGA, VGA, EGA, CGA
 #setting LOCALIP= disables DHCP, can use /etc/hosts names
 #LOCALIP=10.0.2.15
 #GATEWAY=10.0.2.2

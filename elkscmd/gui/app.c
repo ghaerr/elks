@@ -43,8 +43,7 @@ void A_InitTomentPainter(void)
         __dprintf("Can't init events/mouse\n");
         return;
     }
-    int EGA = (int)getenv("EGAMODE");
-    graphics_open(EGA? VGA_640x350x16: VGA_640x480x16);
+    graphics_open(NULL);
 
     DrawingApp.quit = false;
 
@@ -289,6 +288,7 @@ int main(int argc, char* argv[])
     __dprintf("Peak stack size: %d\n", maxCap);
 
     graphics_close();
+    event_close();
     return 0;
 #endif
 
@@ -308,5 +308,6 @@ int main(int argc, char* argv[])
         A_GameLoop();
     }
     graphics_close();
+    event_close();
     return 0;
 }

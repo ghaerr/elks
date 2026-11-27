@@ -41,6 +41,7 @@ LOCALFLAGS = -DDRIVER=1
 PROG = $(BINDIR)/paint
 SRCS = app.c gui.c input.c render.c event.c mouse.c graphics.c drawbmp.c cursor.c \
     drawscanline.c
+SRCS += vga-hwinit.c
 OBJS += vga-ia16.oaj
 
 all: $(PROG)
