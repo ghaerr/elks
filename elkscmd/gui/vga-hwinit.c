@@ -52,30 +52,19 @@ struct regio {
 #define GENREG1 0x3c2
 #define GENREG2 0x3cc
 #define GENREG3 0x3ca
+#define DACREG  0x3c8
+#define DACDATA 0x3c9
 
 static struct regio mode_graphics[];
 static struct regio mode_text[];
 static void writeregs(struct regio *rp);
 
-#if 0
-/* return true if running on PM kernel */
-#define runningPM() __extension__ ({                \
-    unsigned int _v;                                \
-    asm volatile (                                  \
-        ".byte 0x0f, 0x01, 0xe0\n"  /* smsw %ax */  \
-        "and $1,%%ax\n"                             \
-        :"=a" (_v)                                  \
-        :                                           \
-        : "cc"                                      \
-    );                                              \
-    _v; })
-#endif
-
-/* return true if SMSW safe to execute (requires 80286+) */
-static int has_smsw(void)
+/* return true if running in protected mode */
+static int runningPM(void)
 {
-    unsigned flags_after;
+    unsigned flags_after, pm;
 
+    /* first check if SMSW safe to execute (requires 80286+) */
     __asm__ __volatile__ (
         "pushf\n\t"                 /* Save original FLAGS */
         "pushf\n\t"                 /* Push another copy to modify */
@@ -92,17 +81,10 @@ static int has_smsw(void)
     );
 
     /* If bits 12-15 are all still 1 (0xF000), it is an 8086/8088 or 80186/80188 */
-    return (flags_after & 0xF000) != 0xF000;
-}
+    if ((flags_after & 0xF000) == 0xF000)
+        return 0;                   /* not safe and not running PM */
 
-/* return true if running on ELKS PM kernel */
-static int runningPM(void)
-{
-    unsigned int pm;
-
-    if (!has_smsw())
-        return 0;                   /* CPU is 8086/80186 */
-
+    /* access PE bit using SMSW instruction */
     __asm__ __volatile__ (
         ".byte 0x0f, 0x01, 0xe0\n\t"/* smsw %ax (can assemble with -march=i8086) */
         "and $1,%%ax\n"
@@ -111,8 +93,8 @@ static int runningPM(void)
     return pm;
 }
 
-/* Query BIOS INT 10h / AX=1130h for the ROM font address */
-static unsigned char __far *bios_get_rom_font(int font_type)
+/* get ROM font address using BIOS INT 10h AX=1130h BH=font*/
+static unsigned char __far *bios_get_rom_font(int font_number)
 {
     unsigned int seg, off;
     __asm__ __volatile__ (
@@ -122,7 +104,7 @@ static unsigned char __far *bios_get_rom_font(int font_type)
         "movw %%bp, %1\n\t"
         "popw %%bp\n\t"
         : "=r"(seg), "=r"(off)
-        : "a"(0x1130), "b"(font_type << 8)
+        : "a"(0x1130), "b"(font_number << 8)
         : "cx", "dx", "cc"
     );
     return _MK_FP(seg, off);
@@ -145,7 +127,7 @@ static void vga_load_font(unsigned char __far *font_src, int char_height)
     out_word(GRREG, 0x0406);    /* Misc Graphics (6): map VRAM to A0000h-AFFFFh */
     out_word(GRREG, 0xFF08);    /* Bit Mask (8): all bits */
 
-    //__dprintf("rom %lx height %d\n", font_src, char_height);
+    //__dprintf("rom %08lx height %d\n", font_src, char_height);
     /* 2. Copy glyphs: VGA hardware ALWAYS reserves 32 bytes per character in Plane 2,
      * regardless of actual character height (14 or 16 rows).
      */
@@ -168,6 +150,25 @@ static void vga_load_font(unsigned char __far *font_src, int char_height)
     out_word(GRREG, 0x0E06);    /* Misc Graphics (6): map VRAM to B8000h-BFFFFh, Odd/Even on */
 }
 
+#if UNUSED
+static void vga_restore_palette(void) {
+    int i;
+
+    /* Attribute Controller maps 0-7 and 0x38-0x3F (via 0x14 for brown) */
+    static const uint8_t dac_indices[16] = {
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x14, 0x07,
+        0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F
+    };
+
+    for (i = 0; i < 16; i++) {
+        outb(DACREG, dac_indices[i]);
+        outb(DACDATA, default_pal16[i][0]);
+        outb(DACDATA, default_pal16[i][1]);
+        outb(DACDATA, default_pal16[i][2]);
+    }
+}
+#endif
+
 void vga_hwinit(void)
 {
     writeregs(mode_graphics);
@@ -178,7 +179,6 @@ void vga_hwinit(void)
 void vga_hwterm(void)
 {
     unsigned char __far *rom_font_address;
-    //__dprintf("RUN %d\n", runningPM());
 
     if (runningPM()) {
         /* selector-based address of ROM font is passed in BDA:00F0 by PM kernel */
@@ -187,12 +187,11 @@ void vga_hwterm(void)
     } else {
         rom_font_address = bios_get_rom_font(rom_font_number);
     }
-    //__dprintf("ROM %08lx\n", rom_font_address);
     
     vga_load_font(rom_font_address, rom_char_height);
 
     /* back to text mode */
-    //restore_dac_palette();
+    //vga_restore_palette();
     writeregs(mode_text);
 
     fmemset(_MK_FP(0xB800, 0), 0, 80*25*2);
