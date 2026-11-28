@@ -35,13 +35,29 @@ cmdr/USAGE.TXT ::lib/cmdr/usage.txt :cmdr
 scrcap/build/scrcap ::bin/scrcap :scrcap
 scrcap/COPYING ::lib/scrcap/copying :scrcap
 scrcap/USAGE.TXT ::lib/scrcap/usage.txt :scrcap
-# ELKSWeb is installed on HD images only (no floppy-size tags).
+# ELKSWeb and WebNX are installed on HD images only (no floppy-size tags).
 ELKSWeb/build/elksweb                              :elksweb
-ELKSWeb/share/welcome.htm ::root/welcome.htm        :elksweb
-ELKSWeb/share/elksweb.gif ::root/elksweb.gif        :elksweb
-ELKSWeb/share/logo-source.txt ::root/logo-src.txt   :elksweb
+ELKSWeb/build/nanox/webnx ::bin/webnx               :elksweb
+ELKSWeb/build/runtime/lib/elksnx/welcome.htm ::lib/elksnx/welcome.htm :elksweb
+ELKSWeb/build/runtime/lib/elksweb/color.htm ::lib/elksweb/color.htm :elksweb
+ELKSWeb/build/runtime/lib/elksweb/welcome.htm ::lib/elksweb/welcome.htm :elksweb
+ELKSWeb/build/runtime/lib/web/chart.gif ::lib/web/chart.gif :elksweb
+ELKSWeb/build/runtime/lib/web/color.htm ::lib/web/color.htm :elksweb
+ELKSWeb/build/runtime/lib/web/colornx.htm ::lib/web/colornx.htm :elksweb
+ELKSWeb/build/runtime/lib/web/elksweb.gif ::lib/web/elksweb.gif :elksweb
+ELKSWeb/build/runtime/lib/web/elkswebc.gif ::lib/web/elkswebc.gif :elksweb
+ELKSWeb/build/runtime/lib/web/keys.htm ::lib/web/keys.htm :elksweb
+ELKSWeb/build/runtime/lib/web/start.htm ::lib/web/start.htm :elksweb
+ELKSWeb/build/runtime/lib/web/startnx.htm ::lib/web/startnx.htm :elksweb
+ELKSWeb/build/runtime/lib/web/webnx.gif ::lib/web/webnx.gif :elksweb
+ELKSWeb/build/runtime/lib/web/welcnx.htm ::lib/web/welcnx.htm :elksweb
+ELKSWeb/build/runtime/lib/web/welcome.htm ::lib/web/welcome.htm :elksweb
+ELKSWeb/build/runtime/lib/webnx/color.htm ::lib/webnx/color.htm :elksweb
+ELKSWeb/build/runtime/lib/webnx/welcome.htm ::lib/webnx/welcome.htm :elksweb
+ELKSWeb/share/logo-source.txt ::lib/web/logo-src.txt :elksweb
 ELKSWeb/COPYING ::lib/elksweb/COPYING               :elksweb
 ELKSWeb/font/COPYING ::lib/elksweb/font-copying     :elksweb
+microwindows/LICENSE ::lib/web/mw-copying            :elksweb
 microwindows/src/bin/nano-x                         :nanox  :1232c :1440k
 microwindows/src/bin/nxcalc                         :nanox  :1232c :1440k
 microwindows/src/bin/nxclock                        :nanox  :1232c :1440k
