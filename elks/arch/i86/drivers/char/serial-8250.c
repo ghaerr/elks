@@ -153,35 +153,33 @@ static int INITPROC rs_probe(register struct serial_info *sp)
 
 static void update_port(register struct serial_info *port)
 {
-    unsigned int cflags;        /* use smaller 16-bit width to save code*/
+    unsigned int cflags = port->tty->termios.c_cflag;
+    unsigned int baud = cflags & CBAUD;
     unsigned divisor;
+    unsigned char lcr;
     flag_t flags;
 
-    /* set baud rate divisor, first lower, then higher byte */
-    cflags = port->tty->termios.c_cflag & CBAUD;
-    if (cflags & CBAUDEX)
-        cflags = B38400 + (cflags & 03);
-    divisor = divisors[cflags];
+    if (baud & CBAUDEX)
+        baud = B38400 + (baud & 03);
+    divisor = divisors[baud];
+    /* Keep the BREAK control separate from the termios frame format. */
+    lcr = (port->lcr & UART_LCR_SBC) | ((cflags & CSIZE) >> 4);
+    if (cflags & CSTOPB)
+        lcr |= UART_LCR_STOP;
+    if (cflags & PARENB)
+        lcr |= UART_LCR_PARITY | ((cflags & PARODD) ? 0 : UART_LCR_EPAR);
 
-    //FIXME: update lcr parity and data width from termios values
-
-    /* update divisor only if changed, since we have not TCSETW*/
-    if (divisor != port->divisor) {
-        port->divisor = divisor;
-
+    if (divisor != port->divisor || lcr != port->lcr) {
         save_flags(flags);
         clr_irq();
-
-        /* Set the divisor latch bit */
-        OUTB(port->lcr | UART_LCR_DLAB, port->io + UART_LCR);
-
-        /* Set the divisor low and high byte */
-        OUTB((unsigned char)divisor, port->io + UART_DLL);
-        OUTB((unsigned char)(divisor >> 8), port->io + UART_DLM);
-
-        /* Clear the divisor latch bit */
-        OUTB(port->lcr, port->io + UART_LCR);
-
+        if (divisor != port->divisor) {
+            OUTB(lcr | UART_LCR_DLAB, port->io + UART_LCR);
+            OUTB((unsigned char)divisor, port->io + UART_DLL);
+            OUTB((unsigned char)(divisor >> 8), port->io + UART_DLM);
+            port->divisor = divisor;
+        }
+        OUTB(lcr, port->io + UART_LCR);
+        port->lcr = lcr;
         restore_flags(flags);
     }
 }
