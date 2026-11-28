@@ -57,7 +57,7 @@
 static int FARPROC execve_aout(struct inode *inode, struct file *filp,
     char *sptr, size_t slen);
 static void FARPROC finalize_exec(struct inode *inode, segment_s *seg_code,
-    segment_s *seg_data, word_t entry, int multisegment);
+    segment_s *seg_data, segment_s *seg_ftext, word_t entry, int multisegment);
 
 #ifdef CONFIG_EXEC_OS2
 static int FARPROC execve_os2(struct inode *inode, struct file *filp,
@@ -144,7 +144,7 @@ int sys_execve(const char *filename, char *sptr, size_t slen)
  * relocations. The scratch area is overwritten later by bss clearing and argv.
  */
 static int FARPROC relocate(seg_t place_base, unsigned long rsize, segment_s *seg_code,
-    segment_s *seg_data, struct inode *inode, struct file *filp, size_t tseg,
+    segment_s *seg_data, segment_s *seg_ftext, struct inode *inode, struct file *filp,
     size_t scratch_off, size_t scratch_size)
 {
     int retval = 0;
@@ -178,7 +178,7 @@ static int FARPROC relocate(seg_t place_base, unsigned long rsize, segment_s *se
             case S_TEXT:
                 val = seg_code->base; break;
             case S_FTEXT:
-                val = seg_code->base + bytes_to_paras(tseg); break;
+                val = seg_ftext->base; break;
             case S_DATA:
                 val = seg_data->base; break;
             default:
@@ -207,7 +207,8 @@ static int FARPROC execve_aout(struct inode *inode, struct file *filp,
     int retval;
     seg_t ds = current->t_regs.ds;
     seg_t base_data = 0;
-    segment_s * seg_code;
+    segment_s * seg_code = 0;
+    segment_s * seg_ftext = 0;
     segment_s * seg_data;
     size_t len, min_len, heap, stack = 0;
     size_t bytes;
@@ -234,12 +235,12 @@ static int FARPROC execve_aout(struct inode *inode, struct file *filp,
     }
 
     /* Look for the binary in memory */
-    seg_code = 0;
     currentp = &task[0];
     do {
         if ((currentp->state <= TASK_STOPPED) && (currentp->t_inode == inode)) {
             debug("EXEC found copy\n");
             seg_code = currentp->mm[SEG_CODE];
+            seg_ftext = currentp->mm[SEG_FTEXT];
             break;
         }
     } while (++currentp < &task[max_tasks]);
@@ -377,6 +378,7 @@ static int FARPROC execve_aout(struct inode *inode, struct file *filp,
             /* Point the code segment directly to in-memory ROMFS. This runs text
              * segments directly from ROM, as opposed to making copies of them in
              * RAM. Not supported for compressed or relocatable binaries.
+             * NOTE: Running MM executables in ROM not yet supported!
              */
             seg_code = seg_alloc_fixed(filp->f_inode->u.romfs.seg + (filp->f_pos >> 4),
                 paras, SEG_FLAG_CSEG);
@@ -385,19 +387,15 @@ static int FARPROC execve_aout(struct inode *inode, struct file *filp,
         }
 #endif
 #ifdef CONFIG_EXEC_COMPRESS
-        if (esuph.esh_compr_tseg || esuph.esh_compr_ftseg) {
-            if (esuph.esh_compr_tseg)
-                bytes = esuph.esh_compr_tseg;
+        if (esuph.esh_compr_tseg) {
+            bytes = esuph.esh_compr_tseg;
             paras += 1;         /* add 16 bytes for safety offset */
         }
 #endif
-#ifdef CONFIG_EXEC_MMODEL
-        paras += bytes_to_paras((size_t)esuph.esh_ftseg);
-#endif
-        debug_reloc("EXEC: allocating %04x paras (%04x bytes) for text segment(s)\n",
+        debug_reloc("EXEC: allocating %04x paras (%04x file bytes) for text segment\n",
             paras, bytes);
         seg_code = seg_alloc(paras, SEG_FLAG_CSEG);
-        if (!seg_code) goto error_exec3;
+        if (!seg_code) goto error_exec4;
 #ifdef CONFIG_286_PMODE
         /* text seg is a code selector (not writable in PM); make it writable to load */
         desc_chaccess(seg_code->base, DESC_KDATA);
@@ -414,14 +412,25 @@ static int FARPROC execve_aout(struct inode *inode, struct file *filp,
             decompress(0, seg_code->base, (size_t)mh.tseg, bytes, 16) != (size_t)mh.tseg)
                 goto error_exec4;
 #endif
+
 #ifdef CONFIG_EXEC_MMODEL
-        bytes = esuph.esh_ftseg;
+        bytes = (size_t)esuph.esh_ftseg;
         if (bytes) {
+            paras = bytes_to_paras(bytes);
 #ifdef CONFIG_EXEC_COMPRESS
-            if (esuph.esh_compr_ftseg)
+            if (esuph.esh_compr_ftseg) {
                 bytes = esuph.esh_compr_ftseg;
+                paras += 1;     /* add 16 bytes for safety offset */
+            }
 #endif
-            currentp->t_regs.ds = seg_code->base + bytes_to_paras((size_t)mh.tseg);
+            debug_reloc("EXEC: allocating %04x paras (%04x file bytes) for ftext segment\n",
+                paras, bytes);
+            seg_ftext = seg_alloc(paras, SEG_FLAG_CSEG);
+            if (!seg_ftext) goto error_exec4;
+#ifdef CONFIG_286_PMODE
+            desc_chaccess(seg_ftext->base, DESC_KDATA);
+#endif
+            currentp->t_regs.ds = seg_ftext->base;
             retval = filp->f_op->read(inode, filp, 0, bytes);
             if (retval != bytes) {
                 debug("EXEC(ftseg read): bad result %u, expected %u\n", retval, bytes);
@@ -430,14 +439,16 @@ static int FARPROC execve_aout(struct inode *inode, struct file *filp,
 #ifdef CONFIG_EXEC_COMPRESS
             retval = -ENOEXEC;
             if (esuph.esh_compr_ftseg &&
-                decompress(0, seg_code->base + bytes_to_paras((size_t)mh.tseg),
+                decompress(0, seg_ftext->base,
                     (size_t)esuph.esh_ftseg, bytes, 16) != (size_t)esuph.esh_ftseg)
                         goto error_exec4;
 #endif
         }
-#endif
+#endif /* CONFIG_EXEC_MMODEL */
+
     } else {
         seg_get (seg_code);
+        if (seg_ftext) seg_get (seg_ftext);
 
   code_seg_found_exec:
 #ifdef CONFIG_EXEC_MMODEL
@@ -481,14 +492,15 @@ static int FARPROC execve_aout(struct inode *inode, struct file *filp,
     scratch_off = ((size_t)mh.dseg + 1) & ~1;
     if (need_reloc_code) {
         /* Read and apply text segment relocations */
-        retval = relocate(seg_code->base, esuph.msh_trsize, seg_code, seg_data,
-                          inode, filp, mh.tseg, scratch_off, len - scratch_off);
+        retval = relocate(seg_code->base,
+                          esuph.msh_trsize, seg_code, seg_data, seg_ftext,
+                          inode, filp, scratch_off, len - scratch_off);
         if (retval != 0)
             goto error_exec5;
         /* Read and apply far text segment relocations */
-        retval = relocate(seg_code->base + bytes_to_paras((size_t)mh.tseg),
-                          esuph.esh_ftrsize, seg_code, seg_data,
-                          inode, filp, mh.tseg, scratch_off, len - scratch_off);
+        if (seg_ftext) retval = relocate(seg_ftext->base,
+                          esuph.esh_ftrsize, seg_code, seg_data, seg_ftext,
+                          inode, filp, scratch_off, len - scratch_off);
         if (retval != 0)
             goto error_exec5;
     } else {
@@ -497,8 +509,8 @@ static int FARPROC execve_aout(struct inode *inode, struct file *filp,
         filp->f_pos += esuph.esh_ftrsize;
     }
     /* Read and apply data relocations */
-    retval = relocate(seg_data->base, esuph.msh_drsize, seg_code, seg_data,
-                      inode, filp, mh.tseg, scratch_off, len - scratch_off);
+    retval = relocate(seg_data->base, esuph.msh_drsize, seg_code, seg_data, seg_ftext,
+                      inode, filp, scratch_off, len - scratch_off);
     if (retval != 0)
         goto error_exec5;
 #endif
@@ -519,15 +531,17 @@ static int FARPROC execve_aout(struct inode *inode, struct file *filp,
 #ifdef CONFIG_286_PMODE
     /* text fully loaded; restore executable access so seg_code can be used as CS */
     desc_chaccess(seg_code->base, DESC_KCODE);
+    if (seg_ftext) desc_chaccess(seg_ftext->base, DESC_KCODE);
 #endif
-    finalize_exec(inode, seg_code, seg_data, (word_t)mh.entry, 0);
+    finalize_exec(inode, seg_code, seg_data, seg_ftext, (word_t)mh.entry, 0);
     return 0;           /* success */
 
   error_exec5:
     seg_put (seg_data);
 
   error_exec4:
-    seg_put (seg_code);
+    if (seg_code) seg_put (seg_code);
+    if (seg_ftext) seg_put (seg_ftext);
 
   error_exec3:
     current->t_regs.ds = ds;
@@ -538,7 +552,7 @@ static int FARPROC execve_aout(struct inode *inode, struct file *filp,
 
 /* seg_code is entry code segment, seg_data is main (auto stack/heap) data segment */
 static void FARPROC finalize_exec(struct inode *inode, segment_s *seg_code,
-    segment_s *seg_data, word_t entry, int multisegment)
+    segment_s *seg_data, segment_s *seg_ftext, word_t entry, int multisegment)
 {
     struct task_struct *currentp = current;
     int i, n, v;
@@ -562,6 +576,7 @@ static void FARPROC finalize_exec(struct inode *inode, segment_s *seg_code,
     {
         currentp->mm[SEG_CODE] = seg_code;
         currentp->mm[SEG_DATA] = seg_data;
+        currentp->mm[SEG_FTEXT] = seg_ftext;
     }
 
     currentp->t_regs.ss = currentp->t_regs.es = currentp->t_regs.ds = seg_data->base;
@@ -799,7 +814,7 @@ static int FARPROC execve_os2(struct inode *inode, struct file *filp,
     debug_os2("fmemcpy %04x:%04x <- %d\n", seg_data->base, current->t_begstack, slen);
     fmemcpyb((char *)current->t_begstack, seg_data->base, sptr, ds, slen);
 
-    finalize_exec(inode, seg_code, seg_data, os2hdr.reg_ip, 1);
+    finalize_exec(inode, seg_code, seg_data, 0, os2hdr.reg_ip, 1);
     return 0;       /* success */
 
 errout3:

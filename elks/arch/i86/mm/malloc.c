@@ -41,7 +41,7 @@ static int seg_pm_attach(segment_s *seg, word_t type)
      * User mode fmemalloc allocations are also limited to 64K max segments
      * unless 32-bit instructions are used within the application.
      */
-    if (!(type & SEG_FLAG_XMS) && (limit >> 16) > 1) {
+    if (!(type & SEG_FLAG_XMS) && (limit >> 16) != 0) {
         printk("seg_alloc: %08lx limit > 64K\n", limit);
         return 0;
     }
