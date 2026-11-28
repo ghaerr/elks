@@ -18,7 +18,7 @@
 #       elksdigger      ia16-elf-gcc    Digger for ELKS
 #       cmdr            ia16-elf-gcc    Two-panel ANSI file manager
 #       scrcap          ia16-elf-gcc    CGA/HP monochrome screenshot utility
-#       elksweb         ia16-elf-gcc    Graphical HTTP browser for IBM PC compatibles
+#       elksweb         ia16-elf-gcc    Direct-console and Nano-X graphical HTTP browsers
 #       owc_libc        OpenWatcom      ELKS C Library compiled by OWC
 #       owc_elkscmd     OpenWatcom      Some elkscmd/ programs compiled by OWC
 #       c86_toolchain   OpenWatcom/C86  C86 Toolchain, header files and examples
@@ -353,14 +353,19 @@ elksmoria()
 
 elksweb()
 {
-    echo "Building ELKSWeb..."
+    # Standalone builds need the same client source as the Nano-X server.
+    if [ ! -f "$TOPDIR/extapps/microwindows/src/include/nano-X.h" ]; then
+        microwindows
+    fi
+    echo "Building ELKSWeb and WebNX..."
     cd "$TOPDIR/extapps"
     if [ ! -d ELKSWeb ] ; then
         git clone https://github.com/l00nix/ELKSWeb.git ELKSWeb
     fi
     cd ELKSWeb
     git pull --ff-only
-    ELKSWEB_ELKS="$TOPDIR" sh toolchain/build-external.sh
+    ELKSWEB_ELKS="$TOPDIR" MWDIR="$TOPDIR/extapps/microwindows" \
+        sh toolchain/build-external.sh
     echo "ELKSWeb build complete"
 }
 
