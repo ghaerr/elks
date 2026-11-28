@@ -30,6 +30,7 @@ struct signal_struct {
 /* Standard segment entry indices for a.out executables */
 #define SEG_CODE        0
 #define SEG_DATA        1
+#define SEG_FTEXT       2
 
 /* ordering this struct saves kernel code space using byte offsets for freq accesses */
 struct task_struct {
